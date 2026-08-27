@@ -53,7 +53,49 @@ Yalnızca tahmin girilmişse tablo sadece o maçlar üzerinden hesaplanır.
 
 Tahminler tarayıcının `localStorage`'ında **tohum başına** saklanır
 (`ucl:picks:<tohum>`), yani başka bir kuraya geçip geri dönünce yerinde durur.
-Sunucuya gitmez, cihaz ve tarayıcı dışına çıkmaz.
+
+### Kayıtlar
+
+Kayıtlar sekmesi bir kurayı adlandırıp saklar: tohum + o an ekranda geçerli olan
+tüm maç skorları + hangilerinin kullanıcı tahmini olduğu. Kayıt açıldığında kura
+tohumdan yeniden üretilir, skorlar üstüne yerleştirilir, tahmin işaretleri korunur.
+
+Liste herkese açıktır: kaydı olan herkes listeyi görür ve açar. Silme yetkisi
+kaydı oluşturan tarayıcıya aittir — kayıt anında dönen token `localStorage`'da
+`ucl:tokens` altında tutulur. Hesap ve giriş yok.
+
+## Kayıt sunucusu (`api/`)
+
+Cloudflare Worker + D1 (serverless SQLite). Site GitHub Pages'te kalır, sadece
+API ayrı origin'dedir ve CORS ile açılır.
+
+| Uç | İş |
+|---|---|
+| `GET /api/saves` | Son 60 kayıt (payload'sız özet) |
+| `GET /api/saves/:id` | Tek kaydın tamamı |
+| `POST /api/saves` | Yeni kayıt, `{id, token}` döner |
+| `DELETE /api/saves/:id` | `X-Save-Token` başlığı doğruysa siler |
+
+Sunucu tarafı sınırlar: gövde 64 KB, ad 60 karakter, en fazla 200 maç, gol 0-99,
+tohum 1-999999, IP özeti başına saatte 30 kayıt. `token` hiçbir listeleme veya
+detay yanıtında dönmez. CORS yalnızca `ALLOWED_ORIGINS` içindeki kaynaklara açıktır.
+
+IP'ler ham saklanmaz; hız sınırı için `IP_SALT` secret'ıyla tuzlanmış SHA-256
+özetinin ilk 8 baytı tutulur.
+
+```bash
+cd api
+npx wrangler@3 d1 create ucl-draw-saves          # database_id'yi wrangler.toml'a yaz
+npx wrangler@3 d1 execute ucl-draw-saves --remote --file=schema.sql
+node -e "console.log(require('crypto').randomBytes(24).toString('hex'))" \
+  | npx wrangler@3 secret put IP_SALT
+npx wrangler@3 deploy
+```
+
+Worker adresi `app.part.js` içindeki `API` sabitine yazılır. Sabit boş bırakılırsa
+Kayıtlar sekmesi "yapılandırılmadı" der, sitenin geri kalanı çalışmaya devam eder.
+
+`wrangler@3` kullanılıyor çünkü 4.x Node 22+ istiyor.
 
 ## Kullanım (Python)
 
