@@ -40,6 +40,17 @@ function newDraw(seed) {
   }, 10);
 }
 
+/**
+ * Kutudaki tohumla yeniden kura çeker. Tohum değişmemişse bir artırır, çünkü
+ * aynı tohum aynı kurayı üretir ve buton etkisiz görünür.
+ */
+function redrawFromInput() {
+  const typed = Number($('#seed').value) || 1;
+  const seed = typed === state.seed ? (typed % 999999) + 1 : typed;
+  $('#seed').value = seed;
+  newDraw(seed);
+}
+
 // ---------------------------------------------------------------------------
 // 1. Matris
 // ---------------------------------------------------------------------------
@@ -116,6 +127,8 @@ function selectTeam(id) {
   state.selected = id;
   paintSelection();
   renderDetail();
+  renderTeams();
+  $('#teampick').value = id || '';
 }
 
 function renderDetail() {
@@ -149,8 +162,34 @@ function renderDetail() {
 // ---------------------------------------------------------------------------
 // 2. Takim kartlari
 // ---------------------------------------------------------------------------
+function fillTeamPicker() {
+  const pick = $('#teampick');
+  const all = el('option', null, 'Tüm takımlar');
+  all.value = '';
+  pick.appendChild(all);
+  [1, 2, 3, 4].forEach(pot => {
+    const group = document.createElement('optgroup');
+    group.label = 'Torba ' + pot;
+    ORDER.filter(id => byId[id].pot === pot)
+      .sort((a, b) => byId[a].name.localeCompare(byId[b].name, 'tr'))
+      .forEach(id => {
+        const o = el('option', null, byId[id].name);
+        o.value = id;
+        group.appendChild(o);
+      });
+    pick.appendChild(group);
+  });
+}
+
 function renderTeams() {
   const host = $('#teams'); host.innerHTML = '';
+  $('#teamall').hidden = !state.selected;
+  $('#teamhint').textContent = state.selected
+    ? 'matris sekmesinde de bu takım seçili'
+    : 'listeden seç ya da bir karta tıkla';
+
+  if (state.selected) { host.appendChild(teamFocus(byId[state.selected])); return; }
+
   [1, 2, 3, 4].forEach(pot => {
     const head = el('div', 'pothead');
     head.appendChild(el('h2', null, 'Torba ' + pot));
@@ -159,7 +198,10 @@ function renderTeams() {
     const grid = el('div', 'cards');
     ORDER.filter(id => byId[id].pot === pot).forEach(id => {
       const t = byId[id];
-      const card = el('div', 'card p' + pot);
+      const card = el('button', 'card p' + pot);
+      card.type = 'button';
+      card.dataset.team = id;
+      card.title = t.name + ' fikstürünü aç';
       const h = el('h4', null, t.name);
       card.appendChild(h);
       card.appendChild(el('div', 'sub', t.country));
@@ -174,8 +216,84 @@ function renderTeams() {
       card.appendChild(ul);
       grid.appendChild(card);
     });
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('[data-team]');
+      if (card) selectTeam(card.dataset.team);
+    });
     host.appendChild(grid);
   });
+}
+
+/** Tek takimin sezonluk fikstur paneli; skor sutunu ancak sezon oynandiysa cikar. */
+function teamFocus(t) {
+  const rows = state.view[t.id];
+  const byFixture = new Map();
+  if (state.results) state.results.forEach(r => byFixture.set(r.f, r));
+
+  const box = el('div', 'focus p' + t.pot);
+  const head = el('div', 'focushead');
+  head.appendChild(el('h2', null, t.name));
+  head.appendChild(el('div', 'line'));
+  box.appendChild(head);
+
+  const counts = {};
+  rows.forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
+  const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
+  const bits = [t.country, 'Torba ' + t.pot, '4 iç saha / 4 deplasman'];
+  if (doubled.length) bits.push('aynı ülkeden çift rakip: ' + doubled.join(', '));
+  if (state.results) {
+    let w = 0, d = 0, l = 0, gf = 0, ga = 0;
+    rows.forEach(r => {
+      const res = byFixture.get(r.f);
+      if (!res) return;
+      const f = r.venue === 'H' ? res.hg : res.ag;
+      const a = r.venue === 'H' ? res.ag : res.hg;
+      gf += f; ga += a;
+      if (f > a) w++; else if (f === a) d++; else l++;
+    });
+    bits.push(`${w}G ${d}B ${l}M · ${gf}-${ga} · ${w * 3 + d} puan`);
+  }
+  box.appendChild(el('div', 'meta', bits.join(' · ')));
+
+  const scroll = el('div', 'fixscroll');
+  const table = el('table', 'fixtab');
+  const hr = el('tr');
+  const cols = ['Hafta', 'Tarih', 'Saha', 'Rakip', 'Ülke', 'Torba'];
+  if (state.results) cols.push('Skor');
+  cols.forEach(c => hr.appendChild(el('th', null, c)));
+  table.appendChild(el('thead')).appendChild(hr);
+
+  const tb = el('tbody');
+  rows.forEach(r => {
+    const opp = byId[r.opp];
+    const tr = el('tr');
+    tr.appendChild(el('td', 'md', 'MD' + r.md));
+    tr.appendChild(el('td', 'dt', MD_DATES[r.md - 1]));
+
+    const vn = el('td', 'vn p' + opp.pot);
+    vn.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
+    vn.appendChild(el('span', 'vt', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+    tr.appendChild(vn);
+
+    tr.appendChild(el('td', 'nm', opp.name));
+    tr.appendChild(el('td', 'cn', opp.country));
+    tr.appendChild(el('td', 'pt', 'T' + opp.pot));
+
+    if (state.results) {
+      const res = byFixture.get(r.f);
+      if (!res) { tr.appendChild(el('td', 'sc', '–')); }
+      else {
+        const f = r.venue === 'H' ? res.hg : res.ag;
+        const a = r.venue === 'H' ? res.ag : res.hg;
+        tr.appendChild(el('td', 'sc ' + (f > a ? 'w' : f === a ? 'd' : 'l'), f + '-' + a));
+      }
+    }
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb);
+  scroll.appendChild(table);
+  box.appendChild(scroll);
+  return box;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,7 +329,7 @@ function renderMatchdays() {
 function playSeason() {
   const rng = makeRng((Math.random() * 1e9) | 0);
   state.results = simulateSeason(state.fixtures, TEAMS, rng);
-  renderTable(); renderMatchdays();
+  renderTable(); renderMatchdays(); renderTeams();
 }
 
 function renderTable() {
@@ -327,13 +445,16 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
       (s.hidden = s.id !== 'view-' + b.dataset.view));
   });
 });
-$('#redraw').addEventListener('click', () => newDraw(Number($('#seed').value) || 1));
+$('#redraw').addEventListener('click', redrawFromInput);
 $('#random').addEventListener('click', () => {
   const s = (Math.random() * 99999) | 0;
   $('#seed').value = s; newDraw(s);
 });
 $('#play').addEventListener('click', playSeason);
 $('#mcrun').addEventListener('click', runMonteCarlo);
+$('#teampick').addEventListener('change', e => selectTeam(e.target.value || null));
+$('#teamall').addEventListener('click', () => selectTeam(null));
 
 $('#seed').value = state.seed;
+fillTeamPicker();
 newDraw(state.seed);

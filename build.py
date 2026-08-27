@@ -63,7 +63,14 @@ __UI__
     <div class="detail" id="detail"></div>
   </section>
 
-  <section id="view-teams" hidden><div id="teams"></div></section>
+  <section id="view-teams" hidden>
+    <div class="bar">
+      <select id="teampick" aria-label="Takım seç"></select>
+      <button id="teamall" class="ghost" hidden>Tüm takımlar</button>
+      <span class="hint" id="teamhint">listeden seç ya da bir karta tıkla</span>
+    </div>
+    <div id="teams"></div>
+  </section>
   <section id="view-matchdays" hidden><div id="matchdays"></div></section>
   <section id="view-table" hidden><div id="table"></div></section>
 

@@ -141,9 +141,49 @@ ol.fix .pt{font-size:10px;color:var(--ink-3)}
   text-transform:uppercase;margin:0;letter-spacing:.02em}
 .pothead .line{flex:1;height:2px;background:var(--rule)}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
-.card{background:var(--paper-2);border:1px solid var(--rule);border-left-width:5px;padding:12px 14px}
+.card{
+  display:block;width:100%;text-align:left;font:inherit;letter-spacing:normal;
+  text-transform:none;color:var(--ink);cursor:pointer;
+  background:var(--paper-2);border:1px solid var(--rule);border-left-width:5px;padding:12px 14px;
+  transition:background .12s,border-color .12s,transform .06s;
+}
+.card:hover{
+  background:var(--paper-2);color:var(--ink);
+  border-top-color:var(--ink);border-right-color:var(--ink);border-bottom-color:var(--ink)
+}
+.card:hover h4{text-decoration:underline;text-underline-offset:3px}
+.card:active{transform:translateY(1px)}
 .card.p1{border-left-color:var(--p1)} .card.p2{border-left-color:var(--p2)}
 .card.p3{border-left-color:var(--p3)} .card.p4{border-left-color:var(--p4)}
+
+/* ---------- tek takim odagi ---------- */
+.focushead{display:flex;align-items:baseline;gap:14px;margin:2px 0 8px}
+.focushead h2{font-family:'Big Shoulders Display',sans-serif;font-weight:800;
+  font-size:clamp(34px,6vw,52px);text-transform:uppercase;margin:0;line-height:.9}
+.focushead .line{flex:1;height:3px;background:var(--ink)}
+.focus.p1 .focushead .line{background:var(--p1)} .focus.p2 .focushead .line{background:var(--p2)}
+.focus.p3 .focushead .line{background:var(--p3)} .focus.p4 .focushead .line{background:var(--p4)}
+.focus .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2)}
+.fixscroll{overflow-x:auto;margin-top:18px}
+table.fixtab{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+table.fixtab th{text-align:left;font-weight:500;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);padding:0 10px 6px;
+  border-bottom:2px solid var(--ink);white-space:nowrap}
+table.fixtab td{padding:8px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+table.fixtab td.md{color:var(--ink-3)}
+table.fixtab td.dt{color:var(--ink-3);font-size:11px}
+table.fixtab td.nm{font-family:'Inter Tight',sans-serif;font-size:14.5px;font-weight:600;white-space:normal}
+table.fixtab td.cn,table.fixtab td.pt{color:var(--ink-3);font-size:11px}
+table.fixtab td.vn.p1{color:var(--p1)} table.fixtab td.vn.p2{color:var(--p2)}
+table.fixtab td.vn.p3{color:var(--p3)} table.fixtab td.vn.p4{color:var(--p4)}
+table.fixtab td.vn .key{width:11px;height:11px;vertical-align:-1px}
+table.fixtab .key.home{background:currentColor}
+table.fixtab .key.away{background:transparent;box-shadow:inset 0 0 0 2.5px currentColor}
+table.fixtab td.vn .vt{color:var(--ink-2);font-size:11px;margin-left:8px}
+table.fixtab td.sc{font-weight:600}
+table.fixtab td.sc.w{color:var(--p2)} table.fixtab td.sc.d{color:var(--ink-2)}
+table.fixtab td.sc.l{color:var(--p4)}
 .card h4{margin:0;font-size:15px;font-weight:650}
 .card .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
@@ -247,7 +287,14 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
     <div class="detail" id="detail"></div>
   </section>
 
-  <section id="view-teams" hidden><div id="teams"></div></section>
+  <section id="view-teams" hidden>
+    <div class="bar">
+      <select id="teampick" aria-label="Takım seç"></select>
+      <button id="teamall" class="ghost" hidden>Tüm takımlar</button>
+      <span class="hint" id="teamhint">listeden seç ya da bir karta tıkla</span>
+    </div>
+    <div id="teams"></div>
+  </section>
   <section id="view-matchdays" hidden><div id="matchdays"></div></section>
   <section id="view-table" hidden><div id="table"></div></section>
 
@@ -675,6 +722,17 @@ function newDraw(seed) {
   }, 10);
 }
 
+/**
+ * Kutudaki tohumla yeniden kura çeker. Tohum değişmemişse bir artırır, çünkü
+ * aynı tohum aynı kurayı üretir ve buton etkisiz görünür.
+ */
+function redrawFromInput() {
+  const typed = Number($('#seed').value) || 1;
+  const seed = typed === state.seed ? (typed % 999999) + 1 : typed;
+  $('#seed').value = seed;
+  newDraw(seed);
+}
+
 // ---------------------------------------------------------------------------
 // 1. Matris
 // ---------------------------------------------------------------------------
@@ -751,6 +809,8 @@ function selectTeam(id) {
   state.selected = id;
   paintSelection();
   renderDetail();
+  renderTeams();
+  $('#teampick').value = id || '';
 }
 
 function renderDetail() {
@@ -784,8 +844,34 @@ function renderDetail() {
 // ---------------------------------------------------------------------------
 // 2. Takim kartlari
 // ---------------------------------------------------------------------------
+function fillTeamPicker() {
+  const pick = $('#teampick');
+  const all = el('option', null, 'Tüm takımlar');
+  all.value = '';
+  pick.appendChild(all);
+  [1, 2, 3, 4].forEach(pot => {
+    const group = document.createElement('optgroup');
+    group.label = 'Torba ' + pot;
+    ORDER.filter(id => byId[id].pot === pot)
+      .sort((a, b) => byId[a].name.localeCompare(byId[b].name, 'tr'))
+      .forEach(id => {
+        const o = el('option', null, byId[id].name);
+        o.value = id;
+        group.appendChild(o);
+      });
+    pick.appendChild(group);
+  });
+}
+
 function renderTeams() {
   const host = $('#teams'); host.innerHTML = '';
+  $('#teamall').hidden = !state.selected;
+  $('#teamhint').textContent = state.selected
+    ? 'matris sekmesinde de bu takım seçili'
+    : 'listeden seç ya da bir karta tıkla';
+
+  if (state.selected) { host.appendChild(teamFocus(byId[state.selected])); return; }
+
   [1, 2, 3, 4].forEach(pot => {
     const head = el('div', 'pothead');
     head.appendChild(el('h2', null, 'Torba ' + pot));
@@ -794,7 +880,10 @@ function renderTeams() {
     const grid = el('div', 'cards');
     ORDER.filter(id => byId[id].pot === pot).forEach(id => {
       const t = byId[id];
-      const card = el('div', 'card p' + pot);
+      const card = el('button', 'card p' + pot);
+      card.type = 'button';
+      card.dataset.team = id;
+      card.title = t.name + ' fikstürünü aç';
       const h = el('h4', null, t.name);
       card.appendChild(h);
       card.appendChild(el('div', 'sub', t.country));
@@ -809,8 +898,84 @@ function renderTeams() {
       card.appendChild(ul);
       grid.appendChild(card);
     });
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('[data-team]');
+      if (card) selectTeam(card.dataset.team);
+    });
     host.appendChild(grid);
   });
+}
+
+/** Tek takimin sezonluk fikstur paneli; skor sutunu ancak sezon oynandiysa cikar. */
+function teamFocus(t) {
+  const rows = state.view[t.id];
+  const byFixture = new Map();
+  if (state.results) state.results.forEach(r => byFixture.set(r.f, r));
+
+  const box = el('div', 'focus p' + t.pot);
+  const head = el('div', 'focushead');
+  head.appendChild(el('h2', null, t.name));
+  head.appendChild(el('div', 'line'));
+  box.appendChild(head);
+
+  const counts = {};
+  rows.forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
+  const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
+  const bits = [t.country, 'Torba ' + t.pot, '4 iç saha / 4 deplasman'];
+  if (doubled.length) bits.push('aynı ülkeden çift rakip: ' + doubled.join(', '));
+  if (state.results) {
+    let w = 0, d = 0, l = 0, gf = 0, ga = 0;
+    rows.forEach(r => {
+      const res = byFixture.get(r.f);
+      if (!res) return;
+      const f = r.venue === 'H' ? res.hg : res.ag;
+      const a = r.venue === 'H' ? res.ag : res.hg;
+      gf += f; ga += a;
+      if (f > a) w++; else if (f === a) d++; else l++;
+    });
+    bits.push(`${w}G ${d}B ${l}M · ${gf}-${ga} · ${w * 3 + d} puan`);
+  }
+  box.appendChild(el('div', 'meta', bits.join(' · ')));
+
+  const scroll = el('div', 'fixscroll');
+  const table = el('table', 'fixtab');
+  const hr = el('tr');
+  const cols = ['Hafta', 'Tarih', 'Saha', 'Rakip', 'Ülke', 'Torba'];
+  if (state.results) cols.push('Skor');
+  cols.forEach(c => hr.appendChild(el('th', null, c)));
+  table.appendChild(el('thead')).appendChild(hr);
+
+  const tb = el('tbody');
+  rows.forEach(r => {
+    const opp = byId[r.opp];
+    const tr = el('tr');
+    tr.appendChild(el('td', 'md', 'MD' + r.md));
+    tr.appendChild(el('td', 'dt', MD_DATES[r.md - 1]));
+
+    const vn = el('td', 'vn p' + opp.pot);
+    vn.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
+    vn.appendChild(el('span', 'vt', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+    tr.appendChild(vn);
+
+    tr.appendChild(el('td', 'nm', opp.name));
+    tr.appendChild(el('td', 'cn', opp.country));
+    tr.appendChild(el('td', 'pt', 'T' + opp.pot));
+
+    if (state.results) {
+      const res = byFixture.get(r.f);
+      if (!res) { tr.appendChild(el('td', 'sc', '–')); }
+      else {
+        const f = r.venue === 'H' ? res.hg : res.ag;
+        const a = r.venue === 'H' ? res.ag : res.hg;
+        tr.appendChild(el('td', 'sc ' + (f > a ? 'w' : f === a ? 'd' : 'l'), f + '-' + a));
+      }
+    }
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb);
+  scroll.appendChild(table);
+  box.appendChild(scroll);
+  return box;
 }
 
 // ---------------------------------------------------------------------------
@@ -846,7 +1011,7 @@ function renderMatchdays() {
 function playSeason() {
   const rng = makeRng((Math.random() * 1e9) | 0);
   state.results = simulateSeason(state.fixtures, TEAMS, rng);
-  renderTable(); renderMatchdays();
+  renderTable(); renderMatchdays(); renderTeams();
 }
 
 function renderTable() {
@@ -962,15 +1127,18 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
       (s.hidden = s.id !== 'view-' + b.dataset.view));
   });
 });
-$('#redraw').addEventListener('click', () => newDraw(Number($('#seed').value) || 1));
+$('#redraw').addEventListener('click', redrawFromInput);
 $('#random').addEventListener('click', () => {
   const s = (Math.random() * 99999) | 0;
   $('#seed').value = s; newDraw(s);
 });
 $('#play').addEventListener('click', playSeason);
 $('#mcrun').addEventListener('click', runMonteCarlo);
+$('#teampick').addEventListener('change', e => selectTeam(e.target.value || null));
+$('#teamall').addEventListener('click', () => selectTeam(null));
 
 $('#seed').value = state.seed;
+fillTeamPicker();
 newDraw(state.seed);
 
 </script>
