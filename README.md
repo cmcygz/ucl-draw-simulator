@@ -160,6 +160,13 @@ skor dağıtıyor. Örnekleme 30+ farklı skor üretiyor ve maç başına gol sa
 gerçeğe daha yakın. Bilinen sapma: bağımsız Poisson beraberliği az üretiyor
 (%15, gerçekte ~%25).
 
+### Yenileme kurayı korur
+
+Kura, çekiliş ilerlemesi ve skorlar `sessionStorage`'a yazılır. Sayfa
+yenilendiğinde her şey geri gelir; yarım kalmış çekiliş kaldığı yerden devam
+eder. Sekme kapanınca temizlenir, yani günler sonra eski bir kurayı diriltmez
+ve paylaşılabilir bir şey üretmez. Kalıcı saklama için **Fikstürü kaydet**.
+
 ### Kura değişince her şey sıfırlanır
 
 Yeni kura başka bir fikstür demektir, dolayısıyla tahminler ve simülasyon skorları

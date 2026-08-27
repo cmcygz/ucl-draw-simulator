@@ -150,6 +150,7 @@ function newDraw(seed, apply, opts) {
     if (problems.length) setStatus('status.violation', { msg: problems[0] });
     else setStatus('status.ok', { matches: matchCount() });
     renderAll();
+    persist();
   }, 10);
 }
 
@@ -232,6 +233,7 @@ function switchCompetition(id) {
   state.selected = null; state.dirty = false;
   state.drawn = new Set(); state.drawComplete = false;
   savesLoaded = false;
+  clearSession();
   renderCompNav();
   if (!COMP.available || !TEAMS.length) { renderUnavailable(); writeHash(COMP.id); return; }
   fillTeamPicker();
@@ -294,6 +296,78 @@ let viewsStale = false;
 function refreshViews() {
   viewsStale = false;
   renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+}
+
+// --- oturum surekliligi ---------------------------------------------------
+// Sayfa yenilenince kura ve skorlar kaybolmasin diye sekmeye yazilir.
+// sessionStorage bilerek secildi: yenilemede kalir, sekme kapaninca gider,
+// yani gunler sonra eski bir kurayi diriltmez ve paylasilabilir bir sey uretmez.
+const SESSION_KEY = 'ucl:session';
+
+function persist() {
+  if (!state.fixtures.length) return;
+  const sim = [];
+  if (state.simIndex) {
+    state.simIndex.forEach((r, f) => sim.push([fxKey(f), r.hg, r.ag]));
+  }
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      v: 1,
+      comp: COMP.id,
+      fixture: state.fixtures.map(f => [f.home, f.away, f.md]),
+      drawn: Array.from(state.drawn),
+      drawComplete: state.drawComplete,
+      picks: state.picks,
+      sim: sim,
+      dirty: state.dirty
+    }));
+  } catch (e) { /* depolama kapali olabilir */ }
+}
+
+function clearSession() {
+  try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* yoksay */ }
+}
+
+function readSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return data && data.v === 1 && Array.isArray(data.fixture) && data.fixture.length
+      ? data : null;
+  } catch (e) { return null; }
+}
+
+/** Yenileme sonrasi kurayi, cekilis ilerlemesini ve skorlari geri kurar. */
+function restoreSession(data) {
+  useCompetition(data.comp);
+  renderCompNav();
+  fillTeamPicker();
+
+  state.fixtures = data.fixture.map(row => ({
+    home: row[0], away: row[1],
+    homePot: byId[row[0]] ? byId[row[0]].pot : 0,
+    awayPot: byId[row[1]] ? byId[row[1]].pot : 0,
+    md: row[2]
+  })).filter(f => byId[f.home] && byId[f.away]);
+  state.view = buildView(state.fixtures);
+  state.drawn = new Set(data.drawn || []);
+  state.drawComplete = !!data.drawComplete;
+  state.picks = data.picks || {};
+  state.dirty = !!data.dirty;
+
+  const byKey = new Map(state.fixtures.map(f => [fxKey(f), f]));
+  const sim = new Map();
+  (data.sim || []).forEach(row => {
+    const f = byKey.get(row[0]);
+    if (f) sim.set(f, { f: f, hg: row[1], ag: row[2] });
+  });
+  state.simIndex = sim.size ? sim : null;
+  state.results = sim.size ? Array.from(sim.values()) : null;
+
+  setStatus('status.ok', { matches: matchCount() });
+  renderAll();
+  persist();
 }
 
 // ---------------------------------------------------------------------------
@@ -613,6 +687,7 @@ function onPickInput(inp) {
   else delete state.picks[key];
   row.classList.toggle('picked', key in state.picks);
   state.dirty = true;
+  persist();
   updatePickCount();
   renderTable();
   renderTeams();
@@ -639,6 +714,7 @@ function autofillPicks() {
     state.picks[k] = { hg: r.hg, ag: r.ag };
   }
   state.dirty = true;
+  persist();
   renderMatchdays(); renderTable(); renderTeams();
   const added = pickCount() - before;
   mdStatus(!added ? tx('md.allFull')
@@ -650,6 +726,7 @@ function clearPicks() {
   if (!confirm(tx('md.clearConfirm'))) return;
   state.picks = {};
   state.dirty = mergedResults().length > 0;
+  persist();
   renderMatchdays(); renderTable(); renderTeams();
 }
 
@@ -661,6 +738,7 @@ function playSeason() {
   state.results = simulateSeason(state.fixtures, TEAMS, rng);
   state.simIndex = new Map(state.results.map(r => [r.f, r]));
   state.dirty = true;
+  persist();
   renderTable(); renderMatchdays(); renderTeams();
 }
 
@@ -920,20 +998,24 @@ function resetCeremony() {
   $('#drawpause').textContent = tx('draw.pause');
   renderBowls();
   $('#drawstage').innerHTML = '';
-  if (state.drawComplete) {
-    POTS().forEach(pot => {
-      remainingInPot(pot).forEach(id => {
-        ceremony.taken.add(id);
-        openBall(freeBall(pot), byId[id]);
-      });
-    });
-    ceremony.drawn = teamCount();
-    setDrawUI();
-    drawStatus(tx('draw.alreadyDone', { teams: teamCount(), matches: matchCount() }));
-    return;
-  }
+  // Cekilmis takimlarin toplari acik gelir: sayfa yenilendiginde yarim kalan
+  // cekilis kaldigi yerden devam edebilsin.
+  const opened = state.drawComplete ? ORDER.slice() : Array.from(state.drawn);
+  opened.forEach(id => {
+    if (!byId[id]) return;
+    ceremony.taken.add(id);
+    openBall(freeBall(byId[id].pot), byId[id]);
+  });
+  ceremony.drawn = ceremony.taken.size;
+
   setDrawUI();
-  drawStatus(tx('draw.intro'));
+  if (state.drawComplete) {
+    drawStatus(tx('draw.alreadyDone', { teams: teamCount(), matches: matchCount() }));
+  } else if (ceremony.drawn) {
+    drawStatus(tx('draw.next', { n: ceremony.drawn, total: teamCount() }));
+  } else {
+    drawStatus(tx('draw.intro'));
+  }
 }
 
 function finishCeremony() {
@@ -954,6 +1036,7 @@ function finishCeremony() {
   setDrawUI();
   drawStatus(tx('draw.finished', { teams: teamCount(), matches: matchCount() }));
   refreshViews();
+  persist();
 }
 
 /** Tek takimin cekilisi: top calkalanir, acilir, rakipler tek tek gelir. */
@@ -968,6 +1051,7 @@ async function revealTeam(t, gen, ball) {
   activateBowl(0);
   state.drawn.add(t.id);
   viewsStale = true;
+  persist();
   ceremony.drawn++;
   stageTeam(t);
   drawStatus(tx('draw.opening', { n: ceremony.drawn, total: teamCount(), team: t.name }));
@@ -1432,14 +1516,19 @@ const initialHash = parseHash();
 useCompetition(initialHash.comp || 'ucl');
 renderCompNav();
 state.seed = initialHash.seed || state.seed;
-if (!COMP.available || !TEAMS.length) {
+const saved = initialHash.saveId ? null : readSession();
+
+if (initialHash.saveId) {
+  openSave(initialHash.saveId, true);
+} else if (saved && (!initialHash.comp || saved.comp === initialHash.comp)) {
+  // Sayfa yenilenmis: kura, cekilis ilerlemesi ve skorlar geri gelir.
+  restoreSession(saved);
+  if (!saved.drawComplete) showTab('draw');
+} else if (!COMP.available || !TEAMS.length) {
   renderUnavailable();
 } else {
+  clearSession();
   fillTeamPicker();
-  // Adreste tohum varsa paylasilmis bir kuradir, dogrudan acilir; temiz
-  // ziyarette cekilis kullanicinin yapmasi icin bekler.
-  const shared = !!initialHash.seed;
-  newDraw(state.seed, null, { revealed: shared });
-  if (!shared && !initialHash.saveId) showTab('draw');
+  newDraw(state.seed, null, { revealed: false });
+  showTab('draw');
 }
-if (initialHash.saveId) openSave(initialHash.saveId, true);
