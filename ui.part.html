@@ -25,6 +25,25 @@ body{
   color:var(--ink-2); display:flex; gap:10px; align-items:center; flex-wrap:wrap;
 }
 .eyebrow b{font-weight:600;color:var(--ink)}
+.langbox{margin-left:auto;display:flex;align-items:center}
+.langbox select{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;padding:3px 6px;border:1px solid var(--rule);
+  background:transparent;color:var(--ink-2);cursor:pointer
+}
+.langbox select:hover{border-color:var(--ink);color:var(--ink)}
+.compnav{display:inline-flex;border:1.5px solid var(--ink);margin:16px 0 0;flex-wrap:wrap}
+.compnav a{
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:9px 15px;color:var(--ink-2);text-decoration:none;
+  border-right:1.5px solid var(--rule);transition:background .12s,color .12s
+}
+.compnav a:last-child{border-right:0}
+.compnav a:hover{background:var(--paper-2);color:var(--ink)}
+.compnav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+.compnav a[aria-current="page"]:hover{background:var(--ink);color:var(--paper)}
+.compnav a em{font-style:normal;opacity:.6;margin-left:8px;font-size:10px}
+
 h1{
   font-family:'Big Shoulders Display','Inter Tight',sans-serif;
   font-weight:800; font-size:clamp(46px,9vw,104px); line-height:.86;

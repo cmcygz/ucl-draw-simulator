@@ -194,23 +194,28 @@ function renderLegend() {
 
 /** Baslik ve alt basliktaki sayilari aktif turnuvadan turetir. */
 function renderHeader() {
-  $('#compname').textContent = tx('comp.' + COMP.id);
   $('#season').textContent = COMP.season;
   $('#h1clubs').textContent = tx('head.clubs', { n: teamCount() });
   $('#h1matches').textContent = tx('head.matches', { n: matchCount() });
   $('#h1weeks').textContent = tx('head.weeks', { n: FORMAT.matchdays });
 }
 
-function fillCompPicker() {
-  const pick = $('#comp');
-  pick.innerHTML = '';
+/**
+ * Turnuva secimi gercek baglantilardan olusur: hem oturum basina bir iki kez
+ * kullanilan bir baglam secimi gibi durur, hem de arama motoru /ucl, /uel ve
+ * /uecl sayfalarini buradan bulur. Tiklama JS ile yakalanip yerinde islenir.
+ */
+function renderCompNav() {
+  const nav = $('#compnav');
+  nav.innerHTML = '';
   COMP_IDS.forEach(id => {
-    const o = el('option', null, tx('comp.' + id)
-      + (COMPETITIONS[id].available ? '' : ' — ' + tx('comp.soon')));
-    o.value = id;
-    pick.appendChild(o);
+    const link = el('a', null, tx('comp.' + id));
+    link.href = '/' + id;
+    link.dataset.comp = id;
+    if (id === COMP.id) link.setAttribute('aria-current', 'page');
+    if (!COMPETITIONS[id].available) link.appendChild(el('em', null, tx('comp.soon')));
+    nav.appendChild(link);
   });
-  pick.value = COMP.id;
 }
 
 /** Kurasi henuz cekilmemis turnuva icin bilgi ekrani. */
@@ -234,12 +239,13 @@ function renderUnavailable() {
 
 function switchCompetition(id) {
   if (id === COMP.id) return;
-  if (!confirmDiscard()) { $('#comp').value = COMP.id; return; }
+  if (!confirmDiscard()) return;
   useCompetition(id);
   state.picks = {}; state.results = null; state.simIndex = null;
   state.selected = null; state.dirty = false;
+  state.drawn = new Set(); state.drawComplete = false;
   savesLoaded = false;
-  $('#comp').value = COMP.id;
+  renderCompNav();
   if (!COMP.available || !TEAMS.length) { renderUnavailable(); writeHash(COMP.id); return; }
   fillTeamPicker();
   newDraw(state.seed, null, { revealed: false });
@@ -1252,7 +1258,7 @@ async function openSave(id, fromLink) {
     const wanted = payload.comp || data.comp || 'ucl';
     if (wanted !== COMP.id) {
       useCompetition(wanted);
-      $('#comp').value = COMP.id;
+      renderCompNav();
       fillTeamPicker();
     }
     $('#seed').value = payload.seed;
@@ -1369,7 +1375,7 @@ function setLang(lang) {
   try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* depolama kapalı */ }
   $('#lang').value = LANG;
   applyStaticI18n();
-  fillCompPicker();
+  renderCompNav();
   renderHeader();
   renderLegend();
   setStatus(state.status.key, state.status.vars);
@@ -1399,7 +1405,12 @@ function relabelCeremony() {
   else if (!ceremony.busy && ceremony.drawn >= teamCount()) drawStatus(tx('draw.finished', { teams: teamCount(), matches: matchCount() }));
 }
 
-$('#comp').addEventListener('change', e => switchCompetition(e.target.value));
+$('#compnav').addEventListener('click', e => {
+  const link = e.target.closest('a[data-comp]');
+  if (!link) return;
+  e.preventDefault();
+  switchCompetition(link.dataset.comp);
+});
 
 LANG = detectLang();
 $('#lang').value = LANG;
@@ -1407,7 +1418,7 @@ applyStaticI18n();
 
 const initialHash = parseHash();
 useCompetition(initialHash.comp || 'ucl');
-fillCompPicker();
+renderCompNav();
 state.seed = initialHash.seed || state.seed;
 $('#seed').value = state.seed;
 if (!COMP.available || !TEAMS.length) {

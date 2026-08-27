@@ -43,24 +43,22 @@ __UI__
 
 <header>
   <div class="eyebrow">
-    <b data-i18n="brand">DrawLab</b><span id="compname">Champions League</span><span data-i18n="head.phase">league phase</span><span id="season">2026/27</span>
+    <b data-i18n="brand">DrawLab</b><span data-i18n="head.phase">league phase</span><span id="season">2026/27</span>
     <span id="status">preparing the draw</span>
+    <label class="langbox">
+      <select id="lang" data-i18n-aria="bar.lang" aria-label="language">
+        <option value="en">English</option>
+        <option value="tr">T&uuml;rk&ccedil;e</option>
+      </select>
+    </label>
   </div>
+  <nav class="compnav" id="compnav" data-i18n-aria="bar.comp" aria-label="competition"></nav>
   <h1><span id="h1clubs" class="lead">36 clubs</span><span id="h1matches">144 matches</span><span id="h1weeks">8 matchdays</span></h1>
   <p class="lede" data-i18n="head.lede">The new league phase has no groups. Every club draws two
     opponents from each of the four pots, playing one at home and one away. This page reproduces
     that draw under the real constraints, then simulates the season.</p>
   <div class="bar">
-    <label class="seedbox"><span data-i18n="bar.comp">competition</span>
-      <select id="comp"></select>
-    </label>
     <label class="seedbox"><span data-i18n="bar.seed">seed</span> <input id="seed" type="number" min="1" max="999999"></label>
-    <label class="seedbox"><span data-i18n="bar.lang">language</span>
-      <select id="lang">
-        <option value="en">English</option>
-        <option value="tr">T&uuml;rk&ccedil;e</option>
-      </select>
-    </label>
     <button id="redraw" data-i18n="bar.redraw">New draw</button>
     <button id="random" class="ghost" data-i18n="bar.random">Random</button>
     <button id="play" class="ghost" data-i18n="bar.play">Play season</button>

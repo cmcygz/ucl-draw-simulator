@@ -48,6 +48,25 @@ body{
   color:var(--ink-2); display:flex; gap:10px; align-items:center; flex-wrap:wrap;
 }
 .eyebrow b{font-weight:600;color:var(--ink)}
+.langbox{margin-left:auto;display:flex;align-items:center}
+.langbox select{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;padding:3px 6px;border:1px solid var(--rule);
+  background:transparent;color:var(--ink-2);cursor:pointer
+}
+.langbox select:hover{border-color:var(--ink);color:var(--ink)}
+.compnav{display:inline-flex;border:1.5px solid var(--ink);margin:16px 0 0;flex-wrap:wrap}
+.compnav a{
+  font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:9px 15px;color:var(--ink-2);text-decoration:none;
+  border-right:1.5px solid var(--rule);transition:background .12s,color .12s
+}
+.compnav a:last-child{border-right:0}
+.compnav a:hover{background:var(--paper-2);color:var(--ink)}
+.compnav a[aria-current="page"]{background:var(--ink);color:var(--paper)}
+.compnav a[aria-current="page"]:hover{background:var(--ink);color:var(--paper)}
+.compnav a em{font-style:normal;opacity:.6;margin-left:8px;font-size:10px}
+
 h1{
   font-family:'Big Shoulders Display','Inter Tight',sans-serif;
   font-weight:800; font-size:clamp(46px,9vw,104px); line-height:.86;
@@ -396,24 +415,22 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 
 <header>
   <div class="eyebrow">
-    <b data-i18n="brand">DrawLab</b><span id="compname">Champions League</span><span data-i18n="head.phase">league phase</span><span id="season">2026/27</span>
+    <b data-i18n="brand">DrawLab</b><span data-i18n="head.phase">league phase</span><span id="season">2026/27</span>
     <span id="status">preparing the draw</span>
+    <label class="langbox">
+      <select id="lang" data-i18n-aria="bar.lang" aria-label="language">
+        <option value="en">English</option>
+        <option value="tr">T&uuml;rk&ccedil;e</option>
+      </select>
+    </label>
   </div>
+  <nav class="compnav" id="compnav" data-i18n-aria="bar.comp" aria-label="competition"></nav>
   <h1><span id="h1clubs" class="lead">36 clubs</span><span id="h1matches">144 matches</span><span id="h1weeks">8 matchdays</span></h1>
   <p class="lede" data-i18n="head.lede">The new league phase has no groups. Every club draws two
     opponents from each of the four pots, playing one at home and one away. This page reproduces
     that draw under the real constraints, then simulates the season.</p>
   <div class="bar">
-    <label class="seedbox"><span data-i18n="bar.comp">competition</span>
-      <select id="comp"></select>
-    </label>
     <label class="seedbox"><span data-i18n="bar.seed">seed</span> <input id="seed" type="number" min="1" max="999999"></label>
-    <label class="seedbox"><span data-i18n="bar.lang">language</span>
-      <select id="lang">
-        <option value="en">English</option>
-        <option value="tr">T&uuml;rk&ccedil;e</option>
-      </select>
-    </label>
     <button id="redraw" data-i18n="bar.redraw">New draw</button>
     <button id="random" class="ghost" data-i18n="bar.random">Random</button>
     <button id="play" class="ghost" data-i18n="bar.play">Play season</button>
@@ -1662,23 +1679,28 @@ function renderLegend() {
 
 /** Baslik ve alt basliktaki sayilari aktif turnuvadan turetir. */
 function renderHeader() {
-  $('#compname').textContent = tx('comp.' + COMP.id);
   $('#season').textContent = COMP.season;
   $('#h1clubs').textContent = tx('head.clubs', { n: teamCount() });
   $('#h1matches').textContent = tx('head.matches', { n: matchCount() });
   $('#h1weeks').textContent = tx('head.weeks', { n: FORMAT.matchdays });
 }
 
-function fillCompPicker() {
-  const pick = $('#comp');
-  pick.innerHTML = '';
+/**
+ * Turnuva secimi gercek baglantilardan olusur: hem oturum basina bir iki kez
+ * kullanilan bir baglam secimi gibi durur, hem de arama motoru /ucl, /uel ve
+ * /uecl sayfalarini buradan bulur. Tiklama JS ile yakalanip yerinde islenir.
+ */
+function renderCompNav() {
+  const nav = $('#compnav');
+  nav.innerHTML = '';
   COMP_IDS.forEach(id => {
-    const o = el('option', null, tx('comp.' + id)
-      + (COMPETITIONS[id].available ? '' : ' — ' + tx('comp.soon')));
-    o.value = id;
-    pick.appendChild(o);
+    const link = el('a', null, tx('comp.' + id));
+    link.href = '/' + id;
+    link.dataset.comp = id;
+    if (id === COMP.id) link.setAttribute('aria-current', 'page');
+    if (!COMPETITIONS[id].available) link.appendChild(el('em', null, tx('comp.soon')));
+    nav.appendChild(link);
   });
-  pick.value = COMP.id;
 }
 
 /** Kurasi henuz cekilmemis turnuva icin bilgi ekrani. */
@@ -1702,12 +1724,13 @@ function renderUnavailable() {
 
 function switchCompetition(id) {
   if (id === COMP.id) return;
-  if (!confirmDiscard()) { $('#comp').value = COMP.id; return; }
+  if (!confirmDiscard()) return;
   useCompetition(id);
   state.picks = {}; state.results = null; state.simIndex = null;
   state.selected = null; state.dirty = false;
+  state.drawn = new Set(); state.drawComplete = false;
   savesLoaded = false;
-  $('#comp').value = COMP.id;
+  renderCompNav();
   if (!COMP.available || !TEAMS.length) { renderUnavailable(); writeHash(COMP.id); return; }
   fillTeamPicker();
   newDraw(state.seed, null, { revealed: false });
@@ -2720,7 +2743,7 @@ async function openSave(id, fromLink) {
     const wanted = payload.comp || data.comp || 'ucl';
     if (wanted !== COMP.id) {
       useCompetition(wanted);
-      $('#comp').value = COMP.id;
+      renderCompNav();
       fillTeamPicker();
     }
     $('#seed').value = payload.seed;
@@ -2837,7 +2860,7 @@ function setLang(lang) {
   try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* depolama kapalı */ }
   $('#lang').value = LANG;
   applyStaticI18n();
-  fillCompPicker();
+  renderCompNav();
   renderHeader();
   renderLegend();
   setStatus(state.status.key, state.status.vars);
@@ -2867,7 +2890,12 @@ function relabelCeremony() {
   else if (!ceremony.busy && ceremony.drawn >= teamCount()) drawStatus(tx('draw.finished', { teams: teamCount(), matches: matchCount() }));
 }
 
-$('#comp').addEventListener('change', e => switchCompetition(e.target.value));
+$('#compnav').addEventListener('click', e => {
+  const link = e.target.closest('a[data-comp]');
+  if (!link) return;
+  e.preventDefault();
+  switchCompetition(link.dataset.comp);
+});
 
 LANG = detectLang();
 $('#lang').value = LANG;
@@ -2875,7 +2903,7 @@ applyStaticI18n();
 
 const initialHash = parseHash();
 useCompetition(initialHash.comp || 'ucl');
-fillCompPicker();
+renderCompNav();
 state.seed = initialHash.seed || state.seed;
 $('#seed').value = state.seed;
 if (!COMP.available || !TEAMS.length) {
