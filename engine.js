@@ -109,21 +109,18 @@ function drawOpponents(teams, opt, rng) {
 // --- 2. ic saha / deplasman -------------------------------------------------
 /**
  * Yonlendirmeyi bicime gore secer. Torba basina 2 rakip varsa her (potA,potB)
- * blogu ayri dengelenir; 1 rakip varsa blok basina denge imkansizdir, bu yuzden
- * fikstur grafinin tamami dongulere ayrilip toplam ev/deplasman dengelenir.
+ * blogu ayri dengelenir. 1 rakip varsa (UECL) komsu torbalar eslestirilir ve
+ * denge cift basina kurulur.
  */
 function orient(edges, teams, opt, rng) {
   return opt.oppPerPot === 1
-    ? orientBalanced(edges, teams, opt, rng)
+    ? orientPaired(edges, teams, opt, rng)
     : orientBlocks(edges, teams, opt, rng);
 }
 
-/**
- * Cift dereceli grafi ayrik dongulere ayirir. Her dongu tek yonde dolasilinca
- * her takimin ev sayisi deplasman sayisina esitlenir (UECL'de 3-3).
- */
-function cycleDecompose(edges, ids) {
-  const adj = new Map(ids.map(i => [i, []]));
+/** Cift dereceli grafi ayrik dongulere ayirir; her adim ozgun kenari da tasir. */
+function cycleDecompose(edges, nodes) {
+  const adj = new Map(nodes.map(n => [n, []]));
   edges.forEach(([a, b], e) => {
     adj.get(a).push({ to: b, e });
     adj.get(b).push({ to: a, e });
@@ -132,7 +129,7 @@ function cycleDecompose(edges, ids) {
   const free = node => adj.get(node).find(x => !used[x.e]);
   const cycles = [];
 
-  for (const start of ids) {
+  for (const start of nodes) {
     for (;;) {
       if (!free(start)) break;
       const cycle = [];
@@ -141,7 +138,7 @@ function cycleDecompose(edges, ids) {
         const step = free(cur);
         if (!step) break;
         used[step.e] = true;
-        cycle.push([cur, step.to]);
+        cycle.push({ from: cur, to: step.to, e: step.e });
         cur = step.to;
       } while (cur !== start);
       if (cycle.length) cycles.push(cycle);
@@ -150,17 +147,45 @@ function cycleDecompose(edges, ids) {
   return cycles;
 }
 
-function orientBalanced(edges, teams, opt, rng) {
+/**
+ * UECL yonlendirmesi. Kural: komsu torbalar eslestirilir (1-2, 3-4, 5-6) ve her
+ * takim her ciftten birini evinde birini deplasmanda oynar.
+ *
+ * Bunu saglamak icin yardimci bir graf kurulur: dugumler (takim, torba cifti)
+ * ikilileri, kenarlar maclardir. Her takim her torbadan tam bir rakip cektigi
+ * icin her dugumun derecesi tam ikidir, yani graf dongulere ayrilir. Bir donguyu
+ * tek yonde dolasmak her dugume tam bir "ev" kazandirir; bu da her cift icin
+ * bir ic saha bir deplasman demektir.
+ */
+function orientPaired(edges, teams, opt, rng) {
   const byId = Object.fromEntries(teams.map(t => [t.id, t]));
   const banned = new Set(opt.bannedHome);
+  const pairOf = pot => Math.floor((pot - 1) / 2);
+  const slot = (teamId, oppPot) => teamId + '#' + pairOf(oppPot);
+
+  const nodes = [];
+  const pairCount = Math.ceil(opt.pots / 2);
+  teams.forEach(t => {
+    for (let p = 0; p < pairCount; p++) nodes.push(t.id + '#' + p);
+  });
+
+  const slotEdges = edges.map(([a, b]) => [slot(a, byId[b].pot), slot(b, byId[a].pot)]);
   const fixtures = [];
 
-  for (const cycle of cycleDecompose(edges, teams.map(t => t.id))) {
-    const fwdBad = cycle.some(([h, a]) => banned.has(h + '>' + a));
-    const revBad = cycle.some(([h, a]) => banned.has(a + '>' + h));
+  for (const cycle of cycleDecompose(slotEdges, nodes)) {
+    // Donguyu ileri dolasirken kenarin "from" ucundaki takim ev sahibi olur.
+    const homeOf = step => (slotEdges[step.e][0] === step.from
+      ? edges[step.e][0] : edges[step.e][1]);
+    const awayOf = step => (homeOf(step) === edges[step.e][0]
+      ? edges[step.e][1] : edges[step.e][0]);
+
+    const fwdBad = cycle.some(st => banned.has(homeOf(st) + '>' + awayOf(st)));
+    const revBad = cycle.some(st => banned.has(awayOf(st) + '>' + homeOf(st)));
     if (fwdBad && revBad) return null;
     const flip = fwdBad || (!revBad && rng() < 0.5);
-    for (const [h, a] of cycle) {
+
+    for (const st of cycle) {
+      const h = homeOf(st), a = awayOf(st);
       const [home, away] = flip ? [a, h] : [h, a];
       fixtures.push({ home, away, homePot: byId[home].pot, awayPot: byId[away].pot, md: null });
     }
@@ -343,6 +368,27 @@ function verify(fixtures, teams, opt = DEFAULTS) {
     }
   }
   const perPotHome = opt.oppPerPot / 2;
+  const pairHome = {}, pairAway = {};
+  teams.forEach(t => { pairHome[t.id] = {}; pairAway[t.id] = {}; });
+  if (opt.oppPerPot === 1) {
+    for (const f of fixtures) {
+      const hp = Math.floor((byId[f.away].pot - 1) / 2);
+      const ap = Math.floor((byId[f.home].pot - 1) / 2);
+      pairHome[f.home][hp] = (pairHome[f.home][hp] || 0) + 1;
+      pairAway[f.away][ap] = (pairAway[f.away][ap] || 0) + 1;
+    }
+    const pairs = Math.ceil(opt.pots / 2);
+    for (const t of teams) {
+      for (let p = 0; p < pairs; p++) {
+        if ((pairHome[t.id][p] || 0) !== 1) {
+          problems.push(t.id + ' cift' + p + ' ic saha ' + (pairHome[t.id][p] || 0));
+        }
+        if ((pairAway[t.id][p] || 0) !== 1) {
+          problems.push(t.id + ' cift' + p + ' deplasman ' + (pairAway[t.id][p] || 0));
+        }
+      }
+    }
+  }
   for (const t of teams) {
     let home = 0, away = 0;
     for (const p of potList(opt)) {

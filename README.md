@@ -11,6 +11,10 @@ simülatör. Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi.
 | Avrupa Ligi | 4 x 9 | 8 | 4/4 | 8 |
 | Konferans Ligi | 6 x 6 | 6 | 3/3 | 6 |
 
+Konferans Ligi'nde komşu torbalar eşleştirilir (1-2, 3-4, 5-6) ve her takım her
+çiftten birini iç sahada, birini deplasmanda oynar. Bu, toplam 3-3 dengesinden
+daha güçlü bir kısıttır.
+
 ## Barındırma
 
 Cloudflare Worker hem siteyi hem API'yi sunuyor, yani her şey tek origin'de.
