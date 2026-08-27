@@ -89,8 +89,16 @@ skor dağıtıyor. Örnekleme 30+ farklı skor üretiyor ve maç başına gol sa
 gerçeğe daha yakın. Bilinen sapma: bağımsız Poisson beraberliği az üretiyor
 (%15, gerçekte ~%25).
 
-Tahminler tarayıcının `localStorage`'ında **tohum başına** saklanır
-(`ucl:picks:<tohum>`), yani başka bir kuraya geçip geri dönünce yerinde durur.
+### Kura değişince her şey sıfırlanır
+
+Yeni kura başka bir fikstür demektir, dolayısıyla tahminler ve simülasyon skorları
+o anda silinir. Tahminler tarayıcıda saklanmaz; kalıcı olmasını istiyorsan
+**Fikstürü kaydet** demen gerekir, tek kalıcı depo odur.
+
+Ekranda kaydedilmemiş skor varken kurayı değiştirecek her işlem (Yeni kura,
+Rastgele, adres çubuğundan tohum değiştirme, listeden başka bir kaydı açma) önce
+uyarır ve kaç maçın silineceğini söyler. İptal edilirse mevcut fikstür ve skorlar
+olduğu gibi kalır. Kaydettikten sonra uyarı çıkmaz.
 
 ### Kayıtlar
 

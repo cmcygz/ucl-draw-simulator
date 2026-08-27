@@ -13,7 +13,7 @@ const el = (tag, cls, txt) => {
 
 const state = {
   seed: 2027, fixtures: [], results: null, simIndex: null,
-  selected: null, view: {}, picks: {}
+  selected: null, view: {}, picks: {}, dirty: false
 };
 
 const fxKey = f => f.home + '>' + f.away;
@@ -40,21 +40,18 @@ function showTab(view) {
   if (btn) btn.click();
 }
 
-const picksKey = seed => 'ucl:picks:' + seed;
-
-function loadPicks(seed) {
-  try { return JSON.parse(localStorage.getItem(picksKey(seed))) || {}; }
-  catch (e) { return {}; }
-}
-
-function savePicks() {
-  try {
-    if (Object.keys(state.picks).length) {
-      localStorage.setItem(picksKey(state.seed), JSON.stringify(state.picks));
-    } else {
-      localStorage.removeItem(picksKey(state.seed));
-    }
-  } catch (e) { /* depolama kapalı olabilir */ }
+/**
+ * Ekranda kaydedilmemis skor var mi? Kura degistirecek her islem once bunu sorar,
+ * cunku yeni kura tum skorlari ve tahminleri siler.
+ */
+function confirmDiscard() {
+  if (!state.dirty) return true;
+  const n = mergedResults().length;
+  return confirm(
+    `Bu fikstürde kaydedilmemiş ${n} maç skoru var.\n\n`
+    + 'Yeni kura çekilirse hepsi silinir. Saklamak istiyorsan önce '
+    + '"Fikstürü kaydet" de.\n\nYine de devam edilsin mi?'
+  );
 }
 
 /** Bir maçın gösterilecek skoru: kullanıcı tahmini simülasyonu ezer. */
@@ -102,7 +99,8 @@ function newDraw(seed, apply) {
     if (!f) { $('#status').textContent = 'Kura çıkmadı, başka bir tohum dene.'; return; }
     state.seed = seed; state.fixtures = f; state.results = null; state.simIndex = null;
     state.view = buildView(f);
-    state.picks = loadPicks(seed);
+    state.picks = {};
+    state.dirty = false;
     writeHash(seed);
     if (apply) apply();
     const problems = verify(f, TEAMS);
@@ -118,6 +116,7 @@ function newDraw(seed, apply) {
  * aynı tohum aynı kurayı üretir ve buton etkisiz görünür.
  */
 function redrawFromInput() {
+  if (!confirmDiscard()) return;
   const typed = Number($('#seed').value) || 1;
   const seed = typed === state.seed ? (typed % 999999) + 1 : typed;
   $('#seed').value = seed;
@@ -437,7 +436,7 @@ function onPickInput(inp) {
   if (h !== '' && a !== '') state.picks[key] = { hg: Number(h), ag: Number(a) };
   else delete state.picks[key];
   row.classList.toggle('picked', key in state.picks);
-  savePicks();
+  state.dirty = true;
   updatePickCount();
   renderTable();
   renderTeams();
@@ -463,7 +462,7 @@ function autofillPicks() {
     if (state.picks[k]) continue;
     state.picks[k] = { hg: r.hg, ag: r.ag };
   }
-  savePicks();
+  state.dirty = true;
   renderMatchdays(); renderTable(); renderTeams();
   const added = pickCount() - before;
   mdStatus(added
@@ -475,7 +474,7 @@ function clearPicks() {
   if (!pickCount()) return;
   if (!confirm('Bu kuradaki tüm tahminlerin silinecek. Devam edilsin mi?')) return;
   state.picks = {};
-  savePicks();
+  state.dirty = mergedResults().length > 0;
   renderMatchdays(); renderTable(); renderTeams();
 }
 
@@ -486,6 +485,7 @@ function playSeason() {
   const rng = makeRng((Math.random() * 1e9) | 0);
   state.results = simulateSeason(state.fixtures, TEAMS, rng);
   state.simIndex = new Map(state.results.map(r => [r.f, r]));
+  state.dirty = true;
   renderTable(); renderMatchdays(); renderTeams();
 }
 
@@ -886,6 +886,7 @@ function applySave(payload) {
   state.picks = picks;
   state.simIndex = sim;
   state.results = Array.from(sim.values());
+  state.dirty = false;
 }
 
 async function apiCall(path, options) {
@@ -943,6 +944,7 @@ async function submitSave(name) {
   tokens[data.id] = data.token;
   storeTokens(tokens);
   savesLoaded = false;
+  state.dirty = false;
   return { id: data.id, total, picks: picks.length };
 }
 
@@ -1036,6 +1038,7 @@ function renderSaves(rows) {
 }
 
 async function openSave(id, fromLink) {
+  if (!fromLink && !confirmDiscard()) return;
   saveStatus('Kayıt açılıyor…');
   if (fromLink) mdStatus('Paylaşılan kayıt açılıyor…');
   try {
@@ -1094,6 +1097,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
 });
 $('#redraw').addEventListener('click', redrawFromInput);
 $('#random').addEventListener('click', () => {
+  if (!confirmDiscard()) return;
   const s = 1 + ((Math.random() * 999999) | 0);
   $('#seed').value = s; newDraw(s);
 });
@@ -1136,7 +1140,10 @@ $('#saves').addEventListener('click', e => {
 window.addEventListener('hashchange', () => {
   const h = parseHash();
   if (h.saveId) return openSave(h.saveId, true);
-  if (h.seed && h.seed !== state.seed) { $('#seed').value = h.seed; newDraw(h.seed); }
+  if (h.seed && h.seed !== state.seed && confirmDiscard()) {
+    $('#seed').value = h.seed;
+    newDraw(h.seed);
+  }
 });
 
 const initialHash = parseHash();
