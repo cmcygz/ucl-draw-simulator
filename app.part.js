@@ -962,7 +962,7 @@ async function runCeremony() {
 // Sayfayi Worker sunuyorsa API ayni origin'de; disaridan servis edilen
 // kopyalar (github.io, yerel test sunucusu) mutlak adrese gider.
 const API = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)
-  ? 'https://drawlab.cmcygz.workers.dev'
+  ? 'https://drawer.win'
   : '';
 const TOKENS_KEY = 'ucl:tokens';
 let savesLoaded = false;

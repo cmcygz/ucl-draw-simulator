@@ -15,7 +15,7 @@ simülatör. Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi.
 
 Cloudflare Worker hem siteyi hem API'yi sunuyor, yani her şey tek origin'de.
 Alan adı `drawer.win`, Worker'a custom domain olarak bağlı; `www.drawer.win` de
-aynı içeriği veriyor. Yedek adres `drawlab.cmcygz.workers.dev`.
+aynı içeriği veriyor.
 
 Cloudflare Pages denendi ve elendi: `*.pages.dev` Türkiye'de ISS seviyesinde
 engelli, DNS Cloudflare yerine bir Türk Telekom IP'sine (213.14.227.50)

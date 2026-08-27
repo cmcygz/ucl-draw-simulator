@@ -160,10 +160,14 @@ export default {
           headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
       }
+      // Tarayici 10 dakika onbellekte tutsun, sonrasinda bayat kopyayi
+      // gosterip arkada tazelesin. Her yenilemenin Worker istegi harcamasi
+      // ucretsiz plandaki gunluk 100 bin sinirini hizla tuketiyordu.
+      // ETag denendi ve vazgecildi: Cloudflare yaniti akitirken dusuruyor.
       return new Response(SITE_HTML, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400',
           'X-Robots-Tag': 'noindex, nofollow'
         }
       });
