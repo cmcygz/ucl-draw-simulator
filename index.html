@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UCL Lig Aşaması Kura Simülatörü 2026/27</title>
+<title>UCL League Phase Draw Simulator 2026/27</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
@@ -359,55 +359,57 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 
 <header>
   <div class="eyebrow">
-    <b>2026/27</b><span>Şampiyonlar Ligi</span><span>lig aşaması</span>
-    <span id="status">kura hazırlanıyor</span>
+    <b>2026/27</b><span data-i18n="head.competition">Champions League</span><span data-i18n="head.phase">league phase</span>
+    <span id="status">preparing the draw</span>
   </div>
-  <h1>36 takım<span>144 maç</span><span>8 hafta</span></h1>
-  <p class="lede">
-    Yeni lig aşamasında grup yok. Her takım dört torbanın her birinden iki rakip
-    çekiyor, birini evinde birini deplasmanda oynuyor. Bu sayfa o kurayı kurallara
-    uyarak yeniden üretiyor, sonra sezonu simüle ediyor.
-  </p>
+  <h1><span data-i18n="head.h1a">36 clubs</span><span data-i18n="head.h1b">144 matches</span><span data-i18n="head.h1c">8 matchdays</span></h1>
+  <p class="lede" data-i18n="head.lede"></p>
   <div class="bar">
-    <label class="seedbox">tohum <input id="seed" type="number" min="1" max="999999"></label>
-    <button id="redraw">Yeni kura</button>
-    <button id="random" class="ghost">Rastgele</button>
-    <button id="play" class="ghost">Sezonu oyna</button>
+    <label class="seedbox"><span data-i18n="bar.seed">seed</span> <input id="seed" type="number" min="1" max="999999"></label>
+    <label class="seedbox"><span data-i18n="bar.lang">language</span>
+      <select id="lang">
+        <option value="en">English</option>
+        <option value="tr">T&uuml;rk&ccedil;e</option>
+      </select>
+    </label>
+    <button id="redraw" data-i18n="bar.redraw">New draw</button>
+    <button id="random" class="ghost" data-i18n="bar.random">Random</button>
+    <button id="play" class="ghost" data-i18n="bar.play">Play season</button>
   </div>
   <div class="rule"></div>
 </header>
 
 <nav class="tabs" role="tablist">
-  <button data-view="matrix" aria-selected="true">Matris</button>
-  <button data-view="draw" aria-selected="false">Çekiliş</button>
-  <button data-view="teams" aria-selected="false">Takımlar</button>
-  <button data-view="matchdays" aria-selected="false">Haftalar</button>
-  <button data-view="table" aria-selected="false">Puan tablosu</button>
-  <button data-view="probs" aria-selected="false">Olasılıklar</button>
-  <button data-view="saves" aria-selected="false">Kayıtlar</button>
+  <button data-view="matrix" aria-selected="true" data-i18n="tab.matrix">Matrix</button>
+  <button data-view="draw" aria-selected="false" data-i18n="tab.draw">Draw</button>
+  <button data-view="teams" aria-selected="false" data-i18n="tab.teams">Clubs</button>
+  <button data-view="matchdays" aria-selected="false" data-i18n="tab.matchdays">Matchdays</button>
+  <button data-view="table" aria-selected="false" data-i18n="tab.table">Standings</button>
+  <button data-view="probs" aria-selected="false" data-i18n="tab.probs">Odds</button>
+  <button data-view="saves" aria-selected="false" data-i18n="tab.saves">Saves</button>
 </nav>
 
 <main>
   <section id="view-matrix">
     <div class="matrixScroll"><div id="matrix"></div></div>
     <div class="legend">
-      <span><i class="key home"></i> iç saha</span>
-      <span><i class="key away"></i> deplasman</span>
-      <span><i class="key" style="background:var(--p1)"></i> Torba 1</span>
-      <span><i class="key" style="background:var(--p2)"></i> Torba 2</span>
-      <span><i class="key" style="background:var(--p3)"></i> Torba 3</span>
-      <span><i class="key" style="background:var(--p4)"></i> Torba 4</span>
+      <span><i class="key home"></i> <span data-i18n="legend.home">home</span></span>
+      <span><i class="key away"></i> <span data-i18n="legend.away">away</span></span>
+      <span><i class="key" style="background:var(--p1)"></i> <span data-i18n="legend.pot1">Pot 1</span></span>
+      <span><i class="key" style="background:var(--p2)"></i> <span data-i18n="legend.pot2">Pot 2</span></span>
+      <span><i class="key" style="background:var(--p3)"></i> <span data-i18n="legend.pot3">Pot 3</span></span>
+      <span><i class="key" style="background:var(--p4)"></i> <span data-i18n="legend.pot4">Pot 4</span></span>
     </div>
     <div class="detail" id="detail"></div>
   </section>
 
   <section id="view-draw" hidden>
     <div class="bar">
-      <button id="drawstart">Hepsini otomatik çek</button>
-      <button id="drawpause" class="ghost" hidden>Duraklat</button>
-      <button id="drawskip" class="ghost" hidden>Bu takımı hızlandır</button>
-      <button id="drawreset" class="ghost" hidden>Baştan al</button>
-      <label class="seedbox">hız
+      <button id="drawstart" data-i18n="draw.auto">Auto-draw everything</button>
+      <button id="drawpause" class="ghost" hidden data-i18n="draw.pause">Pause</button>
+      <button id="drawskip" class="ghost" hidden data-i18n="draw.skipTeam">Speed up this club</button>
+      <button id="drawreset" class="ghost" hidden data-i18n="draw.reset">Start over</button>
+      <label class="seedbox"><span data-i18n="draw.speed">speed</span>
         <select id="drawspeed">
           <option value="1" selected>1x</option>
           <option value="2">2x</option>
@@ -422,17 +424,17 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 
   <section id="view-teams" hidden>
     <div class="bar">
-      <select id="teampick" aria-label="Takım seç"></select>
-      <button id="teamall" class="ghost" hidden>Tüm takımlar</button>
-      <span class="hint" id="teamhint">listeden seç ya da bir karta tıkla</span>
+      <select id="teampick" data-i18n-aria="teams.pickLabel" aria-label="Select a club"></select>
+      <button id="teamall" class="ghost" hidden data-i18n="teams.all">All clubs</button>
+      <span class="hint" id="teamhint">pick from the list or click a card</span>
     </div>
     <div id="teams"></div>
   </section>
   <section id="view-matchdays" hidden>
     <div class="bar">
-      <button id="autofill">Skorları doldur</button>
-      <button id="savefixture">Fikstürü kaydet</button>
-      <button id="pickclear" class="ghost" hidden>Tahminleri sil</button>
+      <button id="autofill" data-i18n="md.autofill">Fill in scores</button>
+      <button id="savefixture" data-i18n="md.saveFixture">Save fixture</button>
+      <button id="pickclear" class="ghost" hidden data-i18n="md.clear">Clear predictions</button>
     </div>
     <p class="hint" id="pickcount"></p>
     <p class="hint" id="mdstatus"></p>
@@ -444,21 +446,21 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
   <section id="view-probs" hidden>
     <div class="bar">
       <select id="mcmode">
-        <option value="fixed">Bu kura sabit &middot; 3000 sezon</option>
-        <option value="redraw">Her sezon yeni kura &middot; 120 sezon</option>
+        <option value="fixed" data-i18n="probs.modeFixed">This draw fixed &middot; 3000 seasons</option>
+        <option value="redraw" data-i18n="probs.modeRedraw">New draw each season &middot; 120 seasons</option>
       </select>
-      <button id="mcrun">Hesapla</button>
+      <button id="mcrun" data-i18n="probs.run">Calculate</button>
     </div>
     <div id="probs" style="margin-top:18px"></div>
   </section>
 
   <section id="view-saves" hidden>
     <div class="bar">
-      <label class="namebox">ad
-        <input id="savename" type="text" maxlength="60" placeholder="örn. Fener yılın kurası">
+      <label class="namebox"><span data-i18n="saves.nameLabel">name</span>
+        <input id="savename" type="text" maxlength="60" data-i18n-ph="saves.namePlaceholder" placeholder="e.g. Arsenal treble run">
       </label>
-      <button id="savebtn">Bu kurayı kaydet</button>
-      <button id="savereload" class="ghost">Listeyi yenile</button>
+      <button id="savebtn" data-i18n="saves.saveBtn">Save this draw</button>
+      <button id="savereload" class="ghost" data-i18n="saves.reload">Refresh list</button>
     </div>
     <p class="hint" id="savestatus"></p>
     <div id="saveshare"></div>
@@ -467,12 +469,9 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 </main>
 
 <footer>
-  Torbalar UEFA'nın 26.08.2026 resmi listesi. Rating değerleri ve Poisson gol modeli
-  kalibre edilmemiş tahmindir; olasılıklar gerçek tahmin olarak kullanılmamalı.<br>
-  Uygulanan kurallar: aynı ülke eşleşemez, aynı ülkeden en fazla 2 rakip, her torbadan
-  1 iç saha + 1 deplasman, haftada 1 maç, 3 hafta üst üste aynı saha yok.<br>
-  Modellenmeyen: disiplin puanı sıralaması, TV ve güvenlik kaynaklı hafta kısıtları,
-  UEFA'nın gerçek kura yazılımının dağılımı.
+  <span data-i18n="footer.l1"></span><br>
+  <span data-i18n="footer.l2"></span><br>
+  <span data-i18n="footer.l3"></span>
 </footer>
 
 </div>
@@ -837,6 +836,420 @@ function buildTable(results, teams) {
 }
 
 // ---------------------------------------------------------------------------
+// Diller
+// ---------------------------------------------------------------------------
+const I18N = {
+  en: {
+    'html.lang': 'en',
+    'locale': 'en-GB',
+    'doc.title': 'UCL League Phase Draw Simulator 2026/27',
+
+    'head.competition': 'Champions League',
+    'head.phase': 'league phase',
+    'head.h1a': '36 clubs',
+    'head.h1b': '144 matches',
+    'head.h1c': '8 matchdays',
+    'head.lede': 'The new league phase has no groups. Every club draws two opponents from '
+      + 'each of the four pots, playing one at home and one away. This page reproduces that '
+      + 'draw under the real constraints, then simulates the season.',
+
+    'bar.seed': 'seed',
+    'bar.lang': 'language',
+    'bar.redraw': 'New draw',
+    'bar.random': 'Random',
+    'bar.play': 'Play season',
+
+    'tab.matrix': 'Matrix',
+    'tab.draw': 'Draw',
+    'tab.teams': 'Clubs',
+    'tab.matchdays': 'Matchdays',
+    'tab.table': 'Standings',
+    'tab.probs': 'Odds',
+    'tab.saves': 'Saves',
+
+    'legend.home': 'home',
+    'legend.away': 'away',
+    'legend.pot1': 'Pot 1',
+    'legend.pot2': 'Pot 2',
+    'legend.pot3': 'Pot 3',
+    'legend.pot4': 'Pot 4',
+
+    'status.preparing': 'preparing the draw',
+    'status.drawing': 'Drawing…',
+    'status.failed': 'No valid draw found, try another seed.',
+    'status.violation': 'Rule violated: {msg}',
+    'status.ok': '144 matches · all rules satisfied',
+
+    'discard.confirm': 'This fixture has {n} unsaved match scores.\n\n'
+      + 'A new draw wipes all of them. If you want to keep them, use "Save fixture" first.'
+      + '\n\nContinue anyway?',
+
+    'pot': 'Pot {n}',
+    'venue.home': 'home',
+    'venue.away': 'away',
+    'tip.pick': 'your prediction',
+    'tip.sim': 'simulation',
+
+    'detail.hint': 'Pick a club: every filled square in its row is a match. '
+      + 'Solid square means home, outlined means away. Colour shows the opponent\'s pot.',
+    'detail.meta': '{country} · Pot {pot} · 4 home / 4 away',
+    'detail.doubled': 'two opponents from {list}',
+    'matrix.rowTitle': 'Show {team} fixtures',
+    'matrix.cellHome': 'MD{md} · {home} - {away} (home)',
+    'matrix.cellAway': 'MD{md} · {home} - {away} (away)',
+
+    'teams.pickLabel': 'Select a club',
+    'teams.all': 'All clubs',
+    'teams.allOption': 'All clubs',
+    'teams.hint': 'pick from the list or click a card',
+    'teams.hintSelected': 'the same club is selected on the Matrix tab',
+    'teams.cardTitle': 'Open {team} fixtures',
+    'focus.homeAway': '4 home / 4 away',
+    'focus.record': '{n} matches · {w}W {d}D {l}L · {gf}-{ga} · {pts} pts',
+    'focus.col.md': 'MD',
+    'focus.col.date': 'Date',
+    'focus.col.venue': 'Venue',
+    'focus.col.opponent': 'Opponent',
+    'focus.col.country': 'Country',
+    'focus.col.pot': 'Pot',
+    'focus.col.score': 'Score',
+
+    'md.dates': ['8-10 Sep 2026', '13/14 Oct 2026', '20/21 Oct 2026', '3/4 Nov 2026',
+                 '24/25 Nov 2026', '8/9 Dec 2026', '19/20 Jan 2027', '27 Jan 2027'],
+    'md.week': 'Matchday {n}',
+    'md.autofill': 'Fill in scores',
+    'md.saveFixture': 'Save fixture',
+    'md.clear': 'Clear predictions',
+    'md.goalHome': 'home goals prediction',
+    'md.goalAway': 'away goals prediction',
+    'md.countNone': 'type your own scores in the boxes and the standings will follow them',
+    'md.countSome': 'you filled {n} of 144 matches · the standings use them',
+    'md.filled': '{n} matches filled by the model.',
+    'md.filledKept': '{n} matches filled by the model, your {kept} entries untouched.',
+    'md.allFull': 'No empty boxes left, everything was already filled.',
+    'md.clearConfirm': 'All your predictions for this draw will be deleted. Continue?',
+    'md.savePrompt': 'Name this save:',
+    'md.saveDefault': 'Draw {seed}',
+
+    'table.hint': 'Play season: 144 matches are generated with the Poisson model and the '
+      + 'table is ordered by the UEFA criteria. You can also type your own predictions '
+      + 'on the Matchdays tab.',
+    'table.col.pos': '#',
+    'table.col.club': 'Club',
+    'table.col.p': 'P',
+    'table.col.w': 'W',
+    'table.col.d': 'D',
+    'table.col.l': 'L',
+    'table.col.gf': 'GF',
+    'table.col.ga': 'GA',
+    'table.col.gd': 'GD',
+    'table.col.pts': 'Pts',
+    'src.mixed': '{picked} matches your prediction · {sim} matches simulated',
+    'src.allPicks': 'Table built entirely from your {picked} predictions.',
+    'src.picksOnly': 'Table built from your {picked} predictions only, the rest were not played.',
+    'src.simOnly': '{played} matches simulated · type predictions in the boxes and the table will use them',
+    'bands.q': '1-8 straight to the last 16',
+    'bands.po': '9-24 play-off',
+    'bands.out': '25-36 eliminated',
+
+    'probs.modeFixed': 'This draw fixed · 3000 seasons',
+    'probs.modeRedraw': 'New draw each season · 120 seasons',
+    'probs.run': 'Calculate',
+    'probs.press': 'Press Calculate.',
+    'probs.working': 'Calculating… {done}/{total} seasons',
+    'probs.hintFixed': '{total} seasons with this draw held fixed. Fixture luck is not accounted for.',
+    'probs.hintRedraw': '{total} seasons, redrawing the fixture every season. Small sample, swings by a few points.',
+    'probs.legend': 'top 8  ·  play-off  ·  out',
+    'probs.avg': 'avg pts',
+    'probs.tooltip': 'top 8: {q}% · play-off: {p}%',
+
+    'draw.auto': 'Auto-draw everything',
+    'draw.autoRemaining': 'Auto-draw remaining {n}',
+    'draw.drawing': 'Drawing…',
+    'draw.pause': 'Pause',
+    'draw.resume': 'Resume',
+    'draw.skipTeam': 'Speed up this club',
+    'draw.skipAll': 'Skip to the end',
+    'draw.reset': 'Start over',
+    'draw.speed': 'speed',
+    'draw.intro': 'The balls are closed. Draw one from a pot — you cannot tell which club it '
+      + 'holds; a random one of the remaining clubs in that pot comes out and its eight '
+      + 'opponents appear one by one.',
+    'draw.ballLabel': 'Draw a ball from Pot {n}',
+    'draw.ballTitle': 'Pot {n} · draw a ball',
+    'draw.ballDrawn': '{team} drawn',
+    'draw.spinning': 'Pot {pot} · shaking the ball…',
+    'draw.opening': '{n}/36 · {team} drawn, opponents coming up…',
+    'draw.teamDone': '{n}/36 · {team} complete · 4 home, 4 away',
+    'draw.next': '{n}/36 drawn · pick the next ball or let it run automatically',
+    'draw.finished': 'All 36 balls drawn · 144 matches ready. The Matrix and Matchdays tabs have the details.',
+    'draw.opponentsOf': '{country} · Pot {pot} · drawing 8 opponents',
+
+    'saves.nameLabel': 'name',
+    'saves.namePlaceholder': 'e.g. Arsenal treble run',
+    'saves.saveBtn': 'Save this draw',
+    'saves.reload': 'Refresh list',
+    'saves.notConfigured': 'The save server is not configured.',
+    'saves.needName': 'give the save a name',
+    'saves.needScores': 'nothing to save, fill in the scores first',
+    'saves.saving': 'Saving…',
+    'saves.saved': 'Saved · {total} matches, {picks} of them your predictions.',
+    'saves.saveFailed': 'Could not save: {msg}',
+    'saves.loading': 'Loading saves…',
+    'saves.listFailed': 'Could not load the list: {msg}',
+    'saves.empty': 'No saves yet. Make a draw, play the season, then save it.',
+    'saves.meta': 'seed {seed} · {matches} matches · {picks} predictions · {date}',
+    'saves.open': 'Open',
+    'saves.link': 'Link',
+    'saves.delete': 'Delete',
+    'saves.opening': 'Opening the save…',
+    'saves.openingShared': 'Opening the shared save…',
+    'saves.opened': 'Opened: {name} · seed {seed} · {matches} matches',
+    'saves.openFailed': 'Could not open: {msg}',
+    'saves.openFailedShared': 'Could not open the shared save: {msg}',
+    'saves.notYours': 'This save is not yours.',
+    'saves.deleteConfirm': 'This save will be deleted permanently. Continue?',
+    'saves.deleted': 'Save deleted.',
+    'saves.deleteFailed': 'Could not delete: {msg}',
+    'share.label': 'Share link · whoever opens it sees this draw and these scores',
+    'share.copy': 'Copy',
+    'share.copied': 'Copied',
+    'share.fallback': 'Copy the link:',
+
+    'footer.l1': 'Pots follow UEFA\'s official list of 26.08.2026. Ratings and the Poisson goal '
+      + 'model are uncalibrated guesses; the odds should not be treated as real predictions.',
+    'footer.l2': 'Rules applied: no same-country pairings, at most 2 opponents from one country, '
+      + '1 home + 1 away from each pot, one match per matchday, no 3 consecutive matches at the same venue.',
+    'footer.l3': 'Not modelled: disciplinary tiebreaker, TV and security matchday constraints, '
+      + 'the distribution of UEFA\'s actual draw software.'
+  },
+
+  tr: {
+    'html.lang': 'tr',
+    'locale': 'tr-TR',
+    'doc.title': 'UCL Lig Aşaması Kura Simülatörü 2026/27',
+
+    'head.competition': 'Şampiyonlar Ligi',
+    'head.phase': 'lig aşaması',
+    'head.h1a': '36 takım',
+    'head.h1b': '144 maç',
+    'head.h1c': '8 hafta',
+    'head.lede': 'Yeni lig aşamasında grup yok. Her takım dört torbanın her birinden iki rakip '
+      + 'çekiyor, birini evinde birini deplasmanda oynuyor. Bu sayfa o kurayı kurallara uyarak '
+      + 'yeniden üretiyor, sonra sezonu simüle ediyor.',
+
+    'bar.seed': 'tohum',
+    'bar.lang': 'dil',
+    'bar.redraw': 'Yeni kura',
+    'bar.random': 'Rastgele',
+    'bar.play': 'Sezonu oyna',
+
+    'tab.matrix': 'Matris',
+    'tab.draw': 'Çekiliş',
+    'tab.teams': 'Takımlar',
+    'tab.matchdays': 'Haftalar',
+    'tab.table': 'Puan tablosu',
+    'tab.probs': 'Olasılıklar',
+    'tab.saves': 'Kayıtlar',
+
+    'legend.home': 'iç saha',
+    'legend.away': 'deplasman',
+    'legend.pot1': 'Torba 1',
+    'legend.pot2': 'Torba 2',
+    'legend.pot3': 'Torba 3',
+    'legend.pot4': 'Torba 4',
+
+    'status.preparing': 'kura hazırlanıyor',
+    'status.drawing': 'Çekiliyor…',
+    'status.failed': 'Kura çıkmadı, başka bir tohum dene.',
+    'status.violation': 'Kural ihlali: {msg}',
+    'status.ok': '144 maç · tüm kurallar sağlandı',
+
+    'discard.confirm': 'Bu fikstürde kaydedilmemiş {n} maç skoru var.\n\n'
+      + 'Yeni kura çekilirse hepsi silinir. Saklamak istiyorsan önce "Fikstürü kaydet" de.'
+      + '\n\nYine de devam edilsin mi?',
+
+    'pot': 'Torba {n}',
+    'venue.home': 'iç saha',
+    'venue.away': 'deplasman',
+    'tip.pick': 'senin tahminin',
+    'tip.sim': 'simülasyon',
+
+    'detail.hint': 'Bir takım seç: satırdaki her dolu kare bir maç. '
+      + 'Dolu kare iç saha, çerçeveli kare deplasman. Renk rakibin torbası.',
+    'detail.meta': '{country} · Torba {pot} · 4 iç saha / 4 deplasman',
+    'detail.doubled': 'aynı ülkeden çift rakip: {list}',
+    'matrix.rowTitle': '{team} fikstürünü göster',
+    'matrix.cellHome': 'MD{md} · {home} - {away} (ev sahibi)',
+    'matrix.cellAway': 'MD{md} · {home} - {away} (deplasman)',
+
+    'teams.pickLabel': 'Takım seç',
+    'teams.all': 'Tüm takımlar',
+    'teams.allOption': 'Tüm takımlar',
+    'teams.hint': 'listeden seç ya da bir karta tıkla',
+    'teams.hintSelected': 'matris sekmesinde de bu takım seçili',
+    'teams.cardTitle': '{team} fikstürünü aç',
+    'focus.homeAway': '4 iç saha / 4 deplasman',
+    'focus.record': '{n} maç · {w}G {d}B {l}M · {gf}-{ga} · {pts} puan',
+    'focus.col.md': 'Hafta',
+    'focus.col.date': 'Tarih',
+    'focus.col.venue': 'Saha',
+    'focus.col.opponent': 'Rakip',
+    'focus.col.country': 'Ülke',
+    'focus.col.pot': 'Torba',
+    'focus.col.score': 'Skor',
+
+    'md.dates': ['8-10 Eyl 2026', '13/14 Eki 2026', '20/21 Eki 2026', '3/4 Kas 2026',
+                 '24/25 Kas 2026', '8/9 Ara 2026', '19/20 Oca 2027', '27 Oca 2027'],
+    'md.week': 'Hafta {n}',
+    'md.autofill': 'Skorları doldur',
+    'md.saveFixture': 'Fikstürü kaydet',
+    'md.clear': 'Tahminleri sil',
+    'md.goalHome': 'ev sahibi gol tahmini',
+    'md.goalAway': 'deplasman gol tahmini',
+    'md.countNone': 'skor kutularına kendi tahminini yaz, puan tablosu ona göre hesaplansın',
+    'md.countSome': '144 maçın {n} tanesini sen doldurdun · puan tablosu bunları kullanıyor',
+    'md.filled': '{n} maç modele göre dolduruldu.',
+    'md.filledKept': '{n} maç modele göre dolduruldu, senin girdiğin {kept} maça dokunulmadı.',
+    'md.allFull': 'Boş kutu kalmamış, hepsi zaten doluydu.',
+    'md.clearConfirm': 'Bu kuradaki tüm tahminlerin silinecek. Devam edilsin mi?',
+    'md.savePrompt': 'Kayda bir ad ver:',
+    'md.saveDefault': 'Kura {seed}',
+
+    'table.hint': 'Sezonu oyna: 144 maç Poisson modeliyle üretilir, tablo UEFA sıralama '
+      + 'kriterlerine göre dizilir. Haftalar sekmesinden kendi tahminlerini de yazabilirsin.',
+    'table.col.pos': '#',
+    'table.col.club': 'Takım',
+    'table.col.p': 'O',
+    'table.col.w': 'G',
+    'table.col.d': 'B',
+    'table.col.l': 'M',
+    'table.col.gf': 'A',
+    'table.col.ga': 'Y',
+    'table.col.gd': 'AV',
+    'table.col.pts': 'P',
+    'src.mixed': '{picked} maç senin tahminin · {sim} maç simülasyon',
+    'src.allPicks': 'Tablo tamamen senin {picked} tahmininden hesaplandı.',
+    'src.picksOnly': 'Tablo yalnızca senin {picked} tahminin üzerinden hesaplandı, kalan maçlar oynanmadı.',
+    'src.simOnly': '{played} maç simülasyon · skor kutularına tahmin yazarsan tablo onu kullanır',
+    'bands.q': '1-8 son 16\'ya doğrudan',
+    'bands.po': '9-24 play-off',
+    'bands.out': '25-36 elendi',
+
+    'probs.modeFixed': 'Bu kura sabit · 3000 sezon',
+    'probs.modeRedraw': 'Her sezon yeni kura · 120 sezon',
+    'probs.run': 'Hesapla',
+    'probs.press': 'Hesapla butonuna bas.',
+    'probs.working': 'Hesaplanıyor… {done}/{total} sezon',
+    'probs.hintFixed': '{total} sezon, bu kura sabit tutularak. Fikstür şansı hesaba katılmıyor.',
+    'probs.hintRedraw': '{total} sezon, her sezon kura da yeniden çekilerek. Örneklem küçük, birkaç puan oynar.',
+    'probs.legend': 'ilk 8  ·  play-off  ·  elendi',
+    'probs.avg': 'ort. P',
+    'probs.tooltip': 'ilk 8: %{q} · play-off: %{p}',
+
+    'draw.auto': 'Hepsini otomatik çek',
+    'draw.autoRemaining': 'Kalan {n} takımı otomatik çek',
+    'draw.drawing': 'Çekiliyor…',
+    'draw.pause': 'Duraklat',
+    'draw.resume': 'Devam et',
+    'draw.skipTeam': 'Bu takımı hızlandır',
+    'draw.skipAll': 'Sonuca atla',
+    'draw.reset': 'Baştan al',
+    'draw.speed': 'hız',
+    'draw.intro': 'Toplar kapalı. Bir torbadan top çek — hangi takım çıkacağı belli değil, '
+      + 'o torbada kalanlar arasından rastgele biri açılır ve sekiz rakibi tek tek gelir.',
+    'draw.ballLabel': 'Torba {n} torbasından top çek',
+    'draw.ballTitle': 'Torba {n} · top çek',
+    'draw.ballDrawn': '{team} çekildi',
+    'draw.spinning': 'Torba {pot} · top çalkalanıyor…',
+    'draw.opening': '{n}/36 · {team} çekildi, rakipleri açılıyor…',
+    'draw.teamDone': '{n}/36 · {team} tamamlandı · 4 iç saha, 4 deplasman',
+    'draw.next': '{n}/36 çekildi · sıradaki topu seç ya da otomatik devam et',
+    'draw.finished': '36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.',
+    'draw.opponentsOf': '{country} · Torba {pot} · 8 rakip çekiliyor',
+
+    'saves.nameLabel': 'ad',
+    'saves.namePlaceholder': 'örn. Fener yılın kurası',
+    'saves.saveBtn': 'Bu kurayı kaydet',
+    'saves.reload': 'Listeyi yenile',
+    'saves.notConfigured': 'Kayıt sunucusu henüz yapılandırılmadı.',
+    'saves.needName': 'kayda bir ad gerekli',
+    'saves.needScores': 'kaydedecek skor yok, önce skorları doldur',
+    'saves.saving': 'Kaydediliyor…',
+    'saves.saved': 'Kaydedildi · {total} maç, {picks} tanesi senin tahminin.',
+    'saves.saveFailed': 'Kaydedilemedi: {msg}',
+    'saves.loading': 'Kayıtlar yükleniyor…',
+    'saves.listFailed': 'Liste alınamadı: {msg}',
+    'saves.empty': 'Henüz kayıt yok. Bir kura çek, sezonu oyna, sonra kaydet.',
+    'saves.meta': 'tohum {seed} · {matches} maç · {picks} tahmin · {date}',
+    'saves.open': 'Aç',
+    'saves.link': 'Link',
+    'saves.delete': 'Sil',
+    'saves.opening': 'Kayıt açılıyor…',
+    'saves.openingShared': 'Paylaşılan kayıt açılıyor…',
+    'saves.opened': 'Açıldı: {name} · tohum {seed} · {matches} maç',
+    'saves.openFailed': 'Açılamadı: {msg}',
+    'saves.openFailedShared': 'Paylaşılan kayıt açılamadı: {msg}',
+    'saves.notYours': 'Bu kayıt sana ait değil.',
+    'saves.deleteConfirm': 'Bu kayıt kalıcı olarak silinecek. Devam edilsin mi?',
+    'saves.deleted': 'Kayıt silindi.',
+    'saves.deleteFailed': 'Silinemedi: {msg}',
+    'share.label': 'Paylaşım linki · açan kişi bu kurayı ve skorları görür',
+    'share.copy': 'Kopyala',
+    'share.copied': 'Kopyalandı',
+    'share.fallback': 'Linki kopyala:',
+
+    'footer.l1': 'Torbalar UEFA\'nın 26.08.2026 resmi listesi. Rating değerleri ve Poisson gol '
+      + 'modeli kalibre edilmemiş tahmindir; olasılıklar gerçek tahmin olarak kullanılmamalı.',
+    'footer.l2': 'Uygulanan kurallar: aynı ülke eşleşemez, aynı ülkeden en fazla 2 rakip, her '
+      + 'torbadan 1 iç saha + 1 deplasman, haftada 1 maç, 3 hafta üst üste aynı saha yok.',
+    'footer.l3': 'Modellenmeyen: disiplin puanı sıralaması, TV ve güvenlik kaynaklı hafta '
+      + 'kısıtları, UEFA\'nın gerçek kura yazılımının dağılımı.'
+  }
+};
+
+const LANG_KEY = 'ucl:lang';
+let LANG = 'en';
+
+/** Sozlukten ham degeri verir; dizi gibi metin olmayan girdiler icin. */
+function txraw(key) {
+  const dict = I18N[LANG] || I18N.en;
+  return dict[key] !== undefined ? dict[key] : I18N.en[key];
+}
+
+/** Cevrilmis metin; {ad} yer tutucularini vars ile doldurur. */
+function tx(key, vars) {
+  let out = txraw(key);
+  if (typeof out !== 'string') return key;
+  if (vars) {
+    Object.keys(vars).forEach(k => {
+      out = out.split('{' + k + '}').join(String(vars[k]));
+    });
+  }
+  return out;
+}
+
+function detectLang() {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved && I18N[saved]) return saved;
+  } catch (e) { /* depolama kapalı */ }
+  return 'en';
+}
+
+/** data-i18n imli tum statik dugumleri gecerli dile cevirir. */
+function applyStaticI18n() {
+  document.documentElement.lang = tx('html.lang');
+  document.title = tx('doc.title');
+  document.querySelectorAll('[data-i18n]').forEach(n => { n.textContent = tx(n.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(n => { n.placeholder = tx(n.dataset.i18nPh); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(n => {
+    n.setAttribute('aria-label', tx(n.dataset.i18nAria));
+  });
+}
+
+
+// ---------------------------------------------------------------------------
 // Arayuz
 // ---------------------------------------------------------------------------
 const byId = Object.fromEntries(TEAMS.map(t => [t.id, t]));
@@ -851,10 +1264,17 @@ const el = (tag, cls, txt) => {
 
 const state = {
   seed: 2027, fixtures: [], results: null, simIndex: null,
-  selected: null, view: {}, picks: {}, dirty: false
+  selected: null, view: {}, picks: {}, dirty: false,
+  status: { key: 'status.preparing', vars: {} }
 };
 
 const fxKey = f => f.home + '>' + f.away;
+
+/** Baslik satirindaki durumu yazar ve dil degisiminde tekrar cevrilebilsin diye saklar. */
+function setStatus(key, vars) {
+  state.status = { key: key, vars: vars || {} };
+  $('#status').textContent = tx(key, state.status.vars);
+}
 
 /**
  * Adres parçasını çözer: `#2027` tohum, `#k=ysjgzzsv` kayıt linki.
@@ -885,11 +1305,7 @@ function showTab(view) {
 function confirmDiscard() {
   if (!state.dirty) return true;
   const n = mergedResults().length;
-  return confirm(
-    `Bu fikstürde kaydedilmemiş ${n} maç skoru var.\n\n`
-    + 'Yeni kura çekilirse hepsi silinir. Saklamak istiyorsan önce '
-    + '"Fikstürü kaydet" de.\n\nYine de devam edilsin mi?'
-  );
+  return confirm(tx('discard.confirm', { n: n }));
 }
 
 /** Bir maçın gösterilecek skoru: kullanıcı tahmini simülasyonu ezer. */
@@ -930,11 +1346,11 @@ function buildView(fixtures) {
  */
 function newDraw(seed, apply) {
   const btn = $('#redraw');
-  btn.disabled = true; btn.textContent = 'Çekiliyor…';
+  btn.disabled = true; btn.textContent = tx('status.drawing');
   setTimeout(() => {
     const f = runDraw(TEAMS, seed);
-    btn.disabled = false; btn.textContent = 'Yeni kura';
-    if (!f) { $('#status').textContent = 'Kura çıkmadı, başka bir tohum dene.'; return; }
+    btn.disabled = false; btn.textContent = tx('bar.redraw');
+    if (!f) { setStatus('status.failed'); return; }
     state.seed = seed; state.fixtures = f; state.results = null; state.simIndex = null;
     state.view = buildView(f);
     state.picks = {};
@@ -942,9 +1358,8 @@ function newDraw(seed, apply) {
     writeHash(seed);
     if (apply) apply();
     const problems = verify(f, TEAMS);
-    $('#status').textContent = problems.length
-      ? 'Kural ihlali: ' + problems[0]
-      : '144 maç · tüm kurallar sağlandı';
+    if (problems.length) setStatus('status.violation', { msg: problems[0] });
+    else setStatus('status.ok');
     renderAll();
   }, 10);
 }
@@ -990,7 +1405,7 @@ function renderMatrix() {
     const th = el('th', 'row');
     th.append(byId[rowId].name);
     const em = el('em', null, byId[rowId].country); th.appendChild(em);
-    th.title = byId[rowId].name + ' fikstürünü göster';
+    th.title = tx('matrix.rowTitle', { team: byId[rowId].name });
     tr.appendChild(th);
     tr.appendChild(el('td', 'potrail p' + byId[rowId].pot));
 
@@ -1002,8 +1417,8 @@ function renderMatrix() {
         td.classList.add(hit.venue === 'H' ? 'home' : 'away', 'p' + byId[colId].pot);
         td.appendChild(el('i'));
         td.title = hit.venue === 'H'
-          ? `MD${hit.f.md} · ${byId[rowId].name} - ${byId[colId].name} (ev sahibi)`
-          : `MD${hit.f.md} · ${byId[colId].name} - ${byId[rowId].name} (deplasman)`;
+          ? tx('matrix.cellHome', { md: hit.f.md, home: byId[rowId].name, away: byId[colId].name })
+          : tx('matrix.cellAway', { md: hit.f.md, home: byId[colId].name, away: byId[rowId].name });
       }
       td.dataset.row = rowId; td.dataset.col = colId;
       tr.appendChild(td);
@@ -1044,8 +1459,7 @@ function selectTeam(id) {
 function renderDetail() {
   const host = $('#detail'); host.innerHTML = '';
   if (!state.selected) {
-    host.appendChild(el('p', 'hint', 'Bir takım seç: satırdaki her dolu kare bir maç. '
-      + 'Dolu kare iç saha, çerçeveli kare deplasman. Renk rakibin torbası.'));
+    host.appendChild(el('p', 'hint', tx('detail.hint')));
     return;
   }
   const t = byId[state.selected];
@@ -1054,8 +1468,8 @@ function renderDetail() {
   state.view[t.id].forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
   host.appendChild(el('div', 'meta',
-    `${t.country} · Torba ${t.pot} · 4 iç saha / 4 deplasman`
-    + (doubled.length ? ` · aynı ülkeden çift rakip: ${doubled.join(', ')}` : '')));
+    tx('detail.meta', { country: t.country, pot: t.pot })
+    + (doubled.length ? ' · ' + tx('detail.doubled', { list: doubled.join(', ') }) : '')));
 
   const ol = el('ol', 'fix');
   state.view[t.id].forEach(r => {
@@ -1074,12 +1488,14 @@ function renderDetail() {
 // ---------------------------------------------------------------------------
 function fillTeamPicker() {
   const pick = $('#teampick');
-  const all = el('option', null, 'Tüm takımlar');
+  const current = pick.value;
+  pick.innerHTML = '';
+  const all = el('option', null, tx('teams.allOption'));
   all.value = '';
   pick.appendChild(all);
   [1, 2, 3, 4].forEach(pot => {
     const group = document.createElement('optgroup');
-    group.label = 'Torba ' + pot;
+    group.label = tx('pot', { n: pot });
     ORDER.filter(id => byId[id].pot === pot)
       .sort((a, b) => byId[a].name.localeCompare(byId[b].name, 'tr'))
       .forEach(id => {
@@ -1089,20 +1505,21 @@ function fillTeamPicker() {
       });
     pick.appendChild(group);
   });
+  pick.value = current || '';
 }
 
 function renderTeams() {
   const host = $('#teams'); host.innerHTML = '';
   $('#teamall').hidden = !state.selected;
   $('#teamhint').textContent = state.selected
-    ? 'matris sekmesinde de bu takım seçili'
-    : 'listeden seç ya da bir karta tıkla';
+    ? tx('teams.hintSelected')
+    : tx('teams.hint');
 
   if (state.selected) { host.appendChild(teamFocus(byId[state.selected])); return; }
 
   [1, 2, 3, 4].forEach(pot => {
     const head = el('div', 'pothead');
-    head.appendChild(el('h2', null, 'Torba ' + pot));
+    head.appendChild(el('h2', null, tx('pot', { n: pot })));
     head.appendChild(el('div', 'line'));
     host.appendChild(head);
     const grid = el('div', 'cards');
@@ -1111,7 +1528,7 @@ function renderTeams() {
       const card = el('button', 'card p' + pot);
       card.type = 'button';
       card.dataset.team = id;
-      card.title = t.name + ' fikstürünü aç';
+      card.title = tx('teams.cardTitle', { team: t.name });
       const h = el('h4', null, t.name);
       card.appendChild(h);
       card.appendChild(el('div', 'sub', t.country));
@@ -1149,8 +1566,8 @@ function teamFocus(t) {
   const counts = {};
   rows.forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
-  const bits = [t.country, 'Torba ' + t.pot, '4 iç saha / 4 deplasman'];
-  if (doubled.length) bits.push('aynı ülkeden çift rakip: ' + doubled.join(', '));
+  const bits = [t.country, tx('pot', { n: t.pot }), tx('focus.homeAway')];
+  if (doubled.length) bits.push(tx('detail.doubled', { list: doubled.join(', ') }));
   if (hasScores) {
     let w = 0, d = 0, l = 0, gf = 0, ga = 0, n = 0;
     rows.forEach(r => {
@@ -1161,16 +1578,17 @@ function teamFocus(t) {
       gf += f; ga += a; n++;
       if (f > a) w++; else if (f === a) d++; else l++;
     });
-    bits.push(`${n} maç · ${w}G ${d}B ${l}M · ${gf}-${ga} · ${w * 3 + d} puan`);
+    bits.push(tx('focus.record', { n: n, w: w, d: d, l: l, gf: gf, ga: ga, pts: w * 3 + d }));
   }
   box.appendChild(el('div', 'meta', bits.join(' · ')));
 
   const scroll = el('div', 'fixscroll');
   const table = el('table', 'fixtab');
   const hr = el('tr');
-  const cols = ['Hafta', 'Tarih', 'Saha', 'Rakip', 'Ülke', 'Torba'];
-  if (hasScores) cols.push('Skor');
-  cols.forEach(c => hr.appendChild(el('th', null, c)));
+  const cols = ['focus.col.md', 'focus.col.date', 'focus.col.venue',
+                'focus.col.opponent', 'focus.col.country', 'focus.col.pot'];
+  if (hasScores) cols.push('focus.col.score');
+  cols.forEach(c => hr.appendChild(el('th', null, tx(c))));
   table.appendChild(el('thead')).appendChild(hr);
 
   const tb = el('tbody');
@@ -1178,11 +1596,11 @@ function teamFocus(t) {
     const opp = byId[r.opp];
     const tr = el('tr');
     tr.appendChild(el('td', 'md', 'MD' + r.md));
-    tr.appendChild(el('td', 'dt', MD_DATES[r.md - 1]));
+    tr.appendChild(el('td', 'dt', txraw('md.dates')[r.md - 1]));
 
     const vn = el('td', 'vn p' + opp.pot);
     vn.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
-    vn.appendChild(el('span', 'vt', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+    vn.appendChild(el('span', 'vt', tx(r.venue === 'H' ? 'venue.home' : 'venue.away')));
     tr.appendChild(vn);
 
     tr.appendChild(el('td', 'nm', opp.name));
@@ -1197,7 +1615,7 @@ function teamFocus(t) {
         const a = r.venue === 'H' ? res.ag : res.hg;
         const cls = 'sc ' + (f > a ? 'w' : f === a ? 'd' : 'l') + (res.pick ? ' pick' : '');
         const td = el('td', cls, f + '-' + a);
-        td.title = res.pick ? 'senin tahminin' : 'simülasyon';
+        td.title = tx(res.pick ? 'tip.pick' : 'tip.sim');
         tr.appendChild(td);
       }
     }
@@ -1212,9 +1630,6 @@ function teamFocus(t) {
 // ---------------------------------------------------------------------------
 // 3. Haftalar
 // ---------------------------------------------------------------------------
-const MD_DATES = ['8-10 Eyl 2026', '13/14 Eki 2026', '20/21 Eki 2026', '3/4 Kas 2026',
-                  '24/25 Kas 2026', '8/9 Ara 2026', '19/20 Oca 2027', '27 Oca 2027'];
-
 function goalInput(key, side, value, placeholder) {
   const i = document.createElement('input');
   i.type = 'text';
@@ -1224,7 +1639,7 @@ function goalInput(key, side, value, placeholder) {
   i.dataset.side = side;
   i.value = value === null ? '' : String(value);
   i.placeholder = placeholder === null ? '·' : String(placeholder);
-  i.setAttribute('aria-label', side === 'h' ? 'ev sahibi gol tahmini' : 'deplasman gol tahmini');
+  i.setAttribute('aria-label', tx(side === 'h' ? 'md.goalHome' : 'md.goalAway'));
   return i;
 }
 
@@ -1233,8 +1648,8 @@ function renderMatchdays() {
   const grid = el('div', 'mdgrid');
   for (let md = 1; md <= 8; md++) {
     const b = el('div', 'mdblock');
-    b.appendChild(el('h4', null, 'Hafta ' + md));
-    b.appendChild(el('div', 'hint', MD_DATES[md - 1]));
+    b.appendChild(el('h4', null, tx('md.week', { n: md })));
+    b.appendChild(el('div', 'hint', txraw('md.dates')[md - 1]));
     state.fixtures.filter(f => f.md === md).forEach(f => {
       const key = fxKey(f);
       const pick = state.picks[key] || null;
@@ -1258,9 +1673,7 @@ function renderMatchdays() {
 function updatePickCount() {
   const n = pickCount();
   $('#pickclear').hidden = n === 0;
-  $('#pickcount').textContent = n
-    ? `144 maçın ${n} tanesini sen doldurdun · puan tablosu bunları kullanıyor`
-    : 'skor kutularına kendi tahminini yaz, puan tablosu ona göre hesaplansın';
+  $('#pickcount').textContent = n ? tx('md.countSome', { n: n }) : tx('md.countNone');
 }
 
 /** Bir skor kutusu degistiginde state'i tazeler; haftalar ekrani yeniden cizilmez. */
@@ -1303,14 +1716,13 @@ function autofillPicks() {
   state.dirty = true;
   renderMatchdays(); renderTable(); renderTeams();
   const added = pickCount() - before;
-  mdStatus(added
-    ? `${added} maç modele göre dolduruldu` + (before ? `, senin girdiğin ${before} maça dokunulmadı.` : '.')
-    : 'Boş kutu kalmamış, hepsi zaten doluydu.');
+  mdStatus(!added ? tx('md.allFull')
+    : (before ? tx('md.filledKept', { n: added, kept: before }) : tx('md.filled', { n: added })));
 }
 
 function clearPicks() {
   if (!pickCount()) return;
-  if (!confirm('Bu kuradaki tüm tahminlerin silinecek. Devam edilsin mi?')) return;
+  if (!confirm(tx('md.clearConfirm'))) return;
   state.picks = {};
   state.dirty = mergedResults().length > 0;
   renderMatchdays(); renderTable(); renderTeams();
@@ -1331,19 +1743,13 @@ function sourceNote(played, picked) {
   const p = el('p', 'src');
   const total = state.fixtures.length;
   if (picked && played > picked) {
-    p.append(String(picked) + ' maç ');
-    p.appendChild(el('b', null, 'senin tahminin'));
-    p.append(` · ${played - picked} maç simülasyon`);
+    p.textContent = tx('src.mixed', { picked: picked, sim: played - picked });
   } else if (picked && played === total) {
-    p.append('Tablo tamamen ');
-    p.appendChild(el('b', null, `senin ${picked} tahminin`));
-    p.append('den hesaplandı.');
+    p.textContent = tx('src.allPicks', { picked: picked });
   } else if (picked) {
-    p.append('Tablo yalnızca ');
-    p.appendChild(el('b', null, `senin ${picked} tahminin`));
-    p.append(' üzerinden hesaplandı, kalan maçlar oynanmadı.');
+    p.textContent = tx('src.picksOnly', { picked: picked });
   } else {
-    p.append(`${played} maç simülasyon · skor kutularına tahmin yazarsan tablo onu kullanır`);
+    p.textContent = tx('src.simOnly', { played: played });
   }
   return p;
 }
@@ -1352,18 +1758,16 @@ function renderTable() {
   const host = $('#table'); host.innerHTML = '';
   const results = mergedResults();
   if (!results.length) {
-    host.appendChild(el('p', 'hint', 'Sezonu oyna: 144 maç Poisson modeliyle üretilir, '
-      + 'tablo UEFA sıralama kriterlerine göre dizilir. Haftalar sekmesinden kendi '
-      + 'tahminlerini de yazabilirsin.'));
+    host.appendChild(el('p', 'hint', tx('table.hint')));
     return;
   }
   host.appendChild(sourceNote(results.length, pickCount()));
   const rows = buildTable(results, TEAMS);
   const table = el('table', 'std');
   const head = el('tr');
-  ['#', 'Takım', 'O', 'G', 'B', 'M', 'A', 'Y', 'AV', 'P'].forEach((h, i) => {
-    const th = el('th', i === 1 ? 'l' : '', h); head.appendChild(th);
-  });
+  ['table.col.pos', 'table.col.club', 'table.col.p', 'table.col.w', 'table.col.d',
+   'table.col.l', 'table.col.gf', 'table.col.ga', 'table.col.gd', 'table.col.pts']
+    .forEach((k, i) => head.appendChild(el('th', i === 1 ? 'l' : '', tx(k))));
   table.appendChild(el('thead')).appendChild(head);
   const tb = el('tbody');
   rows.forEach((r, i) => {
@@ -1378,9 +1782,15 @@ function renderTable() {
   table.appendChild(tb);
   host.appendChild(table);
   const bands = el('div', 'bands');
-  bands.innerHTML = '<span><i class="swatch" style="background:rgba(35,37,110,.35)"></i>1-8 son 16\'ya doğrudan</span>'
-    + '<span><i class="swatch" style="background:rgba(178,106,0,.35)"></i>9-24 play-off</span>'
-    + '<span><i class="swatch" style="background:var(--paper-3)"></i>25-36 elendi</span>';
+  [['rgba(35,37,110,.35)', 'bands.q'], ['rgba(178,106,0,.35)', 'bands.po'],
+   ['var(--paper-3)', 'bands.out']].forEach(pair => {
+    const span = el('span');
+    const sw = el('i', 'swatch');
+    sw.style.background = pair[0];
+    span.appendChild(sw);
+    span.append(tx(pair[1]));
+    bands.appendChild(span);
+  });
   host.appendChild(bands);
 }
 
@@ -1392,7 +1802,7 @@ function runMonteCarlo() {
   const total = mode === 'fixed' ? 3000 : 120;
   const btn = $('#mcrun'); btn.disabled = true;
   const out = $('#probs'); out.innerHTML = '';
-  const prog = el('div', 'progress', 'Hesaplanıyor…'); out.appendChild(prog);
+  const prog = el('div', 'progress', tx('probs.working', { done: 0, total: total })); out.appendChild(prog);
 
   const acc = Object.fromEntries(ORDER.map(id => [id, { q: 0, p: 0, pts: 0, pos: 0 }]));
   const rng = makeRng((Math.random() * 1e9) | 0);
@@ -1413,7 +1823,7 @@ function runMonteCarlo() {
       });
       done++;
     }
-    prog.textContent = `Hesaplanıyor… ${done}/${total} sezon`;
+    prog.textContent = tx('probs.working', { done: done, total: total });
     if (done < total) return requestAnimationFrame(chunk);
     btn.disabled = false;
     renderProbs(acc, total, mode);
@@ -1423,14 +1833,13 @@ function runMonteCarlo() {
 
 function renderProbs(acc, total, mode) {
   const out = $('#probs'); out.innerHTML = '';
-  out.appendChild(el('p', 'hint', mode === 'fixed'
-    ? `${total} sezon, bu kura sabit tutularak. Fikstür şansı hesaba katılmıyor.`
-    : `${total} sezon, her sezon kura da yeniden çekilerek. Örneklem küçük, ±%4 oynar.`));
+  out.appendChild(el('p', 'hint',
+    tx(mode === 'fixed' ? 'probs.hintFixed' : 'probs.hintRedraw', { total: total })));
   const list = ORDER.slice().sort((a, b) => acc[b].q - acc[a].q || acc[b].p - acc[a].p);
   const head = el('div', 'prob');
   head.appendChild(el('div', 'nm', ''));
-  head.appendChild(el('div', 'hint', 'ilk 8  ·  play-off  ·  elendi'));
-  head.appendChild(el('div', 'hint', 'ort. P'));
+  head.appendChild(el('div', 'hint', tx('probs.legend')));
+  head.appendChild(el('div', 'hint', tx('probs.avg')));
   out.appendChild(head);
   list.forEach(id => {
     const a = acc[id];
@@ -1440,7 +1849,7 @@ function renderProbs(acc, total, mode) {
     const q = el('i', 'q'); q.style.width = (100 * a.q / total) + '%';
     const p = el('i', 'p'); p.style.width = (100 * a.p / total) + '%';
     bar.append(q, p);
-    bar.title = `ilk 8: %${(100 * a.q / total).toFixed(1)} · play-off: %${(100 * a.p / total).toFixed(1)}`;
+    bar.title = tx('probs.tooltip', { q: (100 * a.q / total).toFixed(1), p: (100 * a.p / total).toFixed(1) });
     row.appendChild(bar);
     row.appendChild(el('div', '', (a.pts / total).toFixed(1)));
     out.appendChild(row);
@@ -1487,8 +1896,8 @@ function closedBall(pot) {
   const b = el('button', 'ball p' + pot);
   b.type = 'button';
   b.dataset.pot = String(pot);
-  b.title = 'Torba ' + pot + ' · top çek';
-  b.setAttribute('aria-label', 'Torba ' + pot + ' torbasından top çek');
+  b.title = tx('draw.ballTitle', { n: pot });
+  b.setAttribute('aria-label', tx('draw.ballLabel', { n: pot }));
   return b;
 }
 
@@ -1498,7 +1907,7 @@ function renderBowls() {
   [1, 2, 3, 4].forEach(pot => {
     const bowl = el('div', 'bowl p' + pot);
     bowl.dataset.pot = String(pot);
-    bowl.appendChild(el('h4', null, 'Torba ' + pot));
+    bowl.appendChild(el('h4', null, tx('pot', { n: pot })));
     const balls = el('div', 'balls');
     ORDER.filter(id => byId[id].pot === pot).forEach(() => balls.appendChild(closedBall(pot)));
     bowl.appendChild(balls);
@@ -1519,7 +1928,7 @@ function openBall(ball, t) {
   if (!ball) return;
   ball.textContent = t.code;
   ball.title = t.name;
-  ball.setAttribute('aria-label', t.name + ' çekildi');
+  ball.setAttribute('aria-label', tx('draw.ballDrawn', { team: t.name }));
   ball.classList.add('picked');
 }
 
@@ -1528,11 +1937,11 @@ function setDrawUI() {
   const left = 36 - ceremony.drawn;
   $('#drawstart').disabled = busy || left === 0;
   $('#drawstart').textContent = busy && ceremony.auto
-    ? 'Çekiliyor…'
-    : (ceremony.drawn ? `Kalan ${left} takımı otomatik çek` : 'Hepsini otomatik çek');
+    ? tx('draw.drawing')
+    : (ceremony.drawn ? tx('draw.autoRemaining', { n: left }) : tx('draw.auto'));
   $('#drawpause').hidden = !(busy && ceremony.auto);
   $('#drawskip').hidden = !busy;
-  $('#drawskip').textContent = ceremony.auto ? 'Sonuca atla' : 'Bu takımı hızlandır';
+  $('#drawskip').textContent = tx(ceremony.auto ? 'draw.skipAll' : 'draw.skipTeam');
   $('#drawreset').hidden = ceremony.drawn === 0 || busy;
   $('#drawbowls').classList.toggle('locked', busy);
 }
@@ -1549,7 +1958,7 @@ function stageTeam(t) {
   card.appendChild(stageBall(t));
   const info = el('div', 'info');
   info.appendChild(el('h3', null, t.name));
-  info.appendChild(el('div', 'meta', t.country + ' · Torba ' + t.pot + ' · 8 rakip çekiliyor'));
+  info.appendChild(el('div', 'meta', tx('draw.opponentsOf', { country: t.country, pot: t.pot })));
   card.appendChild(info);
   stage.appendChild(card);
   const opps = el('div', 'opps');
@@ -1562,7 +1971,7 @@ function revealOpponent(r) {
   const row = el('div', 'opp p' + opp.pot);
   row.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
   row.appendChild(el('span', 'nm', opp.name));
-  row.appendChild(el('span', 'vn', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+  row.appendChild(el('span', 'vn', tx(r.venue === 'H' ? 'venue.home' : 'venue.away')));
   $('#drawopps').appendChild(row);
   requestAnimationFrame(() => row.classList.add('in'));
 }
@@ -1576,12 +1985,11 @@ function resetCeremony() {
   ceremony.drawn = 0;
   ceremony.pot = 0;
   ceremony.taken = new Set();
-  $('#drawpause').textContent = 'Duraklat';
+  $('#drawpause').textContent = tx('draw.pause');
   renderBowls();
   $('#drawstage').innerHTML = '';
   setDrawUI();
-  drawStatus('Toplar kapalı. Bir torbadan top çek — hangi takım çıkacağı belli değil, '
-    + 'o torbada kalanlar arasından rastgele biri açılır ve sekiz rakibi tek tek gelir.');
+  drawStatus(tx('draw.intro'));
 }
 
 function finishCeremony() {
@@ -1599,7 +2007,7 @@ function finishCeremony() {
   ceremony.skip = false;
   $('#drawpause').textContent = 'Duraklat';
   setDrawUI();
-  drawStatus('36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.');
+  drawStatus(tx('draw.finished'));
 }
 
 /** Tek takimin cekilisi: top calkalanir, acilir, rakipler tek tek gelir. */
@@ -1607,14 +2015,14 @@ async function revealTeam(t, gen, ball) {
   ceremony.pot = t.pot;
   ceremony.taken.add(t.id);
   activateBowl(t.pot);
-  drawStatus(`Torba ${t.pot} · top çalkalanıyor…`);
+  drawStatus(tx('draw.spinning', { pot: t.pot }));
   if (!await cwait(CTIME.spin, gen)) return false;
 
   openBall(ball || freeBall(t.pot), t);
   activateBowl(0);
   ceremony.drawn++;
   stageTeam(t);
-  drawStatus(`${ceremony.drawn}/36 · ${t.name} çekildi, rakipleri açılıyor…`);
+  drawStatus(tx('draw.opening', { n: ceremony.drawn, team: t.name }));
   if (!await cwait(CTIME.reveal, gen)) return false;
 
   const rows = state.view[t.id];
@@ -1623,7 +2031,7 @@ async function revealTeam(t, gen, ball) {
     if (ceremony.skip) continue;
     if (!await cwait(CTIME.opponent, gen)) return false;
   }
-  drawStatus(`${ceremony.drawn}/36 · ${t.name} tamamlandı · 4 iç saha, 4 deplasman`);
+  drawStatus(tx('draw.teamDone', { n: ceremony.drawn, team: t.name }));
   return true;
 }
 
@@ -1648,7 +2056,7 @@ async function pickBall(ball) {
   ceremony.skip = false;
   if (ok && ceremony.drawn >= 36) { finishCeremony(); return; }
   setDrawUI();
-  if (ok) drawStatus(`${ceremony.drawn}/36 çekildi · sıradaki topu seç ya da otomatik devam et`);
+  if (ok) drawStatus(tx('draw.next', { n: ceremony.drawn }));
 }
 
 async function runCeremony() {
@@ -1740,17 +2148,17 @@ async function copyText(text, btn) {
   try {
     await navigator.clipboard.writeText(text);
     const old = btn.textContent;
-    btn.textContent = 'Kopyalandı';
+    btn.textContent = tx('share.copied');
     setTimeout(() => { btn.textContent = old; }, 1500);
   } catch (e) {
-    prompt('Linki kopyala:', text);
+    prompt(tx('share.fallback'), text);
   }
 }
 
 function renderShare(host, id) {
   host.innerHTML = '';
   const box = el('div', 'sharebox');
-  box.appendChild(el('div', 'lbl', 'Paylaşım linki · açan kişi bu kurayı ve skorları görür'));
+  box.appendChild(el('div', 'lbl', tx('share.label')));
   const row = el('div', 'row');
   const input = document.createElement('input');
   input.type = 'text';
@@ -1758,7 +2166,7 @@ function renderShare(host, id) {
   input.value = shareUrl(id);
   input.addEventListener('focus', () => input.select());
   row.appendChild(input);
-  const btn = el('button', null, 'Kopyala');
+  const btn = el('button', null, tx('share.copy'));
   btn.addEventListener('click', () => copyText(input.value, btn));
   row.appendChild(btn);
   box.appendChild(row);
@@ -1767,11 +2175,11 @@ function renderShare(host, id) {
 
 /** Ekrandaki skorlari sunucuya yazar; id ve sayilari dondurur. */
 async function submitSave(name) {
-  if (!API) throw new Error('kayıt sunucusu yapılandırılmadı');
-  if (!name) throw new Error('kayda bir ad gerekli');
+  if (!API) throw new Error(tx('saves.notConfigured'));
+  if (!name) throw new Error(tx('saves.needName'));
   const { scores, picks } = currentScores();
   const total = Object.keys(scores).length;
-  if (!total) throw new Error('kaydedecek skor yok, önce skorları doldur');
+  if (!total) throw new Error(tx('saves.needScores'));
 
   const data = await apiCall('/api/saves', {
     method: 'POST',
@@ -1789,32 +2197,32 @@ async function submitSave(name) {
 async function createSave() {
   const btn = $('#savebtn');
   btn.disabled = true;
-  saveStatus('Kaydediliyor…');
+  saveStatus(tx('saves.saving'));
   try {
     const r = await submitSave($('#savename').value.trim());
     $('#savename').value = '';
-    saveStatus(`Kaydedildi · ${r.total} maç, ${r.picks} tanesi senin tahminin.`);
+    saveStatus(tx('saves.saved', { total: r.total, picks: r.picks }));
     renderShare($('#saveshare'), r.id);
     listSaves();
   } catch (e) {
-    saveStatus('Kaydedilemedi: ' + e.message, true);
+    saveStatus(tx('saves.saveFailed', { msg: e.message }), true);
   } finally {
     btn.disabled = false;
   }
 }
 
 async function saveFixture() {
-  const name = prompt('Kayda bir ad ver:', 'Kura ' + state.seed);
+  const name = prompt(tx('md.savePrompt'), tx('md.saveDefault', { seed: state.seed }));
   if (name === null) return;
   const btn = $('#savefixture');
   btn.disabled = true;
-  mdStatus('Kaydediliyor…');
+  mdStatus(tx('saves.saving'));
   try {
     const r = await submitSave(name.trim());
-    mdStatus(`Kaydedildi · ${r.total} maç, ${r.picks} tanesi senin tahminin.`);
+    mdStatus(tx('saves.saved', { total: r.total, picks: r.picks }));
     renderShare($('#mdshare'), r.id);
   } catch (e) {
-    mdStatus('Kaydedilemedi: ' + e.message, true);
+    mdStatus(tx('saves.saveFailed', { msg: e.message }), true);
   } finally {
     btn.disabled = false;
   }
@@ -1824,17 +2232,17 @@ async function listSaves() {
   const host = $('#saves');
   host.innerHTML = '';
   if (!API) {
-    host.appendChild(el('p', 'hint', 'Kayıt sunucusu henüz yapılandırılmadı.'));
+    host.appendChild(el('p', 'hint', tx('saves.notConfigured')));
     return;
   }
-  host.appendChild(el('p', 'hint', 'Kayıtlar yükleniyor…'));
+  host.appendChild(el('p', 'hint', tx('saves.loading')));
   try {
     const data = await apiCall('/api/saves');
     savesLoaded = true;
     renderSaves(data.saves || []);
   } catch (e) {
     host.innerHTML = '';
-    host.appendChild(el('p', 'hint bad', 'Liste alınamadı: ' + e.message));
+    host.appendChild(el('p', 'hint bad', tx('saves.listFailed', { msg: e.message })));
   }
 }
 
@@ -1842,7 +2250,7 @@ function renderSaves(rows) {
   const host = $('#saves');
   host.innerHTML = '';
   if (!rows.length) {
-    host.appendChild(el('p', 'hint', 'Henüz kayıt yok. Bir kura çek, sezonu oyna, sonra kaydet.'));
+    host.appendChild(el('p', 'hint', tx('saves.empty')));
     return;
   }
   const tokens = loadTokens();
@@ -1852,20 +2260,20 @@ function renderSaves(rows) {
     const row = el('div', 'saverow' + (mine ? ' mine' : ''));
     const left = el('div');
     left.appendChild(el('h4', null, r.name));
-    const when = new Date(r.created_at).toLocaleDateString('tr-TR');
+    const when = new Date(r.created_at).toLocaleDateString(tx('locale'));
     left.appendChild(el('div', 'meta',
-      `tohum ${r.seed} · ${r.matches} maç · ${r.picks} tahmin · ${when}`));
+      tx('saves.meta', { seed: r.seed, matches: r.matches, picks: r.picks, date: when })));
     row.appendChild(left);
 
     const acts = el('div', 'acts');
-    const open = el('button', null, 'Aç');
+    const open = el('button', null, tx('saves.open'));
     open.dataset.open = r.id;
     acts.appendChild(open);
-    const link = el('button', 'ghost', 'Link');
+    const link = el('button', 'ghost', tx('saves.link'));
     link.dataset.link = r.id;
     acts.appendChild(link);
     if (mine) {
-      const del = el('button', 'ghost', 'Sil');
+      const del = el('button', 'ghost', tx('saves.delete'));
       del.dataset.del = r.id;
       acts.appendChild(del);
     }
@@ -1877,8 +2285,8 @@ function renderSaves(rows) {
 
 async function openSave(id, fromLink) {
   if (!fromLink && !confirmDiscard()) return;
-  saveStatus('Kayıt açılıyor…');
-  if (fromLink) mdStatus('Paylaşılan kayıt açılıyor…');
+  saveStatus(tx('saves.opening'));
+  if (fromLink) mdStatus(tx('saves.openingShared'));
   try {
     const data = await apiCall('/api/saves/' + encodeURIComponent(id));
     const payload = data.payload || {};
@@ -1887,19 +2295,19 @@ async function openSave(id, fromLink) {
       applySave(payload);
       writeHash('k=' + id);
     });
-    const note = `Açıldı: ${data.name} · tohum ${payload.seed} · ${data.matches} maç`;
+    const note = tx('saves.opened', { name: data.name, seed: payload.seed, matches: data.matches });
     saveStatus(note);
     if (fromLink) { mdStatus(note); showTab('table'); }
   } catch (e) {
-    saveStatus('Açılamadı: ' + e.message, true);
-    if (fromLink) mdStatus('Paylaşılan kayıt açılamadı: ' + e.message, true);
+    saveStatus(tx('saves.openFailed', { msg: e.message }), true);
+    if (fromLink) mdStatus(tx('saves.openFailedShared', { msg: e.message }), true);
   }
 }
 
 async function removeSave(id) {
   const tokens = loadTokens();
-  if (!tokens[id]) return saveStatus('Bu kayıt sana ait değil.', true);
-  if (!confirm('Bu kayıt kalıcı olarak silinecek. Devam edilsin mi?')) return;
+  if (!tokens[id]) return saveStatus(tx('saves.notYours'), true);
+  if (!confirm(tx('saves.deleteConfirm'))) return;
   try {
     await apiCall('/api/saves/' + encodeURIComponent(id), {
       method: 'DELETE',
@@ -1907,10 +2315,10 @@ async function removeSave(id) {
     });
     delete tokens[id];
     storeTokens(tokens);
-    saveStatus('Kayıt silindi.');
+    saveStatus(tx('saves.deleted'));
     listSaves();
   } catch (e) {
-    saveStatus('Silinemedi: ' + e.message, true);
+    saveStatus(tx('saves.deleteFailed', { msg: e.message }), true);
   }
 }
 
@@ -1921,7 +2329,7 @@ function renderAll() {
   renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
   resetCeremony();
   $('#probs').innerHTML = '';
-  $('#probs').appendChild(el('p', 'hint', 'Hesapla butonuna bas.'));
+  $('#probs').appendChild(el('p', 'hint', tx('probs.press')));
 }
 
 document.querySelectorAll('nav.tabs button').forEach(b => {
@@ -1954,7 +2362,7 @@ $('#drawbowls').addEventListener('click', e => {
 });
 $('#drawpause').addEventListener('click', () => {
   ceremony.paused = !ceremony.paused;
-  $('#drawpause').textContent = ceremony.paused ? 'Devam et' : 'Duraklat';
+  $('#drawpause').textContent = tx(ceremony.paused ? 'draw.resume' : 'draw.pause');
   activateBowl(ceremony.paused ? 0 : ceremony.pot);
 });
 $('#drawspeed').addEventListener('change', e => {
@@ -1983,6 +2391,47 @@ window.addEventListener('hashchange', () => {
     newDraw(h.seed);
   }
 });
+
+$('#lang').addEventListener('change', e => setLang(e.target.value));
+
+/**
+ * Dili degistirir ve ekrandaki her seyi yeniden cizer. Kura, tahminler ve skorlar
+ * korunur; yalnizca metinler degisir.
+ */
+function setLang(lang) {
+  LANG = I18N[lang] ? lang : 'en';
+  try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* depolama kapalı */ }
+  $('#lang').value = LANG;
+  applyStaticI18n();
+  setStatus(state.status.key, state.status.vars);
+  fillTeamPicker();
+  renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+  relabelCeremony();
+  mdStatus('');
+  saveStatus('');
+  $('#probs').innerHTML = '';
+  $('#probs').appendChild(el('p', 'hint', tx('probs.press')));
+  if (savesLoaded) listSaves();
+}
+
+/** Torba basliklarini yeniden yazar; devam eden cekilisi bozmaz. */
+function relabelCeremony() {
+  document.querySelectorAll('#drawbowls .bowl').forEach(bowl => {
+    const h = bowl.querySelector('h4');
+    if (h) h.textContent = tx('pot', { n: bowl.dataset.pot });
+    bowl.querySelectorAll('.ball:not(.picked)').forEach(b => {
+      b.title = tx('draw.ballTitle', { n: bowl.dataset.pot });
+      b.setAttribute('aria-label', tx('draw.ballLabel', { n: bowl.dataset.pot }));
+    });
+  });
+  setDrawUI();
+  if (!ceremony.busy && ceremony.drawn === 0) drawStatus(tx('draw.intro'));
+  else if (!ceremony.busy && ceremony.drawn >= 36) drawStatus(tx('draw.finished'));
+}
+
+LANG = detectLang();
+$('#lang').value = LANG;
+applyStaticI18n();
 
 const initialHash = parseHash();
 state.seed = initialHash.seed || state.seed;

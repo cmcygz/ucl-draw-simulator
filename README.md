@@ -24,8 +24,9 @@ port edildi, tarayıcıda çalışıyor (bir kura ~150 ms).
 | `index.html` | Derlenmiş tek dosya site (dağıtılacak olan bu) |
 | `engine.js` | Kura + simülasyon motoru, JS portu |
 | `ui.part.html` | Stiller |
+| `i18n.part.js` | İngilizce/Türkçe sözlük ve çeviri yardımcıları |
 | `app.part.js` | Görünümler ve etkileşim |
-| `build.py` | Üçünü birleştirip `index.html` üretir |
+| `build.py` | Dördünü birleştirip `index.html` üretir |
 
 ```bash
 python3 build.py      # parçaları değiştirdikten sonra
@@ -60,6 +61,17 @@ Bu bir **canlandırma**: kura zaten hesaplanmıştır, tören onu tekrar oynatı
 Kısıt çözücü canlı çalışmaz, dolayısıyla gerçek çekilişteki gibi bir fizibilite
 kontrolü ya da tıkanma ihtimali yoktur. Yeni kura çekilince tören sıfırlanır.
 `prefers-reduced-motion` açıksa animasyonlar kapanır.
+
+### Dil
+
+Arayüz İngilizce ve Türkçe. **Varsayılan İngilizce**; başlıktaki seçiciden
+değiştirilir ve tercih `localStorage`'da (`ucl:lang`) saklanır. Dil değişimi
+kurayı, tahminleri ve skorları korur, yalnızca metinleri yeniden çizer.
+
+Sözlük `i18n.part.js` içinde tek bir nesnede duruyor. Statik metinler HTML'de
+`data-i18n` / `data-i18n-ph` / `data-i18n-aria` imleriyle, dinamik metinler
+`tx('anahtar', { degisken })` çağrısıyla çevriliyor. Çeviri fonksiyonu `t` değil
+`tx`, çünkü kodda `t` zaten takım nesnesi için kullanılıyor.
 
 ### Tohum adreste
 

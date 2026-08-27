@@ -13,10 +13,17 @@ const el = (tag, cls, txt) => {
 
 const state = {
   seed: 2027, fixtures: [], results: null, simIndex: null,
-  selected: null, view: {}, picks: {}, dirty: false
+  selected: null, view: {}, picks: {}, dirty: false,
+  status: { key: 'status.preparing', vars: {} }
 };
 
 const fxKey = f => f.home + '>' + f.away;
+
+/** Baslik satirindaki durumu yazar ve dil degisiminde tekrar cevrilebilsin diye saklar. */
+function setStatus(key, vars) {
+  state.status = { key: key, vars: vars || {} };
+  $('#status').textContent = tx(key, state.status.vars);
+}
 
 /**
  * Adres parçasını çözer: `#2027` tohum, `#k=ysjgzzsv` kayıt linki.
@@ -47,11 +54,7 @@ function showTab(view) {
 function confirmDiscard() {
   if (!state.dirty) return true;
   const n = mergedResults().length;
-  return confirm(
-    `Bu fikstürde kaydedilmemiş ${n} maç skoru var.\n\n`
-    + 'Yeni kura çekilirse hepsi silinir. Saklamak istiyorsan önce '
-    + '"Fikstürü kaydet" de.\n\nYine de devam edilsin mi?'
-  );
+  return confirm(tx('discard.confirm', { n: n }));
 }
 
 /** Bir maçın gösterilecek skoru: kullanıcı tahmini simülasyonu ezer. */
@@ -92,11 +95,11 @@ function buildView(fixtures) {
  */
 function newDraw(seed, apply) {
   const btn = $('#redraw');
-  btn.disabled = true; btn.textContent = 'Çekiliyor…';
+  btn.disabled = true; btn.textContent = tx('status.drawing');
   setTimeout(() => {
     const f = runDraw(TEAMS, seed);
-    btn.disabled = false; btn.textContent = 'Yeni kura';
-    if (!f) { $('#status').textContent = 'Kura çıkmadı, başka bir tohum dene.'; return; }
+    btn.disabled = false; btn.textContent = tx('bar.redraw');
+    if (!f) { setStatus('status.failed'); return; }
     state.seed = seed; state.fixtures = f; state.results = null; state.simIndex = null;
     state.view = buildView(f);
     state.picks = {};
@@ -104,9 +107,8 @@ function newDraw(seed, apply) {
     writeHash(seed);
     if (apply) apply();
     const problems = verify(f, TEAMS);
-    $('#status').textContent = problems.length
-      ? 'Kural ihlali: ' + problems[0]
-      : '144 maç · tüm kurallar sağlandı';
+    if (problems.length) setStatus('status.violation', { msg: problems[0] });
+    else setStatus('status.ok');
     renderAll();
   }, 10);
 }
@@ -152,7 +154,7 @@ function renderMatrix() {
     const th = el('th', 'row');
     th.append(byId[rowId].name);
     const em = el('em', null, byId[rowId].country); th.appendChild(em);
-    th.title = byId[rowId].name + ' fikstürünü göster';
+    th.title = tx('matrix.rowTitle', { team: byId[rowId].name });
     tr.appendChild(th);
     tr.appendChild(el('td', 'potrail p' + byId[rowId].pot));
 
@@ -164,8 +166,8 @@ function renderMatrix() {
         td.classList.add(hit.venue === 'H' ? 'home' : 'away', 'p' + byId[colId].pot);
         td.appendChild(el('i'));
         td.title = hit.venue === 'H'
-          ? `MD${hit.f.md} · ${byId[rowId].name} - ${byId[colId].name} (ev sahibi)`
-          : `MD${hit.f.md} · ${byId[colId].name} - ${byId[rowId].name} (deplasman)`;
+          ? tx('matrix.cellHome', { md: hit.f.md, home: byId[rowId].name, away: byId[colId].name })
+          : tx('matrix.cellAway', { md: hit.f.md, home: byId[colId].name, away: byId[rowId].name });
       }
       td.dataset.row = rowId; td.dataset.col = colId;
       tr.appendChild(td);
@@ -206,8 +208,7 @@ function selectTeam(id) {
 function renderDetail() {
   const host = $('#detail'); host.innerHTML = '';
   if (!state.selected) {
-    host.appendChild(el('p', 'hint', 'Bir takım seç: satırdaki her dolu kare bir maç. '
-      + 'Dolu kare iç saha, çerçeveli kare deplasman. Renk rakibin torbası.'));
+    host.appendChild(el('p', 'hint', tx('detail.hint')));
     return;
   }
   const t = byId[state.selected];
@@ -216,8 +217,8 @@ function renderDetail() {
   state.view[t.id].forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
   host.appendChild(el('div', 'meta',
-    `${t.country} · Torba ${t.pot} · 4 iç saha / 4 deplasman`
-    + (doubled.length ? ` · aynı ülkeden çift rakip: ${doubled.join(', ')}` : '')));
+    tx('detail.meta', { country: t.country, pot: t.pot })
+    + (doubled.length ? ' · ' + tx('detail.doubled', { list: doubled.join(', ') }) : '')));
 
   const ol = el('ol', 'fix');
   state.view[t.id].forEach(r => {
@@ -236,12 +237,14 @@ function renderDetail() {
 // ---------------------------------------------------------------------------
 function fillTeamPicker() {
   const pick = $('#teampick');
-  const all = el('option', null, 'Tüm takımlar');
+  const current = pick.value;
+  pick.innerHTML = '';
+  const all = el('option', null, tx('teams.allOption'));
   all.value = '';
   pick.appendChild(all);
   [1, 2, 3, 4].forEach(pot => {
     const group = document.createElement('optgroup');
-    group.label = 'Torba ' + pot;
+    group.label = tx('pot', { n: pot });
     ORDER.filter(id => byId[id].pot === pot)
       .sort((a, b) => byId[a].name.localeCompare(byId[b].name, 'tr'))
       .forEach(id => {
@@ -251,20 +254,21 @@ function fillTeamPicker() {
       });
     pick.appendChild(group);
   });
+  pick.value = current || '';
 }
 
 function renderTeams() {
   const host = $('#teams'); host.innerHTML = '';
   $('#teamall').hidden = !state.selected;
   $('#teamhint').textContent = state.selected
-    ? 'matris sekmesinde de bu takım seçili'
-    : 'listeden seç ya da bir karta tıkla';
+    ? tx('teams.hintSelected')
+    : tx('teams.hint');
 
   if (state.selected) { host.appendChild(teamFocus(byId[state.selected])); return; }
 
   [1, 2, 3, 4].forEach(pot => {
     const head = el('div', 'pothead');
-    head.appendChild(el('h2', null, 'Torba ' + pot));
+    head.appendChild(el('h2', null, tx('pot', { n: pot })));
     head.appendChild(el('div', 'line'));
     host.appendChild(head);
     const grid = el('div', 'cards');
@@ -273,7 +277,7 @@ function renderTeams() {
       const card = el('button', 'card p' + pot);
       card.type = 'button';
       card.dataset.team = id;
-      card.title = t.name + ' fikstürünü aç';
+      card.title = tx('teams.cardTitle', { team: t.name });
       const h = el('h4', null, t.name);
       card.appendChild(h);
       card.appendChild(el('div', 'sub', t.country));
@@ -311,8 +315,8 @@ function teamFocus(t) {
   const counts = {};
   rows.forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
-  const bits = [t.country, 'Torba ' + t.pot, '4 iç saha / 4 deplasman'];
-  if (doubled.length) bits.push('aynı ülkeden çift rakip: ' + doubled.join(', '));
+  const bits = [t.country, tx('pot', { n: t.pot }), tx('focus.homeAway')];
+  if (doubled.length) bits.push(tx('detail.doubled', { list: doubled.join(', ') }));
   if (hasScores) {
     let w = 0, d = 0, l = 0, gf = 0, ga = 0, n = 0;
     rows.forEach(r => {
@@ -323,16 +327,17 @@ function teamFocus(t) {
       gf += f; ga += a; n++;
       if (f > a) w++; else if (f === a) d++; else l++;
     });
-    bits.push(`${n} maç · ${w}G ${d}B ${l}M · ${gf}-${ga} · ${w * 3 + d} puan`);
+    bits.push(tx('focus.record', { n: n, w: w, d: d, l: l, gf: gf, ga: ga, pts: w * 3 + d }));
   }
   box.appendChild(el('div', 'meta', bits.join(' · ')));
 
   const scroll = el('div', 'fixscroll');
   const table = el('table', 'fixtab');
   const hr = el('tr');
-  const cols = ['Hafta', 'Tarih', 'Saha', 'Rakip', 'Ülke', 'Torba'];
-  if (hasScores) cols.push('Skor');
-  cols.forEach(c => hr.appendChild(el('th', null, c)));
+  const cols = ['focus.col.md', 'focus.col.date', 'focus.col.venue',
+                'focus.col.opponent', 'focus.col.country', 'focus.col.pot'];
+  if (hasScores) cols.push('focus.col.score');
+  cols.forEach(c => hr.appendChild(el('th', null, tx(c))));
   table.appendChild(el('thead')).appendChild(hr);
 
   const tb = el('tbody');
@@ -340,11 +345,11 @@ function teamFocus(t) {
     const opp = byId[r.opp];
     const tr = el('tr');
     tr.appendChild(el('td', 'md', 'MD' + r.md));
-    tr.appendChild(el('td', 'dt', MD_DATES[r.md - 1]));
+    tr.appendChild(el('td', 'dt', txraw('md.dates')[r.md - 1]));
 
     const vn = el('td', 'vn p' + opp.pot);
     vn.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
-    vn.appendChild(el('span', 'vt', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+    vn.appendChild(el('span', 'vt', tx(r.venue === 'H' ? 'venue.home' : 'venue.away')));
     tr.appendChild(vn);
 
     tr.appendChild(el('td', 'nm', opp.name));
@@ -359,7 +364,7 @@ function teamFocus(t) {
         const a = r.venue === 'H' ? res.ag : res.hg;
         const cls = 'sc ' + (f > a ? 'w' : f === a ? 'd' : 'l') + (res.pick ? ' pick' : '');
         const td = el('td', cls, f + '-' + a);
-        td.title = res.pick ? 'senin tahminin' : 'simülasyon';
+        td.title = tx(res.pick ? 'tip.pick' : 'tip.sim');
         tr.appendChild(td);
       }
     }
@@ -374,9 +379,6 @@ function teamFocus(t) {
 // ---------------------------------------------------------------------------
 // 3. Haftalar
 // ---------------------------------------------------------------------------
-const MD_DATES = ['8-10 Eyl 2026', '13/14 Eki 2026', '20/21 Eki 2026', '3/4 Kas 2026',
-                  '24/25 Kas 2026', '8/9 Ara 2026', '19/20 Oca 2027', '27 Oca 2027'];
-
 function goalInput(key, side, value, placeholder) {
   const i = document.createElement('input');
   i.type = 'text';
@@ -386,7 +388,7 @@ function goalInput(key, side, value, placeholder) {
   i.dataset.side = side;
   i.value = value === null ? '' : String(value);
   i.placeholder = placeholder === null ? '·' : String(placeholder);
-  i.setAttribute('aria-label', side === 'h' ? 'ev sahibi gol tahmini' : 'deplasman gol tahmini');
+  i.setAttribute('aria-label', tx(side === 'h' ? 'md.goalHome' : 'md.goalAway'));
   return i;
 }
 
@@ -395,8 +397,8 @@ function renderMatchdays() {
   const grid = el('div', 'mdgrid');
   for (let md = 1; md <= 8; md++) {
     const b = el('div', 'mdblock');
-    b.appendChild(el('h4', null, 'Hafta ' + md));
-    b.appendChild(el('div', 'hint', MD_DATES[md - 1]));
+    b.appendChild(el('h4', null, tx('md.week', { n: md })));
+    b.appendChild(el('div', 'hint', txraw('md.dates')[md - 1]));
     state.fixtures.filter(f => f.md === md).forEach(f => {
       const key = fxKey(f);
       const pick = state.picks[key] || null;
@@ -420,9 +422,7 @@ function renderMatchdays() {
 function updatePickCount() {
   const n = pickCount();
   $('#pickclear').hidden = n === 0;
-  $('#pickcount').textContent = n
-    ? `144 maçın ${n} tanesini sen doldurdun · puan tablosu bunları kullanıyor`
-    : 'skor kutularına kendi tahminini yaz, puan tablosu ona göre hesaplansın';
+  $('#pickcount').textContent = n ? tx('md.countSome', { n: n }) : tx('md.countNone');
 }
 
 /** Bir skor kutusu degistiginde state'i tazeler; haftalar ekrani yeniden cizilmez. */
@@ -465,14 +465,13 @@ function autofillPicks() {
   state.dirty = true;
   renderMatchdays(); renderTable(); renderTeams();
   const added = pickCount() - before;
-  mdStatus(added
-    ? `${added} maç modele göre dolduruldu` + (before ? `, senin girdiğin ${before} maça dokunulmadı.` : '.')
-    : 'Boş kutu kalmamış, hepsi zaten doluydu.');
+  mdStatus(!added ? tx('md.allFull')
+    : (before ? tx('md.filledKept', { n: added, kept: before }) : tx('md.filled', { n: added })));
 }
 
 function clearPicks() {
   if (!pickCount()) return;
-  if (!confirm('Bu kuradaki tüm tahminlerin silinecek. Devam edilsin mi?')) return;
+  if (!confirm(tx('md.clearConfirm'))) return;
   state.picks = {};
   state.dirty = mergedResults().length > 0;
   renderMatchdays(); renderTable(); renderTeams();
@@ -493,19 +492,13 @@ function sourceNote(played, picked) {
   const p = el('p', 'src');
   const total = state.fixtures.length;
   if (picked && played > picked) {
-    p.append(String(picked) + ' maç ');
-    p.appendChild(el('b', null, 'senin tahminin'));
-    p.append(` · ${played - picked} maç simülasyon`);
+    p.textContent = tx('src.mixed', { picked: picked, sim: played - picked });
   } else if (picked && played === total) {
-    p.append('Tablo tamamen ');
-    p.appendChild(el('b', null, `senin ${picked} tahminin`));
-    p.append('den hesaplandı.');
+    p.textContent = tx('src.allPicks', { picked: picked });
   } else if (picked) {
-    p.append('Tablo yalnızca ');
-    p.appendChild(el('b', null, `senin ${picked} tahminin`));
-    p.append(' üzerinden hesaplandı, kalan maçlar oynanmadı.');
+    p.textContent = tx('src.picksOnly', { picked: picked });
   } else {
-    p.append(`${played} maç simülasyon · skor kutularına tahmin yazarsan tablo onu kullanır`);
+    p.textContent = tx('src.simOnly', { played: played });
   }
   return p;
 }
@@ -514,18 +507,16 @@ function renderTable() {
   const host = $('#table'); host.innerHTML = '';
   const results = mergedResults();
   if (!results.length) {
-    host.appendChild(el('p', 'hint', 'Sezonu oyna: 144 maç Poisson modeliyle üretilir, '
-      + 'tablo UEFA sıralama kriterlerine göre dizilir. Haftalar sekmesinden kendi '
-      + 'tahminlerini de yazabilirsin.'));
+    host.appendChild(el('p', 'hint', tx('table.hint')));
     return;
   }
   host.appendChild(sourceNote(results.length, pickCount()));
   const rows = buildTable(results, TEAMS);
   const table = el('table', 'std');
   const head = el('tr');
-  ['#', 'Takım', 'O', 'G', 'B', 'M', 'A', 'Y', 'AV', 'P'].forEach((h, i) => {
-    const th = el('th', i === 1 ? 'l' : '', h); head.appendChild(th);
-  });
+  ['table.col.pos', 'table.col.club', 'table.col.p', 'table.col.w', 'table.col.d',
+   'table.col.l', 'table.col.gf', 'table.col.ga', 'table.col.gd', 'table.col.pts']
+    .forEach((k, i) => head.appendChild(el('th', i === 1 ? 'l' : '', tx(k))));
   table.appendChild(el('thead')).appendChild(head);
   const tb = el('tbody');
   rows.forEach((r, i) => {
@@ -540,9 +531,15 @@ function renderTable() {
   table.appendChild(tb);
   host.appendChild(table);
   const bands = el('div', 'bands');
-  bands.innerHTML = '<span><i class="swatch" style="background:rgba(35,37,110,.35)"></i>1-8 son 16\'ya doğrudan</span>'
-    + '<span><i class="swatch" style="background:rgba(178,106,0,.35)"></i>9-24 play-off</span>'
-    + '<span><i class="swatch" style="background:var(--paper-3)"></i>25-36 elendi</span>';
+  [['rgba(35,37,110,.35)', 'bands.q'], ['rgba(178,106,0,.35)', 'bands.po'],
+   ['var(--paper-3)', 'bands.out']].forEach(pair => {
+    const span = el('span');
+    const sw = el('i', 'swatch');
+    sw.style.background = pair[0];
+    span.appendChild(sw);
+    span.append(tx(pair[1]));
+    bands.appendChild(span);
+  });
   host.appendChild(bands);
 }
 
@@ -554,7 +551,7 @@ function runMonteCarlo() {
   const total = mode === 'fixed' ? 3000 : 120;
   const btn = $('#mcrun'); btn.disabled = true;
   const out = $('#probs'); out.innerHTML = '';
-  const prog = el('div', 'progress', 'Hesaplanıyor…'); out.appendChild(prog);
+  const prog = el('div', 'progress', tx('probs.working', { done: 0, total: total })); out.appendChild(prog);
 
   const acc = Object.fromEntries(ORDER.map(id => [id, { q: 0, p: 0, pts: 0, pos: 0 }]));
   const rng = makeRng((Math.random() * 1e9) | 0);
@@ -575,7 +572,7 @@ function runMonteCarlo() {
       });
       done++;
     }
-    prog.textContent = `Hesaplanıyor… ${done}/${total} sezon`;
+    prog.textContent = tx('probs.working', { done: done, total: total });
     if (done < total) return requestAnimationFrame(chunk);
     btn.disabled = false;
     renderProbs(acc, total, mode);
@@ -585,14 +582,13 @@ function runMonteCarlo() {
 
 function renderProbs(acc, total, mode) {
   const out = $('#probs'); out.innerHTML = '';
-  out.appendChild(el('p', 'hint', mode === 'fixed'
-    ? `${total} sezon, bu kura sabit tutularak. Fikstür şansı hesaba katılmıyor.`
-    : `${total} sezon, her sezon kura da yeniden çekilerek. Örneklem küçük, ±%4 oynar.`));
+  out.appendChild(el('p', 'hint',
+    tx(mode === 'fixed' ? 'probs.hintFixed' : 'probs.hintRedraw', { total: total })));
   const list = ORDER.slice().sort((a, b) => acc[b].q - acc[a].q || acc[b].p - acc[a].p);
   const head = el('div', 'prob');
   head.appendChild(el('div', 'nm', ''));
-  head.appendChild(el('div', 'hint', 'ilk 8  ·  play-off  ·  elendi'));
-  head.appendChild(el('div', 'hint', 'ort. P'));
+  head.appendChild(el('div', 'hint', tx('probs.legend')));
+  head.appendChild(el('div', 'hint', tx('probs.avg')));
   out.appendChild(head);
   list.forEach(id => {
     const a = acc[id];
@@ -602,7 +598,7 @@ function renderProbs(acc, total, mode) {
     const q = el('i', 'q'); q.style.width = (100 * a.q / total) + '%';
     const p = el('i', 'p'); p.style.width = (100 * a.p / total) + '%';
     bar.append(q, p);
-    bar.title = `ilk 8: %${(100 * a.q / total).toFixed(1)} · play-off: %${(100 * a.p / total).toFixed(1)}`;
+    bar.title = tx('probs.tooltip', { q: (100 * a.q / total).toFixed(1), p: (100 * a.p / total).toFixed(1) });
     row.appendChild(bar);
     row.appendChild(el('div', '', (a.pts / total).toFixed(1)));
     out.appendChild(row);
@@ -649,8 +645,8 @@ function closedBall(pot) {
   const b = el('button', 'ball p' + pot);
   b.type = 'button';
   b.dataset.pot = String(pot);
-  b.title = 'Torba ' + pot + ' · top çek';
-  b.setAttribute('aria-label', 'Torba ' + pot + ' torbasından top çek');
+  b.title = tx('draw.ballTitle', { n: pot });
+  b.setAttribute('aria-label', tx('draw.ballLabel', { n: pot }));
   return b;
 }
 
@@ -660,7 +656,7 @@ function renderBowls() {
   [1, 2, 3, 4].forEach(pot => {
     const bowl = el('div', 'bowl p' + pot);
     bowl.dataset.pot = String(pot);
-    bowl.appendChild(el('h4', null, 'Torba ' + pot));
+    bowl.appendChild(el('h4', null, tx('pot', { n: pot })));
     const balls = el('div', 'balls');
     ORDER.filter(id => byId[id].pot === pot).forEach(() => balls.appendChild(closedBall(pot)));
     bowl.appendChild(balls);
@@ -681,7 +677,7 @@ function openBall(ball, t) {
   if (!ball) return;
   ball.textContent = t.code;
   ball.title = t.name;
-  ball.setAttribute('aria-label', t.name + ' çekildi');
+  ball.setAttribute('aria-label', tx('draw.ballDrawn', { team: t.name }));
   ball.classList.add('picked');
 }
 
@@ -690,11 +686,11 @@ function setDrawUI() {
   const left = 36 - ceremony.drawn;
   $('#drawstart').disabled = busy || left === 0;
   $('#drawstart').textContent = busy && ceremony.auto
-    ? 'Çekiliyor…'
-    : (ceremony.drawn ? `Kalan ${left} takımı otomatik çek` : 'Hepsini otomatik çek');
+    ? tx('draw.drawing')
+    : (ceremony.drawn ? tx('draw.autoRemaining', { n: left }) : tx('draw.auto'));
   $('#drawpause').hidden = !(busy && ceremony.auto);
   $('#drawskip').hidden = !busy;
-  $('#drawskip').textContent = ceremony.auto ? 'Sonuca atla' : 'Bu takımı hızlandır';
+  $('#drawskip').textContent = tx(ceremony.auto ? 'draw.skipAll' : 'draw.skipTeam');
   $('#drawreset').hidden = ceremony.drawn === 0 || busy;
   $('#drawbowls').classList.toggle('locked', busy);
 }
@@ -711,7 +707,7 @@ function stageTeam(t) {
   card.appendChild(stageBall(t));
   const info = el('div', 'info');
   info.appendChild(el('h3', null, t.name));
-  info.appendChild(el('div', 'meta', t.country + ' · Torba ' + t.pot + ' · 8 rakip çekiliyor'));
+  info.appendChild(el('div', 'meta', tx('draw.opponentsOf', { country: t.country, pot: t.pot })));
   card.appendChild(info);
   stage.appendChild(card);
   const opps = el('div', 'opps');
@@ -724,7 +720,7 @@ function revealOpponent(r) {
   const row = el('div', 'opp p' + opp.pot);
   row.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
   row.appendChild(el('span', 'nm', opp.name));
-  row.appendChild(el('span', 'vn', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+  row.appendChild(el('span', 'vn', tx(r.venue === 'H' ? 'venue.home' : 'venue.away')));
   $('#drawopps').appendChild(row);
   requestAnimationFrame(() => row.classList.add('in'));
 }
@@ -738,12 +734,11 @@ function resetCeremony() {
   ceremony.drawn = 0;
   ceremony.pot = 0;
   ceremony.taken = new Set();
-  $('#drawpause').textContent = 'Duraklat';
+  $('#drawpause').textContent = tx('draw.pause');
   renderBowls();
   $('#drawstage').innerHTML = '';
   setDrawUI();
-  drawStatus('Toplar kapalı. Bir torbadan top çek — hangi takım çıkacağı belli değil, '
-    + 'o torbada kalanlar arasından rastgele biri açılır ve sekiz rakibi tek tek gelir.');
+  drawStatus(tx('draw.intro'));
 }
 
 function finishCeremony() {
@@ -761,7 +756,7 @@ function finishCeremony() {
   ceremony.skip = false;
   $('#drawpause').textContent = 'Duraklat';
   setDrawUI();
-  drawStatus('36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.');
+  drawStatus(tx('draw.finished'));
 }
 
 /** Tek takimin cekilisi: top calkalanir, acilir, rakipler tek tek gelir. */
@@ -769,14 +764,14 @@ async function revealTeam(t, gen, ball) {
   ceremony.pot = t.pot;
   ceremony.taken.add(t.id);
   activateBowl(t.pot);
-  drawStatus(`Torba ${t.pot} · top çalkalanıyor…`);
+  drawStatus(tx('draw.spinning', { pot: t.pot }));
   if (!await cwait(CTIME.spin, gen)) return false;
 
   openBall(ball || freeBall(t.pot), t);
   activateBowl(0);
   ceremony.drawn++;
   stageTeam(t);
-  drawStatus(`${ceremony.drawn}/36 · ${t.name} çekildi, rakipleri açılıyor…`);
+  drawStatus(tx('draw.opening', { n: ceremony.drawn, team: t.name }));
   if (!await cwait(CTIME.reveal, gen)) return false;
 
   const rows = state.view[t.id];
@@ -785,7 +780,7 @@ async function revealTeam(t, gen, ball) {
     if (ceremony.skip) continue;
     if (!await cwait(CTIME.opponent, gen)) return false;
   }
-  drawStatus(`${ceremony.drawn}/36 · ${t.name} tamamlandı · 4 iç saha, 4 deplasman`);
+  drawStatus(tx('draw.teamDone', { n: ceremony.drawn, team: t.name }));
   return true;
 }
 
@@ -810,7 +805,7 @@ async function pickBall(ball) {
   ceremony.skip = false;
   if (ok && ceremony.drawn >= 36) { finishCeremony(); return; }
   setDrawUI();
-  if (ok) drawStatus(`${ceremony.drawn}/36 çekildi · sıradaki topu seç ya da otomatik devam et`);
+  if (ok) drawStatus(tx('draw.next', { n: ceremony.drawn }));
 }
 
 async function runCeremony() {
@@ -902,17 +897,17 @@ async function copyText(text, btn) {
   try {
     await navigator.clipboard.writeText(text);
     const old = btn.textContent;
-    btn.textContent = 'Kopyalandı';
+    btn.textContent = tx('share.copied');
     setTimeout(() => { btn.textContent = old; }, 1500);
   } catch (e) {
-    prompt('Linki kopyala:', text);
+    prompt(tx('share.fallback'), text);
   }
 }
 
 function renderShare(host, id) {
   host.innerHTML = '';
   const box = el('div', 'sharebox');
-  box.appendChild(el('div', 'lbl', 'Paylaşım linki · açan kişi bu kurayı ve skorları görür'));
+  box.appendChild(el('div', 'lbl', tx('share.label')));
   const row = el('div', 'row');
   const input = document.createElement('input');
   input.type = 'text';
@@ -920,7 +915,7 @@ function renderShare(host, id) {
   input.value = shareUrl(id);
   input.addEventListener('focus', () => input.select());
   row.appendChild(input);
-  const btn = el('button', null, 'Kopyala');
+  const btn = el('button', null, tx('share.copy'));
   btn.addEventListener('click', () => copyText(input.value, btn));
   row.appendChild(btn);
   box.appendChild(row);
@@ -929,11 +924,11 @@ function renderShare(host, id) {
 
 /** Ekrandaki skorlari sunucuya yazar; id ve sayilari dondurur. */
 async function submitSave(name) {
-  if (!API) throw new Error('kayıt sunucusu yapılandırılmadı');
-  if (!name) throw new Error('kayda bir ad gerekli');
+  if (!API) throw new Error(tx('saves.notConfigured'));
+  if (!name) throw new Error(tx('saves.needName'));
   const { scores, picks } = currentScores();
   const total = Object.keys(scores).length;
-  if (!total) throw new Error('kaydedecek skor yok, önce skorları doldur');
+  if (!total) throw new Error(tx('saves.needScores'));
 
   const data = await apiCall('/api/saves', {
     method: 'POST',
@@ -951,32 +946,32 @@ async function submitSave(name) {
 async function createSave() {
   const btn = $('#savebtn');
   btn.disabled = true;
-  saveStatus('Kaydediliyor…');
+  saveStatus(tx('saves.saving'));
   try {
     const r = await submitSave($('#savename').value.trim());
     $('#savename').value = '';
-    saveStatus(`Kaydedildi · ${r.total} maç, ${r.picks} tanesi senin tahminin.`);
+    saveStatus(tx('saves.saved', { total: r.total, picks: r.picks }));
     renderShare($('#saveshare'), r.id);
     listSaves();
   } catch (e) {
-    saveStatus('Kaydedilemedi: ' + e.message, true);
+    saveStatus(tx('saves.saveFailed', { msg: e.message }), true);
   } finally {
     btn.disabled = false;
   }
 }
 
 async function saveFixture() {
-  const name = prompt('Kayda bir ad ver:', 'Kura ' + state.seed);
+  const name = prompt(tx('md.savePrompt'), tx('md.saveDefault', { seed: state.seed }));
   if (name === null) return;
   const btn = $('#savefixture');
   btn.disabled = true;
-  mdStatus('Kaydediliyor…');
+  mdStatus(tx('saves.saving'));
   try {
     const r = await submitSave(name.trim());
-    mdStatus(`Kaydedildi · ${r.total} maç, ${r.picks} tanesi senin tahminin.`);
+    mdStatus(tx('saves.saved', { total: r.total, picks: r.picks }));
     renderShare($('#mdshare'), r.id);
   } catch (e) {
-    mdStatus('Kaydedilemedi: ' + e.message, true);
+    mdStatus(tx('saves.saveFailed', { msg: e.message }), true);
   } finally {
     btn.disabled = false;
   }
@@ -986,17 +981,17 @@ async function listSaves() {
   const host = $('#saves');
   host.innerHTML = '';
   if (!API) {
-    host.appendChild(el('p', 'hint', 'Kayıt sunucusu henüz yapılandırılmadı.'));
+    host.appendChild(el('p', 'hint', tx('saves.notConfigured')));
     return;
   }
-  host.appendChild(el('p', 'hint', 'Kayıtlar yükleniyor…'));
+  host.appendChild(el('p', 'hint', tx('saves.loading')));
   try {
     const data = await apiCall('/api/saves');
     savesLoaded = true;
     renderSaves(data.saves || []);
   } catch (e) {
     host.innerHTML = '';
-    host.appendChild(el('p', 'hint bad', 'Liste alınamadı: ' + e.message));
+    host.appendChild(el('p', 'hint bad', tx('saves.listFailed', { msg: e.message })));
   }
 }
 
@@ -1004,7 +999,7 @@ function renderSaves(rows) {
   const host = $('#saves');
   host.innerHTML = '';
   if (!rows.length) {
-    host.appendChild(el('p', 'hint', 'Henüz kayıt yok. Bir kura çek, sezonu oyna, sonra kaydet.'));
+    host.appendChild(el('p', 'hint', tx('saves.empty')));
     return;
   }
   const tokens = loadTokens();
@@ -1014,20 +1009,20 @@ function renderSaves(rows) {
     const row = el('div', 'saverow' + (mine ? ' mine' : ''));
     const left = el('div');
     left.appendChild(el('h4', null, r.name));
-    const when = new Date(r.created_at).toLocaleDateString('tr-TR');
+    const when = new Date(r.created_at).toLocaleDateString(tx('locale'));
     left.appendChild(el('div', 'meta',
-      `tohum ${r.seed} · ${r.matches} maç · ${r.picks} tahmin · ${when}`));
+      tx('saves.meta', { seed: r.seed, matches: r.matches, picks: r.picks, date: when })));
     row.appendChild(left);
 
     const acts = el('div', 'acts');
-    const open = el('button', null, 'Aç');
+    const open = el('button', null, tx('saves.open'));
     open.dataset.open = r.id;
     acts.appendChild(open);
-    const link = el('button', 'ghost', 'Link');
+    const link = el('button', 'ghost', tx('saves.link'));
     link.dataset.link = r.id;
     acts.appendChild(link);
     if (mine) {
-      const del = el('button', 'ghost', 'Sil');
+      const del = el('button', 'ghost', tx('saves.delete'));
       del.dataset.del = r.id;
       acts.appendChild(del);
     }
@@ -1039,8 +1034,8 @@ function renderSaves(rows) {
 
 async function openSave(id, fromLink) {
   if (!fromLink && !confirmDiscard()) return;
-  saveStatus('Kayıt açılıyor…');
-  if (fromLink) mdStatus('Paylaşılan kayıt açılıyor…');
+  saveStatus(tx('saves.opening'));
+  if (fromLink) mdStatus(tx('saves.openingShared'));
   try {
     const data = await apiCall('/api/saves/' + encodeURIComponent(id));
     const payload = data.payload || {};
@@ -1049,19 +1044,19 @@ async function openSave(id, fromLink) {
       applySave(payload);
       writeHash('k=' + id);
     });
-    const note = `Açıldı: ${data.name} · tohum ${payload.seed} · ${data.matches} maç`;
+    const note = tx('saves.opened', { name: data.name, seed: payload.seed, matches: data.matches });
     saveStatus(note);
     if (fromLink) { mdStatus(note); showTab('table'); }
   } catch (e) {
-    saveStatus('Açılamadı: ' + e.message, true);
-    if (fromLink) mdStatus('Paylaşılan kayıt açılamadı: ' + e.message, true);
+    saveStatus(tx('saves.openFailed', { msg: e.message }), true);
+    if (fromLink) mdStatus(tx('saves.openFailedShared', { msg: e.message }), true);
   }
 }
 
 async function removeSave(id) {
   const tokens = loadTokens();
-  if (!tokens[id]) return saveStatus('Bu kayıt sana ait değil.', true);
-  if (!confirm('Bu kayıt kalıcı olarak silinecek. Devam edilsin mi?')) return;
+  if (!tokens[id]) return saveStatus(tx('saves.notYours'), true);
+  if (!confirm(tx('saves.deleteConfirm'))) return;
   try {
     await apiCall('/api/saves/' + encodeURIComponent(id), {
       method: 'DELETE',
@@ -1069,10 +1064,10 @@ async function removeSave(id) {
     });
     delete tokens[id];
     storeTokens(tokens);
-    saveStatus('Kayıt silindi.');
+    saveStatus(tx('saves.deleted'));
     listSaves();
   } catch (e) {
-    saveStatus('Silinemedi: ' + e.message, true);
+    saveStatus(tx('saves.deleteFailed', { msg: e.message }), true);
   }
 }
 
@@ -1083,7 +1078,7 @@ function renderAll() {
   renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
   resetCeremony();
   $('#probs').innerHTML = '';
-  $('#probs').appendChild(el('p', 'hint', 'Hesapla butonuna bas.'));
+  $('#probs').appendChild(el('p', 'hint', tx('probs.press')));
 }
 
 document.querySelectorAll('nav.tabs button').forEach(b => {
@@ -1116,7 +1111,7 @@ $('#drawbowls').addEventListener('click', e => {
 });
 $('#drawpause').addEventListener('click', () => {
   ceremony.paused = !ceremony.paused;
-  $('#drawpause').textContent = ceremony.paused ? 'Devam et' : 'Duraklat';
+  $('#drawpause').textContent = tx(ceremony.paused ? 'draw.resume' : 'draw.pause');
   activateBowl(ceremony.paused ? 0 : ceremony.pot);
 });
 $('#drawspeed').addEventListener('change', e => {
@@ -1145,6 +1140,47 @@ window.addEventListener('hashchange', () => {
     newDraw(h.seed);
   }
 });
+
+$('#lang').addEventListener('change', e => setLang(e.target.value));
+
+/**
+ * Dili degistirir ve ekrandaki her seyi yeniden cizer. Kura, tahminler ve skorlar
+ * korunur; yalnizca metinler degisir.
+ */
+function setLang(lang) {
+  LANG = I18N[lang] ? lang : 'en';
+  try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* depolama kapalı */ }
+  $('#lang').value = LANG;
+  applyStaticI18n();
+  setStatus(state.status.key, state.status.vars);
+  fillTeamPicker();
+  renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+  relabelCeremony();
+  mdStatus('');
+  saveStatus('');
+  $('#probs').innerHTML = '';
+  $('#probs').appendChild(el('p', 'hint', tx('probs.press')));
+  if (savesLoaded) listSaves();
+}
+
+/** Torba basliklarini yeniden yazar; devam eden cekilisi bozmaz. */
+function relabelCeremony() {
+  document.querySelectorAll('#drawbowls .bowl').forEach(bowl => {
+    const h = bowl.querySelector('h4');
+    if (h) h.textContent = tx('pot', { n: bowl.dataset.pot });
+    bowl.querySelectorAll('.ball:not(.picked)').forEach(b => {
+      b.title = tx('draw.ballTitle', { n: bowl.dataset.pot });
+      b.setAttribute('aria-label', tx('draw.ballLabel', { n: bowl.dataset.pot }));
+    });
+  });
+  setDrawUI();
+  if (!ceremony.busy && ceremony.drawn === 0) drawStatus(tx('draw.intro'));
+  else if (!ceremony.busy && ceremony.drawn >= 36) drawStatus(tx('draw.finished'));
+}
+
+LANG = detectLang();
+$('#lang').value = LANG;
+applyStaticI18n();
 
 const initialHash = parseHash();
 state.seed = initialHash.seed || state.seed;
