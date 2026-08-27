@@ -38,9 +38,17 @@ tıklayarak tek takımın fikstürü), **Haftalar**, **Puan tablosu**, **Olasıl
 
 ### Çekiliş töreni
 
-Dört torba, torba başına 9 top. Torbadan bir top çekilir, takım sahneye çıkar,
-sekiz rakibi tek tek açılır; sıra torba 1'den başlar, torba içindeki sıra tohuma
-bağlıdır. Duraklat, sonuca atla ve 1x/2x/4x hız kontrolleri var.
+Dört torba, torba başına 9 top. **Varsayılan mod elle seçim:** herhangi bir topa
+tıklarsın, o takım sahneye çıkar, sekiz rakibi tek tek açılır; bitince sıradaki
+topu seçersin. Çekiliş sürerken diğer toplar kilitlenir.
+
+**Hepsini otomatik çek** kalan takımları sırayla çeker (torba 1'den başlar, torba
+içindeki sıra tohuma bağlıdır); bu modda duraklat ve sonuca atla vardır. Elle
+başlayıp otomatiğe devam etmek mümkündür, otomatik kaldığı yerden sürer.
+
+Hız 1x/2x/4x. 1x'te tek takım yaklaşık 4.7 saniye sürer (top 0.9 sn çalkalanır,
+takım 0.7 sn sahnede bekler, her rakip 0.42 sn arayla açılır). **Baştan al**
+torbaları sıfırlar.
 
 Bu bir **canlandırma**: kura zaten hesaplanmıştır, tören onu tekrar oynatır.
 Kısıt çözücü canlı çalışmaz, dolayısıyla gerçek çekilişteki gibi bir fizibilite

@@ -67,13 +67,14 @@ __UI__
 
   <section id="view-draw" hidden>
     <div class="bar">
-      <button id="drawstart">Çekilişi başlat</button>
+      <button id="drawstart">Hepsini otomatik çek</button>
       <button id="drawpause" class="ghost" hidden>Duraklat</button>
-      <button id="drawskip" class="ghost" hidden>Sonuca atla</button>
+      <button id="drawskip" class="ghost" hidden>Bu takımı hızlandır</button>
+      <button id="drawreset" class="ghost" hidden>Baştan al</button>
       <label class="seedbox">hız
         <select id="drawspeed">
-          <option value="1">1x</option>
-          <option value="2" selected>2x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
           <option value="4">4x</option>
         </select>
       </label>

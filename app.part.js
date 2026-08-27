@@ -612,7 +612,8 @@ function renderProbs(acc, total, mode) {
 // ---------------------------------------------------------------------------
 // 6. Cekilis toreni
 // ---------------------------------------------------------------------------
-const ceremony = { gen: 0, running: false, paused: false, skip: false, speed: 2 };
+const ceremony = { gen: 0, busy: false, auto: false, paused: false, skip: false, speed: 1, pot: 0, drawn: 0 };
+const CTIME = { spin: 900, reveal: 700, opponent: 420, rest: 600 };
 
 function drawStatus(msg) { $('#drawstatus').textContent = msg; }
 
@@ -632,10 +633,15 @@ function cwait(ms, gen) {
   });
 }
 
-function ballEl(t, extra) {
-  const b = el('div', 'ball p' + t.pot + (extra ? ' ' + extra : ''));
+function ballEl(t, opts) {
+  const o = opts || {};
+  const b = el(o.interactive ? 'button' : 'div', 'ball p' + t.pot + (o.big ? ' big' : ''));
+  if (o.interactive) {
+    b.type = 'button';
+    b.setAttribute('aria-label', t.name + ' topunu çek');
+  }
   b.dataset.team = t.id;
-  b.title = t.name;
+  b.title = o.interactive ? t.name + ' · topu çekmek için tıkla' : t.name;
   b.textContent = t.code;
   return b;
 }
@@ -648,10 +654,30 @@ function renderBowls() {
     bowl.dataset.pot = String(pot);
     bowl.appendChild(el('h4', null, 'Torba ' + pot));
     const balls = el('div', 'balls');
-    ORDER.filter(id => byId[id].pot === pot).forEach(id => balls.appendChild(ballEl(byId[id])));
+    ORDER.filter(id => byId[id].pot === pot)
+      .forEach(id => balls.appendChild(ballEl(byId[id], { interactive: true })));
     bowl.appendChild(balls);
     host.appendChild(bowl);
   });
+}
+
+function isPicked(id) {
+  const b = document.querySelector('#drawbowls .ball[data-team="' + id + '"]');
+  return !!b && b.classList.contains('picked');
+}
+
+function setDrawUI() {
+  const busy = ceremony.busy;
+  const left = 36 - ceremony.drawn;
+  $('#drawstart').disabled = busy || left === 0;
+  $('#drawstart').textContent = busy && ceremony.auto
+    ? 'Çekiliyor…'
+    : (ceremony.drawn ? `Kalan ${left} takımı otomatik çek` : 'Hepsini otomatik çek');
+  $('#drawpause').hidden = !(busy && ceremony.auto);
+  $('#drawskip').hidden = !busy;
+  $('#drawskip').textContent = ceremony.auto ? 'Sonuca atla' : 'Bu takımı hızlandır';
+  $('#drawreset').hidden = ceremony.drawn === 0 || busy;
+  $('#drawbowls').classList.toggle('locked', busy);
 }
 
 function activateBowl(pot) {
@@ -663,7 +689,7 @@ function stageTeam(t) {
   const stage = $('#drawstage');
   stage.innerHTML = '';
   const card = el('div', 'drawcard');
-  card.appendChild(ballEl(t, 'big'));
+  card.appendChild(ballEl(t, { big: true }));
   const info = el('div', 'info');
   info.appendChild(el('h3', null, t.name));
   info.appendChild(el('div', 'meta', t.country + ' · Torba ' + t.pot + ' · 8 rakip çekiliyor'));
@@ -684,34 +710,99 @@ function revealOpponent(r) {
   requestAnimationFrame(() => row.classList.add('in'));
 }
 
-function drawButtons(running) {
-  $('#drawstart').textContent = running ? 'Çekiliyor…' : 'Çekilişi başlat';
-  $('#drawstart').disabled = running;
-  $('#drawpause').hidden = !running;
-  $('#drawskip').hidden = !running;
-  $('#drawpause').textContent = 'Duraklat';
-}
-
 function resetCeremony() {
   ceremony.gen++;
-  ceremony.running = false;
+  ceremony.busy = false;
+  ceremony.auto = false;
   ceremony.paused = false;
   ceremony.skip = false;
-  drawButtons(false);
+  ceremony.drawn = 0;
+  ceremony.pot = 0;
+  $('#drawpause').textContent = 'Duraklat';
   renderBowls();
   $('#drawstage').innerHTML = '';
-  drawStatus('36 top sırayla çekilir, her takımın 8 rakibi tek tek açılır. '
-    + 'Kura zaten hazır; bu onun canlandırması.');
+  setDrawUI();
+  drawStatus('Bir topa tıkla: o takım sahneye çıkar, sekiz rakibi tek tek açılır. '
+    + 'Dilersen hepsini otomatik de çektirebilirsin.');
 }
 
 function finishCeremony() {
   document.querySelectorAll('#drawbowls .ball').forEach(b => b.classList.add('picked'));
   activateBowl(0);
-  ceremony.running = false;
+  ceremony.drawn = 36;
+  ceremony.busy = false;
+  ceremony.auto = false;
   ceremony.paused = false;
   ceremony.skip = false;
-  drawButtons(false);
+  $('#drawpause').textContent = 'Duraklat';
+  setDrawUI();
   drawStatus('36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.');
+}
+
+/** Tek takimin cekilisi: top calkalanir, takim sahneye cikar, rakipler tek tek acilir. */
+async function revealTeam(t, gen) {
+  ceremony.pot = t.pot;
+  activateBowl(t.pot);
+  drawStatus(`Torba ${t.pot} · top çalkalanıyor…`);
+  if (!await cwait(CTIME.spin, gen)) return false;
+
+  const ball = document.querySelector('#drawbowls .ball[data-team="' + t.id + '"]');
+  if (ball) ball.classList.add('picked');
+  activateBowl(0);
+  ceremony.drawn++;
+  stageTeam(t);
+  drawStatus(`${ceremony.drawn}/36 · ${t.name} çekildi, rakipleri açılıyor…`);
+  if (!await cwait(CTIME.reveal, gen)) return false;
+
+  const rows = state.view[t.id];
+  for (let i = 0; i < rows.length; i++) {
+    revealOpponent(rows[i]);
+    if (ceremony.skip) continue;
+    if (!await cwait(CTIME.opponent, gen)) return false;
+  }
+  drawStatus(`${ceremony.drawn}/36 · ${t.name} tamamlandı · 4 iç saha, 4 deplasman`);
+  return true;
+}
+
+async function pickBall(id) {
+  if (ceremony.busy || !state.fixtures.length) return;
+  const t = byId[id];
+  if (!t || isPicked(id)) return;
+
+  const gen = ceremony.gen;
+  ceremony.busy = true;
+  ceremony.auto = false;
+  ceremony.skip = false;
+  setDrawUI();
+
+  const ok = await revealTeam(t, gen);
+  if (ceremony.gen !== gen) return;
+
+  ceremony.busy = false;
+  ceremony.skip = false;
+  if (ok && ceremony.drawn >= 36) { finishCeremony(); return; }
+  setDrawUI();
+  if (ok) drawStatus(`${ceremony.drawn}/36 çekildi · sıradaki topu seç ya da otomatik devam et`);
+}
+
+async function runCeremony() {
+  if (ceremony.busy || !state.fixtures.length) return;
+  const gen = ceremony.gen;
+  ceremony.busy = true;
+  ceremony.auto = true;
+  ceremony.paused = false;
+  ceremony.skip = false;
+  $('#drawpause').textContent = 'Duraklat';
+  setDrawUI();
+
+  for (const id of ceremonyOrder()) {
+    if (ceremony.skip) break;
+    if (isPicked(id)) continue;
+    if (!await revealTeam(byId[id], gen)) return;
+    if (!await cwait(CTIME.rest, gen)) return;
+  }
+  if (ceremony.gen !== gen) return;
+  finishCeremony();
 }
 
 /** Torbalara gore sirali, torba icinde tohuma bagli karisik cekilis sirasi. */
@@ -727,42 +818,6 @@ function ceremonyOrder() {
     out.push.apply(out, ids);
   });
   return out;
-}
-
-async function runCeremony() {
-  if (ceremony.running || !state.fixtures.length) return;
-  const gen = ++ceremony.gen;
-  ceremony.running = true;
-  ceremony.paused = false;
-  ceremony.skip = false;
-  ceremony.speed = Number($('#drawspeed').value) || 1;
-  drawButtons(true);
-  renderBowls();
-  $('#drawstage').innerHTML = '';
-
-  const order = ceremonyOrder();
-  for (let i = 0; i < order.length; i++) {
-    if (ceremony.skip) break;
-    const t = byId[order[i]];
-    ceremony.pot = t.pot;
-    drawStatus(`Torba ${t.pot} · ${i + 1}/36 · top çalkalanıyor`);
-    activateBowl(t.pot);
-    if (!await cwait(420, gen)) return;
-
-    const ball = document.querySelector('#drawbowls .ball[data-team="' + t.id + '"]');
-    if (ball) ball.classList.add('picked');
-    stageTeam(t);
-    drawStatus(`Torba ${t.pot} · ${i + 1}/36 · ${t.name}`);
-    if (!await cwait(340, gen)) return;
-
-    for (const r of state.view[t.id]) {
-      if (ceremony.skip) break;
-      revealOpponent(r);
-      if (!await cwait(120, gen)) return;
-    }
-    if (!await cwait(280, gen)) return;
-  }
-  if (ceremony.gen === gen) finishCeremony();
 }
 
 // ---------------------------------------------------------------------------
@@ -1032,7 +1087,12 @@ $('#teamall').addEventListener('click', () => selectTeam(null));
 $('#pickclear').addEventListener('click', clearPicks);
 $('#autofill').addEventListener('click', autofillPicks);
 $('#drawstart').addEventListener('click', runCeremony);
+$('#drawreset').addEventListener('click', resetCeremony);
 $('#drawskip').addEventListener('click', () => { ceremony.skip = true; });
+$('#drawbowls').addEventListener('click', e => {
+  const ball = e.target.closest('button.ball');
+  if (ball) pickBall(ball.dataset.team);
+});
 $('#drawpause').addEventListener('click', () => {
   ceremony.paused = !ceremony.paused;
   $('#drawpause').textContent = ceremony.paused ? 'Devam et' : 'Duraklat';
