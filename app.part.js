@@ -1041,7 +1041,7 @@ async function submitSave(name) {
   const data = await apiCall('/api/saves', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, seed: state.seed, scores, picks })
+    body: JSON.stringify({ name, comp: COMP.id, seed: state.seed, scores, picks })
   });
   const tokens = loadTokens();
   tokens[data.id] = data.token;
@@ -1119,7 +1119,7 @@ function renderSaves(rows) {
     left.appendChild(el('h4', null, r.name));
     const when = new Date(r.created_at).toLocaleDateString(tx('locale'));
     left.appendChild(el('div', 'meta',
-      tx('saves.meta', { seed: r.seed, matches: r.matches, picks: r.picks, date: when })));
+      tx('saves.meta', { comp: tx('comp.' + (r.comp || 'ucl')), seed: r.seed, matches: r.matches, picks: r.picks, date: when })));
     row.appendChild(left);
 
     const acts = el('div', 'acts');
@@ -1147,12 +1147,18 @@ async function openSave(id, fromLink) {
   try {
     const data = await apiCall('/api/saves/' + encodeURIComponent(id));
     const payload = data.payload || {};
+    const wanted = payload.comp || data.comp || 'ucl';
+    if (wanted !== COMP.id) {
+      useCompetition(wanted);
+      $('#comp').value = COMP.id;
+      fillTeamPicker();
+    }
     $('#seed').value = payload.seed;
     newDraw(payload.seed, () => {
       applySave(payload);
       writeHash('k=' + id);
     });
-    const note = tx('saves.opened', { name: data.name, seed: payload.seed, matches: data.matches });
+    const note = tx('saves.opened', { name: data.name, comp: tx('comp.' + wanted), seed: payload.seed, matches: data.matches });
     saveStatus(note);
     if (fromLink) { mdStatus(note); showTab('table'); }
   } catch (e) {

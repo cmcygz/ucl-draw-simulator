@@ -6,6 +6,7 @@ const MAX_BODY = 64 * 1024;
 const LIST_LIMIT = 60;
 const RATE_PER_HOUR = 30;
 const ID_ALPHABET = '23456789abcdefghjkmnpqrstuvwxyz';
+const COMPS = ['ucl', 'uel', 'uecl'];
 
 function corsHeaders(request, env) {
   const allowed = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -54,6 +55,7 @@ function validate(body) {
   if (!name) return 'kayda bir ad ver';
   if (name.length > MAX_NAME) return 'ad en fazla ' + MAX_NAME + ' karakter olabilir';
   if (!Number.isInteger(body.seed) || body.seed < 1 || body.seed > 999999) return 'tohum 1-999999 aralığında olmalı';
+  if (body.comp !== undefined && COMPS.indexOf(body.comp) === -1) return 'turnuva geçersiz';
 
   const scores = body.scores;
   if (!scores || typeof scores !== 'object' || Array.isArray(scores)) return 'skorlar bir nesne olmalı';
@@ -79,7 +81,7 @@ function validate(body) {
 
 async function listSaves(env, cors) {
   const { results } = await env.DB
-    .prepare('SELECT id, name, seed, matches, picks, created_at FROM saves ORDER BY created_at DESC LIMIT ?')
+    .prepare('SELECT id, name, comp, seed, matches, picks, created_at FROM saves ORDER BY created_at DESC LIMIT ?')
     .bind(LIST_LIMIT)
     .all();
   return json({ saves: results || [] }, 200, cors);
@@ -87,7 +89,7 @@ async function listSaves(env, cors) {
 
 async function getSave(env, id, cors) {
   const row = await env.DB
-    .prepare('SELECT id, name, seed, matches, picks, payload, created_at FROM saves WHERE id = ?')
+    .prepare('SELECT id, name, comp, seed, matches, picks, payload, created_at FROM saves WHERE id = ?')
     .bind(id)
     .first();
   if (!row) return json({ error: 'kayıt bulunamadı' }, 404, cors);
@@ -116,13 +118,14 @@ async function createSave(request, env, cors) {
 
   const scores = body.scores;
   const picks = Array.from(new Set((body.picks || []).filter(k => Object.prototype.hasOwnProperty.call(scores, k))));
-  const payload = JSON.stringify({ v: 1, seed: body.seed, scores, picks });
+  const comp = COMPS.indexOf(body.comp) === -1 ? 'ucl' : body.comp;
+  const payload = JSON.stringify({ v: 1, comp, seed: body.seed, scores, picks });
   const id = randomId(8);
   const token = randomToken();
 
   await env.DB
-    .prepare('INSERT INTO saves (id, name, seed, payload, matches, picks, token, ip_hash, created_at) VALUES (?,?,?,?,?,?,?,?,?)')
-    .bind(id, body.name.trim(), body.seed, payload, Object.keys(scores).length, picks.length, token, ipHash, Date.now())
+    .prepare('INSERT INTO saves (id, name, comp, seed, payload, matches, picks, token, ip_hash, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
+    .bind(id, body.name.trim(), comp, body.seed, payload, Object.keys(scores).length, picks.length, token, ipHash, Date.now())
     .run();
 
   return json({ id, token }, 201, cors);

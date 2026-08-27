@@ -131,7 +131,7 @@ olduğu gibi kalır. Kaydettikten sonra uyarı çıkmaz.
 
 ### Kayıtlar
 
-Kayıtlar sekmesi bir kurayı adlandırıp saklar: tohum + o an ekranda geçerli olan
+Kayıtlar sekmesi bir kurayı adlandırıp saklar: turnuva + tohum + o an ekranda geçerli olan
 tüm maç skorları + hangilerinin kullanıcı tahmini olduğu. Kayıt açıldığında kura
 tohumdan yeniden üretilir, skorlar üstüne yerleştirilir, tahmin işaretleri korunur.
 
@@ -159,7 +159,7 @@ API ayrı origin'dedir ve CORS ile açılır.
 |---|---|
 | `GET /api/saves` | Son 60 kayıt (payload'sız özet) |
 | `GET /api/saves/:id` | Tek kaydın tamamı |
-| `POST /api/saves` | Yeni kayıt, `{id, token}` döner |
+| `POST /api/saves` | Yeni kayıt (`comp` alanı turnuvayı taşır), `{id, token}` döner |
 | `DELETE /api/saves/:id` | `X-Save-Token` başlığı doğruysa siler |
 
 Sunucu tarafı sınırlar: gövde 64 KB, ad 60 karakter, en fazla 200 maç, gol 0-99,

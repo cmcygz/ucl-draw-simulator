@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS saves (
   id         TEXT PRIMARY KEY,
   name       TEXT    NOT NULL,
+  comp       TEXT    NOT NULL DEFAULT 'ucl',
   seed       INTEGER NOT NULL,
   payload    TEXT    NOT NULL,
   matches    INTEGER NOT NULL,
