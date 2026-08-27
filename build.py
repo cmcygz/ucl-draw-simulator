@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """engine.js + ui.part.html + app.part.js -> tek dosya index.html"""
+import base64
 import json
 import pathlib
 
@@ -10,12 +11,27 @@ comps = (here / "competitions.part.js").read_text(encoding="utf-8").split("if (t
 i18n = (here / "i18n.part.js").read_text(encoding="utf-8")
 app = (here / "app.part.js").read_text(encoding="utf-8")
 
+ROBOTS = "User-agent: *\nAllow: /\nSitemap: https://drawer.win/sitemap.xml\n"
+
 HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Draw the UEFA league phase yourself, ball by ball, under the real constraints \u2014 then predict every score and see the standings. Champions League, Europa League and Conference League. Free, no account.">
+<link rel="canonical" href="https://drawer.win/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DrawLab">
+<meta property="og:url" content="https://drawer.win/">
+<meta property="og:title" content="DrawLab \u2014 European league phase draw simulator">
+<meta property="og:description" content="Draw the balls yourself under the real UEFA rules, then play out all 144 matches and share the fixture.">
+<meta property="og:image" content="https://drawer.win/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DrawLab \u2014 European league phase draw simulator">
+<meta name="twitter:description" content="Draw the balls yourself under the real UEFA rules, then play out all 144 matches and share the fixture.">
+<meta name="twitter:image" content="https://drawer.win/og.png">
 <title>DrawLab · European league phase draw simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,11 +43,13 @@ __UI__
 
 <header>
   <div class="eyebrow">
-    <b data-i18n="brand">DrawLab</b><span id="compname"></span><span data-i18n="head.phase">league phase</span><span id="season"></span>
+    <b data-i18n="brand">DrawLab</b><span id="compname">Champions League</span><span data-i18n="head.phase">league phase</span><span id="season">2026/27</span>
     <span id="status">preparing the draw</span>
   </div>
-  <h1><span id="h1clubs" class="lead"></span><span id="h1matches"></span><span id="h1weeks"></span></h1>
-  <p class="lede" data-i18n="head.lede"></p>
+  <h1><span id="h1clubs" class="lead">36 clubs</span><span id="h1matches">144 matches</span><span id="h1weeks">8 matchdays</span></h1>
+  <p class="lede" data-i18n="head.lede">The new league phase has no groups. Every club draws two
+    opponents from each of the four pots, playing one at home and one away. This page reproduces
+    that draw under the real constraints, then simulates the season.</p>
   <div class="bar">
     <label class="seedbox"><span data-i18n="bar.comp">competition</span>
       <select id="comp"></select>
@@ -159,11 +177,13 @@ out = (HTML.replace("__UI__", ui).replace("__ENGINE__", engine)
 dist = here / "dist"
 dist.mkdir(exist_ok=True)
 (dist / "index.html").write_text(out, encoding="utf-8")
-(dist / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+(dist / "robots.txt").write_text(ROBOTS, encoding="utf-8")
 
 site_js = (here / "api" / "src" / "site.js")
 site_js.write_text(
     "// build.py tarafindan uretilir, elle duzenleme.\n"
-    "export const SITE_HTML = " + json.dumps(out) + ";\n",
+    "export const SITE_HTML = " + json.dumps(out) + ";\n"
+    "export const OG_PNG_B64 = " + json.dumps(
+        base64.b64encode((here / "assets" / "og.png").read_bytes()).decode("ascii")) + ";\n",
     encoding="utf-8")
 print(f"index.html ve dist/ yazildi: {len(out)} bayt")

@@ -1,0 +1,38 @@
+<meta charset="utf-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@800&family=IBM+Plex+Mono:wght@400;600&family=Inter+Tight:wght@500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{width:1200px;height:630px;background:#E4EAEE;color:#0C1A26;
+       font-family:'Inter Tight',sans-serif;overflow:hidden;position:relative}
+  .pad{padding:64px 70px}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:20px;letter-spacing:.18em;
+           text-transform:uppercase;color:#41586A;display:flex;gap:16px;align-items:center}
+  .eyebrow b{color:#0C1A26;font-weight:600}
+  h1{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:128px;
+     line-height:.84;text-transform:uppercase;letter-spacing:-.01em;margin-top:26px}
+  h1 .g{color:#7E93A2;display:block}
+  p{max-width:26ch;margin-top:28px;font-size:27px;line-height:1.35;color:#41586A}
+  .rule{height:4px;background:#0C1A26;margin-top:30px;width:520px}
+  .balls{position:absolute;right:70px;top:150px;display:grid;
+         grid-template-columns:repeat(3,124px);gap:22px}
+  .b{width:124px;height:124px;border-radius:50%;display:flex;align-items:center;
+     justify-content:center;color:#fff;font-family:'IBM Plex Mono',monospace;
+     font-size:26px;font-weight:600;
+     box-shadow:inset -10px -14px 26px rgba(0,0,0,.28), inset 7px 9px 20px rgba(255,255,255,.32)}
+  .p1{background:#23256E} .p2{background:#0B6E6B} .p3{background:#B26A00}
+  .p4{background:#8B2A63} .p5{background:#2E6B3A} .p6{background:#7A2233}
+  .foot{position:absolute;left:70px;bottom:54px;font-family:'IBM Plex Mono',monospace;
+        font-size:22px;letter-spacing:.1em;text-transform:uppercase;color:#41586A}
+  .foot b{color:#0C1A26;font-weight:600}
+</style>
+<div class="pad">
+  <div class="eyebrow"><b>DrawLab</b><span>league phase draw simulator</span></div>
+  <h1>Draw it<span class="g">yourself</span></h1>
+  <p>Champions League, Europa League and Conference League — under the real rules.</p>
+  <div class="rule"></div>
+</div>
+<div class="balls">
+  <div class="b p1">PAR</div><div class="b p2">POR</div><div class="b p3">FEN</div>
+  <div class="b p4">AEK</div><div class="b p5">SLA</div><div class="b p6">BOD</div>
+</div>
+<div class="foot"><b>drawer.win</b> &nbsp;·&nbsp; free, no account</div>

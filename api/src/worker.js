@@ -1,4 +1,4 @@
-import { SITE_HTML } from './site.js';
+import { SITE_HTML, OG_PNG_B64 } from './site.js';
 
 const MAX_NAME = 60;
 const MAX_MATCHES = 200;
@@ -155,10 +155,31 @@ export default {
 
     if (parts[0] !== 'api') {
       if (request.method !== 'GET') return json({ error: 'desteklenmeyen istek' }, 405, cors);
-      if (url.pathname === '/robots.txt') {
-        return new Response('User-agent: *\nDisallow: /\n', {
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      if (url.pathname === '/og.png') {
+        const raw = atob(OG_PNG_B64);
+        const bytes = new Uint8Array(raw.length);
+        for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+        return new Response(bytes, {
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=86400'
+          }
         });
+      }
+      if (url.pathname === '/robots.txt') {
+        return new Response(
+          'User-agent: *\nAllow: /\nSitemap: https://drawer.win/sitemap.xml\n',
+          { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+        );
+      }
+      if (url.pathname === '/sitemap.xml') {
+        const pages = ['', '#ucl-2027', '#uel-2027', '#uecl-2027']
+          .map(h => '<url><loc>https://drawer.win/' + h + '</loc></url>').join('');
+        return new Response(
+          '<?xml version="1.0" encoding="UTF-8"?>'
+          + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + pages + '</urlset>',
+          { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+        );
       }
       // Tarayici 10 dakika onbellekte tutsun, sonrasinda bayat kopyayi
       // gosterip arkada tazelesin. Her yenilemenin Worker istegi harcamasi
@@ -167,8 +188,7 @@ export default {
       return new Response(SITE_HTML, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400',
-          'X-Robots-Tag': 'noindex, nofollow'
+          'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400'
         }
       });
     }
