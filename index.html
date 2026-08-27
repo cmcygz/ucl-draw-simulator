@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UCL Lig Aşaması Kura Simülatörü 2026/27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E4EAEE; --paper-2:#F1F5F7; --paper-3:#D6DFE5;
+  --ink:#0C1A26; --ink-2:#41586A; --ink-3:#7E93A2;
+  --rule:#B9C7D0;
+  --p1:#23256E; --p2:#0B6E6B; --p3:#B26A00; --p4:#8B2A63;
+  --mark:#FFE14D;
+  --cell:20px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:'Inter Tight',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:14px; line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+
+/* ---------- header ---------- */
+.eyebrow{
+  font-family:'IBM Plex Mono',ui-monospace,monospace;
+  font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-2); display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+}
+.eyebrow b{font-weight:600;color:var(--ink)}
+h1{
+  font-family:'Big Shoulders Display','Inter Tight',sans-serif;
+  font-weight:800; font-size:clamp(46px,9vw,104px); line-height:.86;
+  margin:10px 0 0; letter-spacing:-.01em; text-transform:uppercase;
+}
+h1 span{display:block;color:var(--ink-3)}
+.lede{max-width:52ch;margin:16px 0 0;color:var(--ink-2)}
+.rule{height:2px;background:var(--ink);margin:22px 0 0}
+.rule.thin{height:1px;background:var(--rule)}
+
+/* ---------- controls ---------- */
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0 0}
+button,.seedbox{
+  font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:12px;
+  letter-spacing:.06em; text-transform:uppercase;
+  background:var(--paper-2); color:var(--ink);
+  border:1.5px solid var(--ink); border-radius:0; padding:9px 14px; cursor:pointer;
+  transition:background .12s,color .12s,transform .06s;
+}
+button:hover{background:var(--ink);color:var(--paper-2)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.4;cursor:progress}
+button.ghost{border-color:var(--rule);color:var(--ink-2)}
+button.ghost:hover{border-color:var(--ink);background:var(--ink);color:var(--paper-2)}
+.seedbox{display:flex;align-items:center;gap:8px;cursor:default;background:transparent;border-style:dashed}
+.seedbox input{
+  font:inherit;width:8ch;border:0;background:transparent;color:var(--ink);
+  text-align:center;outline:none;border-bottom:1.5px solid var(--ink)
+}
+select{
+  font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px;
+  border:1.5px solid var(--rule);background:var(--paper-2);color:var(--ink);border-radius:0
+}
+:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+
+/* ---------- tabs ---------- */
+nav.tabs{display:flex;gap:0;margin:26px 0 0;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+nav.tabs button{
+  border:0;border-bottom:4px solid transparent;background:transparent;
+  padding:10px 16px 8px;margin-bottom:-2px;color:var(--ink-2)
+}
+nav.tabs button:hover{background:transparent;color:var(--ink)}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink);font-weight:600}
+section[hidden]{display:none}
+section{margin-top:26px}
+
+/* ---------- matrix ---------- */
+.matrixScroll{overflow-x:auto;padding-bottom:8px}
+table.matrix{border-collapse:collapse;font-family:'IBM Plex Mono',monospace}
+table.matrix th.corner{width:150px}
+table.matrix th.col{
+  height:56px;padding:0 0 6px;vertical-align:bottom;font-weight:500;font-size:10.5px;
+  letter-spacing:.08em;color:var(--ink-2)
+}
+table.matrix th.col div{writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto}
+table.matrix th.row{
+  text-align:right;padding-right:10px;font-weight:500;font-size:11.5px;white-space:nowrap;
+  border-right:2px solid var(--ink);cursor:pointer
+}
+table.matrix th.row em{font-style:normal;color:var(--ink-3);font-size:10px;margin-left:6px}
+td.c{
+  width:var(--cell);height:var(--cell);border:1px solid var(--paper-3);
+  padding:0;position:relative
+}
+td.c i{display:block;width:100%;height:100%}
+td.c.home i{background:currentColor}
+td.c.away i{box-shadow:inset 0 0 0 2.5px currentColor}
+td.c.self{background:repeating-linear-gradient(45deg,var(--paper-3) 0 2px,transparent 2px 4px)}
+td.c.p1,th.p1{color:var(--p1)} td.c.p2,th.p2{color:var(--p2)}
+td.c.p3,th.p3{color:var(--p3)} td.c.p4,th.p4{color:var(--p4)}
+td.c.lit{background:var(--mark)}
+tr.sel th.row{background:var(--ink);color:var(--paper);border-right-color:var(--ink)}
+tr.sel th.row em{color:var(--paper-3)}
+.potrail{width:6px;padding:0}
+.potrail.p1{background:var(--p1)} .potrail.p2{background:var(--p2)}
+.potrail.p3{background:var(--p3)} .potrail.p4{background:var(--p4)}
+
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:7px}
+.key{width:14px;height:14px;display:inline-block}
+.key.home{background:var(--ink)} .key.away{box-shadow:inset 0 0 0 2.5px var(--ink)}
+
+/* ---------- team detail ---------- */
+.detail{margin-top:24px;border-top:2px solid var(--ink);padding-top:16px}
+.detail h3{
+  font-family:'Big Shoulders Display',sans-serif;font-weight:800;
+  font-size:34px;text-transform:uppercase;margin:0;line-height:1
+}
+.detail .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);margin-top:4px}
+ol.fix{list-style:none;margin:14px 0 0;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:0 22px}
+ol.fix li{display:flex;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--rule);
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+ol.fix .md{color:var(--ink-3);width:34px;flex:none}
+ol.fix .vs{width:16px;flex:none;font-weight:600}
+ol.fix .vs.h{color:var(--ink)} ol.fix .vs.a{color:var(--ink-3)}
+ol.fix .nm{flex:1;font-family:'Inter Tight',sans-serif;font-size:13.5px}
+ol.fix .pt{font-size:10px;color:var(--ink-3)}
+.hint{color:var(--ink-3);font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+
+/* ---------- team grid ---------- */
+.pothead{display:flex;align-items:baseline;gap:12px;margin:28px 0 10px}
+.pothead h2{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:26px;
+  text-transform:uppercase;margin:0;letter-spacing:.02em}
+.pothead .line{flex:1;height:2px;background:var(--rule)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.card{background:var(--paper-2);border:1px solid var(--rule);border-left-width:5px;padding:12px 14px}
+.card.p1{border-left-color:var(--p1)} .card.p2{border-left-color:var(--p2)}
+.card.p3{border-left-color:var(--p3)} .card.p4{border-left-color:var(--p4)}
+.card h4{margin:0;font-size:15px;font-weight:650}
+.card .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
+.card ul{list-style:none;margin:0;padding:0}
+.card li{display:flex;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:2.5px 0}
+.card li .md{color:var(--ink-3);width:28px}
+.card li .vs{width:14px;font-weight:600}
+.card li .nm{font-family:'Inter Tight',sans-serif;font-size:12.5px}
+
+/* ---------- matchdays ---------- */
+.mdgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+.mdblock h4{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:22px;
+  text-transform:uppercase;margin:0 0 6px;border-bottom:2px solid var(--ink);padding-bottom:3px}
+.mdblock .m{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;
+  padding:4px 0;border-bottom:1px solid var(--rule);font-size:12.5px}
+.mdblock .m .a{text-align:right}
+.mdblock .m .s{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-2);
+  background:var(--paper-3);padding:1px 6px;white-space:nowrap}
+
+/* ---------- table ---------- */
+table.std{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12.5px}
+table.std th{text-align:right;font-weight:500;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);padding:0 6px 6px;border-bottom:2px solid var(--ink)}
+table.std th.l,table.std td.l{text-align:left}
+table.std td{padding:5px 6px;border-bottom:1px solid var(--rule);text-align:right}
+table.std td.nm{font-family:'Inter Tight',sans-serif;font-size:13.5px;text-align:left}
+table.std tr.q td{background:rgba(35,37,110,.09)}
+table.std tr.po td{background:rgba(178,106,0,.09)}
+table.std td.pos{color:var(--ink-3)}
+table.std td.pts{font-weight:600}
+.bands{display:flex;gap:20px;margin-top:12px;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;color:var(--ink-2);flex-wrap:wrap}
+.swatch{width:12px;height:12px;display:inline-block;margin-right:6px;vertical-align:-1px}
+
+/* ---------- probabilities ---------- */
+.prob{display:grid;grid-template-columns:150px 1fr 62px;gap:10px;align-items:center;
+  padding:3px 0;font-family:'IBM Plex Mono',monospace;font-size:11.5px}
+.prob .nm{font-family:'Inter Tight',sans-serif;font-size:13px;text-align:right}
+.pbar{display:flex;height:15px;background:var(--paper-3)}
+.pbar i{display:block;height:100%}
+.pbar .q{background:var(--p1)} .pbar .p{background:var(--p3)}
+.progress{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-2)}
+
+footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);line-height:1.7}
+
+@media (max-width:640px){
+  :root{--cell:16px}
+  .wrap{padding:20px 14px 56px}
+  table.matrix th.corner{width:104px}
+  table.matrix th.row{font-size:10px}
+  ol.fix{grid-template-columns:1fr}
+  .prob{grid-template-columns:104px 1fr 54px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">
+    <b>2026/27</b><span>Şampiyonlar Ligi</span><span>lig aşaması</span>
+    <span id="status">kura hazırlanıyor</span>
+  </div>
+  <h1>36 takım<span>144 maç</span><span>8 hafta</span></h1>
+  <p class="lede">
+    Yeni lig aşamasında grup yok. Her takım dört torbanın her birinden iki rakip
+    çekiyor, birini evinde birini deplasmanda oynuyor. Bu sayfa o kurayı kurallara
+    uyarak yeniden üretiyor, sonra sezonu simüle ediyor.
+  </p>
+  <div class="bar">
+    <label class="seedbox">tohum <input id="seed" type="number" min="1" max="999999"></label>
+    <button id="redraw">Yeni kura</button>
+    <button id="random" class="ghost">Rastgele</button>
+    <button id="play" class="ghost">Sezonu oyna</button>
+  </div>
+  <div class="rule"></div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button data-view="matrix" aria-selected="true">Matris</button>
+  <button data-view="teams" aria-selected="false">Takımlar</button>
+  <button data-view="matchdays" aria-selected="false">Haftalar</button>
+  <button data-view="table" aria-selected="false">Puan tablosu</button>
+  <button data-view="probs" aria-selected="false">Olasılıklar</button>
+</nav>
+
+<main>
+  <section id="view-matrix">
+    <div class="matrixScroll"><div id="matrix"></div></div>
+    <div class="legend">
+      <span><i class="key home"></i> iç saha</span>
+      <span><i class="key away"></i> deplasman</span>
+      <span><i class="key" style="background:var(--p1)"></i> Torba 1</span>
+      <span><i class="key" style="background:var(--p2)"></i> Torba 2</span>
+      <span><i class="key" style="background:var(--p3)"></i> Torba 3</span>
+      <span><i class="key" style="background:var(--p4)"></i> Torba 4</span>
+    </div>
+    <div class="detail" id="detail"></div>
+  </section>
+
+  <section id="view-teams" hidden><div id="teams"></div></section>
+  <section id="view-matchdays" hidden><div id="matchdays"></div></section>
+  <section id="view-table" hidden><div id="table"></div></section>
+
+  <section id="view-probs" hidden>
+    <div class="bar">
+      <select id="mcmode">
+        <option value="fixed">Bu kura sabit &middot; 3000 sezon</option>
+        <option value="redraw">Her sezon yeni kura &middot; 120 sezon</option>
+      </select>
+      <button id="mcrun">Hesapla</button>
+    </div>
+    <div id="probs" style="margin-top:18px"></div>
+  </section>
+</main>
+
+<footer>
+  Torbalar UEFA'nın 26.08.2026 resmi listesi. Rating değerleri ve Poisson gol modeli
+  kalibre edilmemiş tahmindir; olasılıklar gerçek tahmin olarak kullanılmamalı.<br>
+  Uygulanan kurallar: aynı ülke eşleşemez, aynı ülkeden en fazla 2 rakip, her torbadan
+  1 iç saha + 1 deplasman, haftada 1 maç, 3 hafta üst üste aynı saha yok.<br>
+  Modellenmeyen: disiplin puanı sıralaması, TV ve güvenlik kaynaklı hafta kısıtları,
+  UEFA'nın gerçek kura yazılımının dağılımı.
+</footer>
+
+</div>
+<script>
+// ---------------------------------------------------------------------------
+// UCL lig asamasi kura motoru (JS portu)
+// ---------------------------------------------------------------------------
+
+const TEAMS = [
+  { id:'psg',        name:'Paris',        code:'PAR', country:'FRA', pot:1, rating:1950 },
+  { id:'bayern',     name:'Bayern',       code:'BAY', country:'GER', pot:1, rating:1930 },
+  { id:'real',       name:'Real Madrid',  code:'RMA', country:'ESP', pot:1, rating:1910 },
+  { id:'arsenal',    name:'Arsenal',      code:'ARS', country:'ENG', pot:1, rating:1905 },
+  { id:'liverpool',  name:'Liverpool',    code:'LIV', country:'ENG', pot:1, rating:1900 },
+  { id:'mancity',    name:'Man City',     code:'MCI', country:'ENG', pot:1, rating:1890 },
+  { id:'barcelona',  name:'Barcelona',    code:'BAR', country:'ESP', pot:1, rating:1885 },
+  { id:'inter',      name:'Inter',        code:'INT', country:'ITA', pot:1, rating:1880 },
+  { id:'atleti',     name:'Atlético',     code:'ATM', country:'ESP', pot:1, rating:1850 },
+
+  { id:'dortmund',   name:'Dortmund',     code:'DOR', country:'GER', pot:2, rating:1790 },
+  { id:'villa',      name:'Aston Villa',  code:'AVL', country:'ENG', pot:2, rating:1780 },
+  { id:'manutd',     name:'Man Utd',      code:'MUN', country:'ENG', pot:2, rating:1775 },
+  { id:'roma',       name:'Roma',         code:'ROM', country:'ITA', pot:2, rating:1770 },
+  { id:'sporting',   name:'Sporting CP',  code:'SPO', country:'POR', pot:2, rating:1760 },
+  { id:'porto',      name:'Porto',        code:'POR', country:'POR', pot:2, rating:1740 },
+  { id:'betis',      name:'Real Betis',   code:'BET', country:'ESP', pot:2, rating:1730 },
+  { id:'psv',        name:'PSV',          code:'PSV', country:'NED', pot:2, rating:1720 },
+  { id:'brugge',     name:'Club Brugge',  code:'BRU', country:'BEL', pot:2, rating:1700 },
+
+  { id:'napoli',     name:'Napoli',       code:'NAP', country:'ITA', pot:3, rating:1710 },
+  { id:'leipzig',    name:'Leipzig',      code:'RBL', country:'GER', pot:3, rating:1690 },
+  { id:'villarreal', name:'Villarreal',   code:'VIL', country:'ESP', pot:3, rating:1680 },
+  { id:'feyenoord',  name:'Feyenoord',    code:'FEY', country:'NED', pot:3, rating:1660 },
+  { id:'galatasaray',name:'Galatasaray',  code:'GAL', country:'TUR', pot:3, rating:1655 },
+  { id:'lille',      name:'Lille',        code:'LIL', country:'FRA', pot:3, rating:1650 },
+  { id:'fenerbahce', name:'Fenerbahçe',   code:'FEN', country:'TUR', pot:3, rating:1640 },
+  { id:'bodo',       name:'Bodø/Glimt',   code:'BOD', country:'NOR', pot:3, rating:1600 },
+  { id:'shakhtar',   name:'Shakhtar',     code:'SHA', country:'UKR', pot:3, rating:1590 },
+
+  { id:'stuttgart',  name:'Stuttgart',    code:'VFB', country:'GER', pot:4, rating:1580 },
+  { id:'como',       name:'Como',         code:'COM', country:'ITA', pot:4, rating:1550 },
+  { id:'lens',       name:'Lens',         code:'LEN', country:'FRA', pot:4, rating:1545 },
+  { id:'slavia',     name:'Slavia Praha', code:'SLA', country:'CZE', pot:4, rating:1540 },
+  { id:'aek',        name:'AEK Athens',   code:'AEK', country:'GRE', pot:4, rating:1520 },
+  { id:'lask',       name:'LASK',         code:'LSK', country:'AUT', pot:4, rating:1490 },
+  { id:'viking',     name:'Viking',       code:'VIK', country:'NOR', pot:4, rating:1470 },
+  { id:'slovan',     name:'S. Bratislava',code:'SLO', country:'SVK', pot:4, rating:1460 },
+  { id:'sabah',      name:'Sabah',        code:'SAB', country:'AZE', pot:4, rating:1420 },
+];
+
+// deterministik RNG (mulberry32)
+function makeRng(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const shuffle = (arr, rng) => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
+const DEFAULTS = {
+  maxSameCountry: 2,
+  allowSameCountry: false,
+  bannedHome: [],      // ['liverpool>real', ...]  ev sahibi > deplasman
+  nodeBudget: 60000,
+};
+
+// --- 1. rakip atamasi -------------------------------------------------------
+function drawOpponents(teams, opt, rng) {
+  const byId = Object.fromEntries(teams.map(t => [t.id, t]));
+  const ids = teams.map(t => t.id);
+  const potMembers = { 1: [], 2: [], 3: [], 4: [] };
+  teams.forEach(t => potMembers[t.pot].push(t.id));
+
+  const need = {};
+  ids.forEach(i => [1, 2, 3, 4].forEach(p => (need[i + '|' + p] = 2)));
+  const opp = Object.fromEntries(ids.map(i => [i, new Set()]));
+  const cc = Object.fromEntries(ids.map(i => [i, {}]));
+  const edges = [];
+  let budget = opt.nodeBudget;
+
+  const compatible = (a, b) => {
+    if (a === b || opp[a].has(b)) return false;
+    const ta = byId[a], tb = byId[b];
+    if (!opt.allowSameCountry && ta.country === tb.country) return false;
+    if (need[b + '|' + ta.pot] <= 0) return false;
+    if ((cc[a][tb.country] || 0) >= opt.maxSameCountry) return false;
+    if ((cc[b][ta.country] || 0) >= opt.maxSameCountry) return false;
+    return true;
+  };
+
+  const solve = () => {
+    if (--budget <= 0) throw new Error('budget');
+    let best = null, bestCands = null;
+    for (const id of ids) {
+      for (const p of [1, 2, 3, 4]) {
+        const k = id + '|' + p;
+        if (need[k] <= 0) continue;
+        const cands = potMembers[p].filter(o => compatible(id, o));
+        if (cands.length < need[k]) return false;          // ileri bakis budamasi
+        if (!bestCands || cands.length < bestCands.length) {
+          best = [id, p]; bestCands = cands;
+        }
+      }
+    }
+    if (!best) return true;
+
+    const [team, pot] = best;
+    const ta = byId[team];
+    for (const other of shuffle(bestCands.slice(), rng)) {
+      const tb = byId[other];
+      need[team + '|' + pot]--; need[other + '|' + ta.pot]--;
+      opp[team].add(other); opp[other].add(team);
+      cc[team][tb.country] = (cc[team][tb.country] || 0) + 1;
+      cc[other][ta.country] = (cc[other][ta.country] || 0) + 1;
+      edges.push([team, other]);
+
+      if (solve()) return true;
+
+      edges.pop();
+      cc[team][tb.country]--; cc[other][ta.country]--;
+      opp[team].delete(other); opp[other].delete(team);
+      need[team + '|' + pot]++; need[other + '|' + ta.pot]++;
+    }
+    return false;
+  };
+
+  try { return solve() ? edges : null; }
+  catch (e) { return null; }
+}
+
+// --- 2. ic saha / deplasman -------------------------------------------------
+// Her (potA,potB) blogu 2-regular graf -> dongulere ayrilir. Donguyu tek yonde
+// dolasmak her takima tam 1 ic saha + 1 deplasman verir.
+function orient(edges, teams, opt, rng) {
+  const byId = Object.fromEntries(teams.map(t => [t.id, t]));
+  const banned = new Set(opt.bannedHome);
+  const blocks = new Map();
+  for (const [a, b] of edges) {
+    const key = [byId[a].pot, byId[b].pot].sort().join('-');
+    if (!blocks.has(key)) blocks.set(key, []);
+    blocks.get(key).push([a, b]);
+  }
+
+  const fixtures = [];
+  for (const blockEdges of blocks.values()) {
+    const adj = {};
+    const unused = new Set();
+    for (const [a, b] of blockEdges) {
+      (adj[a] = adj[a] || []).push(b);
+      (adj[b] = adj[b] || []).push(a);
+      unused.add(a < b ? a + '|' + b : b + '|' + a);
+    }
+    const key = (x, y) => (x < y ? x + '|' + y : y + '|' + x);
+
+    while (unused.size) {
+      const start = unused.values().next().value.split('|')[0];
+      const cycle = [];
+      let cur = start, prev = null;
+      for (;;) {
+        const next = adj[cur].find(n => n !== prev && unused.has(key(cur, n)));
+        if (next === undefined) break;
+        unused.delete(key(cur, next));
+        cycle.push([cur, next]);
+        prev = cur; cur = next;
+        if (cur === start) break;
+      }
+      const fwdBad = cycle.some(([h, a]) => banned.has(h + '>' + a));
+      const revBad = cycle.some(([h, a]) => banned.has(a + '>' + h));
+      if (fwdBad && revBad) return null;
+      const flip = fwdBad || (!revBad && rng() < 0.5);
+      for (const [h, a] of cycle) {
+        const [home, away] = flip ? [a, h] : [h, a];
+        fixtures.push({ home, away, homePot: byId[home].pot, awayPot: byId[away].pot, md: null });
+      }
+    }
+  }
+  return fixtures;
+}
+
+// --- 3. hafta atamasi -------------------------------------------------------
+// Fikstur grafi 8-regular; her hafta = bir mukemmel eslesme (18 mac).
+function perfectMatching(adj, ids, rng, budgetRef) {
+  const matched = new Set();
+  const out = [];
+  const rec = () => {
+    if (--budgetRef.v <= 0) return false;
+    let v = null, cands = null;
+    for (const id of ids) {
+      if (matched.has(id)) continue;
+      const c = adj[id].filter(u => !matched.has(u));
+      if (!cands || c.length < cands.length) { v = id; cands = c; }
+      if (cands.length === 0) break;
+    }
+    if (!v) return true;
+    if (!cands.length) return false;
+    for (const u of shuffle(cands.slice(), rng)) {
+      matched.add(v); matched.add(u); out.push([v, u]);
+      if (rec()) return true;
+      out.pop(); matched.delete(v); matched.delete(u);
+    }
+    return false;
+  };
+  return rec() ? out : null;
+}
+
+function assignMatchdays(fixtures, ids, rng, { avoidThreeInARow = true, tries = 60, altPerRound = 5, budget = 600 } = {}) {
+  const key = (x, y) => (x < y ? x + '|' + y : y + '|' + x);
+  const pool = new Map(fixtures.map(f => [key(f.home, f.away), f]));
+
+  const buildRound = (left, hist) => {
+    const adj = Object.fromEntries(ids.map(i => [i, []]));
+    for (const a of ids) {
+      for (const b of left.get(a)) {
+        if (a >= b) continue;
+        const f = pool.get(key(a, b));
+        if (avoidThreeInARow) {
+          const hh = hist[f.home], aa = hist[f.away];
+          if (hh.length >= 2 && hh[hh.length - 1] === 'H' && hh[hh.length - 2] === 'H') continue;
+          if (aa.length >= 2 && aa[aa.length - 1] === 'A' && aa[aa.length - 2] === 'A') continue;
+        }
+        adj[a].push(b); adj[b].push(a);
+      }
+    }
+    return perfectMatching(adj, ids, rng, { v: 200000 });
+  };
+
+  for (let attempt = 0; attempt < tries; attempt++) {
+    const left = new Map(ids.map(i => [i, new Set()]));
+    for (const f of fixtures) { left.get(f.home).add(f.away); left.get(f.away).add(f.home); }
+    const hist = Object.fromEntries(ids.map(i => [i, []]));
+    const rounds = [];
+    let calls = budget;
+
+    // haftalari sirayla kur; bir hafta cikmazsa o haftayi birkac kez farkli
+    // eslesmeyle dene, olmazsa bir onceki haftaya geri don (backtracking)
+    const rec = (md) => {
+      if (md === 8) return true;
+      for (let k = 0; k < altPerRound; k++) {
+        if (--calls <= 0) return false;
+        const m = buildRound(left, hist);
+        if (!m || m.length !== ids.length / 2) return false;
+        for (const [a, b] of m) {
+          left.get(a).delete(b); left.get(b).delete(a);
+          const f = pool.get(key(a, b));
+          hist[f.home].push('H'); hist[f.away].push('A');
+        }
+        rounds.push(m);
+        if (rec(md + 1)) return true;
+        rounds.pop();
+        for (const [a, b] of m) {
+          left.get(a).add(b); left.get(b).add(a);
+          const f = pool.get(key(a, b));
+          hist[f.home].pop(); hist[f.away].pop();
+        }
+      }
+      return false;
+    };
+
+    if (!rec(0)) continue;
+    rounds.forEach((m, i) => m.forEach(p => (pool.get(key(p[0], p[1])).md = i + 1)));
+    fixtures.sort((x, y) => x.md - y.md || (x.home < y.home ? -1 : 1));
+    return true;
+  }
+  return false;
+}
+
+// --- ust seviye -------------------------------------------------------------
+function runDraw(teams, seed, options = {}) {
+  const opt = { ...DEFAULTS, ...options };
+  const rng = makeRng(seed);
+  const ids = teams.map(t => t.id);
+  for (let restart = 0; restart < 400; restart++) {
+    const edges = drawOpponents(teams, opt, rng);
+    if (!edges) continue;
+    const fixtures = orient(edges, teams, opt, rng);
+    if (!fixtures) continue;
+    if (!assignMatchdays(fixtures, ids, rng) &&
+        !assignMatchdays(fixtures, ids, rng, { avoidThreeInARow: false })) continue;
+    return fixtures;
+  }
+  return null;
+}
+
+function verify(fixtures, teams, opt = DEFAULTS) {
+  const byId = Object.fromEntries(teams.map(t => [t.id, t]));
+  const problems = [];
+  if (fixtures.length !== teams.length * 4) problems.push('mac sayisi yanlis');
+  const seen = new Set(), hp = {}, ap = {}, oc = {}, mds = {};
+  for (const t of teams) { hp[t.id] = {}; ap[t.id] = {}; oc[t.id] = {}; mds[t.id] = new Set(); }
+  for (const f of fixtures) {
+    const k = [f.home, f.away].sort().join('|');
+    if (seen.has(k)) problems.push('tekrar eden eslesme ' + k);
+    seen.add(k);
+    const h = byId[f.home], a = byId[f.away];
+    if (!opt.allowSameCountry && h.country === a.country) problems.push('ayni ulke ' + k);
+    hp[h.id][a.pot] = (hp[h.id][a.pot] || 0) + 1;
+    ap[a.id][h.pot] = (ap[a.id][h.pot] || 0) + 1;
+    oc[h.id][a.country] = (oc[h.id][a.country] || 0) + 1;
+    oc[a.id][h.country] = (oc[a.id][h.country] || 0) + 1;
+    for (const id of [f.home, f.away]) {
+      if (mds[id].has(f.md)) problems.push(id + ' MD' + f.md + ' cift mac');
+      mds[id].add(f.md);
+    }
+  }
+  for (const t of teams) {
+    for (const p of [1, 2, 3, 4]) {
+      if (hp[t.id][p] !== 1) problems.push(t.id + ' pot' + p + ' ic saha != 1');
+      if (ap[t.id][p] !== 1) problems.push(t.id + ' pot' + p + ' deplasman != 1');
+    }
+    for (const [c, n] of Object.entries(oc[t.id]))
+      if (n > opt.maxSameCountry) problems.push(t.id + ' ' + c + ' rakip sayisi ' + n);
+    if (mds[t.id].size !== 8) problems.push(t.id + ' 8 hafta degil');
+  }
+  return problems;
+}
+
+// --- sonuc simulasyonu ------------------------------------------------------
+const BASE_GOALS = 1.45, RATING_SCALE = 0.20, HOME_ADV = 0.22;
+
+function expectedGoals(h, a) {
+  const d = (h.rating - a.rating) / 100;
+  const clamp = x => Math.min(Math.max(x, 0.15), 6);
+  return [clamp(BASE_GOALS * Math.exp(RATING_SCALE * d + HOME_ADV)),
+          clamp(BASE_GOALS * Math.exp(-RATING_SCALE * d - HOME_ADV))];
+}
+function poisson(lam, rng) {
+  const L = Math.exp(-lam); let k = 0, p = 1;
+  do { k++; p *= rng(); } while (p > L);
+  return k - 1;
+}
+function simulateSeason(fixtures, teams, rng) {
+  const byId = Object.fromEntries(teams.map(t => [t.id, t]));
+  return fixtures.map(f => {
+    const [lh, la] = expectedGoals(byId[f.home], byId[f.away]);
+    return { f, hg: poisson(lh, rng), ag: poisson(la, rng) };
+  });
+}
+function buildTable(results, teams) {
+  const rows = Object.fromEntries(teams.map(t => [t.id, {
+    id: t.id, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, agf: 0, aw: 0, rating: t.rating
+  }]));
+  for (const r of results) {
+    const h = rows[r.f.home], a = rows[r.f.away];
+    h.p++; a.p++; h.gf += r.hg; h.ga += r.ag; a.gf += r.ag; a.ga += r.hg; a.agf += r.ag;
+    if (r.hg > r.ag) { h.w++; a.l++; }
+    else if (r.hg < r.ag) { a.w++; a.aw++; h.l++; }
+    else { h.d++; a.d++; }
+  }
+  const list = Object.values(rows).map(r => ({ ...r, pts: r.w * 3 + r.d, gd: r.gf - r.ga }));
+  list.sort((x, y) => y.pts - x.pts || y.gd - x.gd || y.gf - x.gf ||
+                      y.agf - x.agf || y.w - x.w || y.aw - x.aw || y.rating - x.rating);
+  return list;
+}
+
+// ---------------------------------------------------------------------------
+// Arayuz
+// ---------------------------------------------------------------------------
+const byId = Object.fromEntries(TEAMS.map(t => [t.id, t]));
+const ORDER = TEAMS.map(t => t.id);           // torbaya gore siralanmis
+const $ = s => document.querySelector(s);
+const el = (tag, cls, txt) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (txt !== undefined) n.textContent = txt;
+  return n;
+};
+
+const state = { seed: 2027, fixtures: [], results: null, selected: null, view: {} };
+
+function buildView(fixtures) {
+  const v = Object.fromEntries(ORDER.map(id => [id, []]));
+  for (const f of fixtures) {
+    v[f.home].push({ opp: f.away, venue: 'H', pot: f.awayPot, md: f.md, f });
+    v[f.away].push({ opp: f.home, venue: 'A', pot: f.homePot, md: f.md, f });
+  }
+  for (const id in v) v[id].sort((a, b) => a.md - b.md);
+  return v;
+}
+
+function newDraw(seed) {
+  const btn = $('#redraw');
+  btn.disabled = true; btn.textContent = 'Çekiliyor…';
+  setTimeout(() => {
+    const f = runDraw(TEAMS, seed);
+    btn.disabled = false; btn.textContent = 'Yeni kura';
+    if (!f) { $('#status').textContent = 'Kura çıkmadı, başka bir tohum dene.'; return; }
+    state.seed = seed; state.fixtures = f; state.results = null;
+    state.view = buildView(f);
+    const problems = verify(f, TEAMS);
+    $('#status').textContent = problems.length
+      ? 'Kural ihlali: ' + problems[0]
+      : '144 maç · tüm kurallar sağlandı';
+    renderAll();
+  }, 10);
+}
+
+// ---------------------------------------------------------------------------
+// 1. Matris
+// ---------------------------------------------------------------------------
+function renderMatrix() {
+  const host = $('#matrix'); host.innerHTML = '';
+  const map = new Map();
+  for (const f of state.fixtures) {
+    map.set(f.home + '>' + f.away, { venue: 'H', f });
+    map.set(f.away + '>' + f.home, { venue: 'A', f });
+  }
+
+  const table = el('table', 'matrix');
+  const thead = el('thead'); const hr = el('tr');
+  hr.appendChild(el('th', 'corner'));
+  hr.appendChild(el('th', 'potrail'));
+  ORDER.forEach(id => {
+    const th = el('th', 'col p' + byId[id].pot);
+    th.appendChild(el('div', null, byId[id].code));
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr); table.appendChild(thead);
+
+  const tbody = el('tbody');
+  ORDER.forEach(rowId => {
+    const tr = el('tr');
+    tr.dataset.team = rowId;
+    const th = el('th', 'row');
+    th.append(byId[rowId].name);
+    const em = el('em', null, byId[rowId].country); th.appendChild(em);
+    th.title = byId[rowId].name + ' fikstürünü göster';
+    tr.appendChild(th);
+    tr.appendChild(el('td', 'potrail p' + byId[rowId].pot));
+
+    ORDER.forEach(colId => {
+      const td = el('td', 'c');
+      if (rowId === colId) { td.classList.add('self'); tr.appendChild(td); return; }
+      const hit = map.get(rowId + '>' + colId);
+      if (hit) {
+        td.classList.add(hit.venue === 'H' ? 'home' : 'away', 'p' + byId[colId].pot);
+        td.appendChild(el('i'));
+        td.title = hit.venue === 'H'
+          ? `MD${hit.f.md} · ${byId[rowId].name} - ${byId[colId].name} (ev sahibi)`
+          : `MD${hit.f.md} · ${byId[colId].name} - ${byId[rowId].name} (deplasman)`;
+      }
+      td.dataset.row = rowId; td.dataset.col = colId;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  host.appendChild(table);
+
+  table.addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-team]');
+    if (!tr) return;
+    selectTeam(tr.dataset.team);
+  });
+  paintSelection();
+}
+
+function paintSelection() {
+  document.querySelectorAll('table.matrix tr').forEach(tr => {
+    tr.classList.toggle('sel', tr.dataset.team === state.selected);
+  });
+  document.querySelectorAll('td.c.lit').forEach(td => td.classList.remove('lit'));
+  if (!state.selected) return;
+  document.querySelectorAll(`td.c[data-col="${state.selected}"]`)
+    .forEach(td => td.classList.add('lit'));
+  document.querySelectorAll(`td.c[data-row="${state.selected}"]`)
+    .forEach(td => td.classList.add('lit'));
+}
+
+function selectTeam(id) {
+  state.selected = id;
+  paintSelection();
+  renderDetail();
+}
+
+function renderDetail() {
+  const host = $('#detail'); host.innerHTML = '';
+  if (!state.selected) {
+    host.appendChild(el('p', 'hint', 'Bir takım seç: satırdaki her dolu kare bir maç. '
+      + 'Dolu kare iç saha, çerçeveli kare deplasman. Renk rakibin torbası.'));
+    return;
+  }
+  const t = byId[state.selected];
+  host.appendChild(el('h3', null, t.name));
+  const counts = {};
+  state.view[t.id].forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
+  const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
+  host.appendChild(el('div', 'meta',
+    `${t.country} · Torba ${t.pot} · 4 iç saha / 4 deplasman`
+    + (doubled.length ? ` · aynı ülkeden çift rakip: ${doubled.join(', ')}` : '')));
+
+  const ol = el('ol', 'fix');
+  state.view[t.id].forEach(r => {
+    const li = el('li');
+    li.appendChild(el('span', 'md', 'MD' + r.md));
+    li.appendChild(el('span', 'vs ' + (r.venue === 'H' ? 'h' : 'a'), r.venue === 'H' ? 'vs' : '@'));
+    li.appendChild(el('span', 'nm', byId[r.opp].name));
+    li.appendChild(el('span', 'pt', 'T' + r.pot));
+    ol.appendChild(li);
+  });
+  host.appendChild(ol);
+}
+
+// ---------------------------------------------------------------------------
+// 2. Takim kartlari
+// ---------------------------------------------------------------------------
+function renderTeams() {
+  const host = $('#teams'); host.innerHTML = '';
+  [1, 2, 3, 4].forEach(pot => {
+    const head = el('div', 'pothead');
+    head.appendChild(el('h2', null, 'Torba ' + pot));
+    head.appendChild(el('div', 'line'));
+    host.appendChild(head);
+    const grid = el('div', 'cards');
+    ORDER.filter(id => byId[id].pot === pot).forEach(id => {
+      const t = byId[id];
+      const card = el('div', 'card p' + pot);
+      const h = el('h4', null, t.name);
+      card.appendChild(h);
+      card.appendChild(el('div', 'sub', t.country));
+      const ul = el('ul');
+      state.view[id].forEach(r => {
+        const li = el('li');
+        li.appendChild(el('span', 'md', 'MD' + r.md));
+        li.appendChild(el('span', 'vs', r.venue === 'H' ? 'vs' : '@'));
+        li.appendChild(el('span', 'nm', byId[r.opp].name));
+        ul.appendChild(li);
+      });
+      card.appendChild(ul);
+      grid.appendChild(card);
+    });
+    host.appendChild(grid);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// 3. Haftalar
+// ---------------------------------------------------------------------------
+const MD_DATES = ['8-10 Eyl 2026', '13/14 Eki 2026', '20/21 Eki 2026', '3/4 Kas 2026',
+                  '24/25 Kas 2026', '8/9 Ara 2026', '19/20 Oca 2027', '27 Oca 2027'];
+
+function renderMatchdays() {
+  const host = $('#matchdays'); host.innerHTML = '';
+  const score = new Map();
+  if (state.results) state.results.forEach(r => score.set(r.f, r.hg + '-' + r.ag));
+  const grid = el('div', 'mdgrid');
+  for (let md = 1; md <= 8; md++) {
+    const b = el('div', 'mdblock');
+    b.appendChild(el('h4', null, 'Hafta ' + md));
+    b.appendChild(el('div', 'hint', MD_DATES[md - 1]));
+    state.fixtures.filter(f => f.md === md).forEach(f => {
+      const m = el('div', 'm');
+      m.appendChild(el('div', 'a', byId[f.home].name));
+      m.appendChild(el('div', 's', score.get(f) || '–'));
+      m.appendChild(el('div', null, byId[f.away].name));
+      b.appendChild(m);
+    });
+    grid.appendChild(b);
+  }
+  host.appendChild(grid);
+}
+
+// ---------------------------------------------------------------------------
+// 4. Puan tablosu
+// ---------------------------------------------------------------------------
+function playSeason() {
+  const rng = makeRng((Math.random() * 1e9) | 0);
+  state.results = simulateSeason(state.fixtures, TEAMS, rng);
+  renderTable(); renderMatchdays();
+}
+
+function renderTable() {
+  const host = $('#table'); host.innerHTML = '';
+  if (!state.results) {
+    host.appendChild(el('p', 'hint', 'Sezonu oyna: 144 maç Poisson modeliyle üretilir, '
+      + 'tablo UEFA sıralama kriterlerine göre dizilir.'));
+    return;
+  }
+  const rows = buildTable(state.results, TEAMS);
+  const table = el('table', 'std');
+  const head = el('tr');
+  ['#', 'Takım', 'O', 'G', 'B', 'M', 'A', 'Y', 'AV', 'P'].forEach((h, i) => {
+    const th = el('th', i === 1 ? 'l' : '', h); head.appendChild(th);
+  });
+  table.appendChild(el('thead')).appendChild(head);
+  const tb = el('tbody');
+  rows.forEach((r, i) => {
+    const tr = el('tr', i < 8 ? 'q' : i < 24 ? 'po' : '');
+    tr.appendChild(el('td', 'pos', String(i + 1)));
+    tr.appendChild(el('td', 'nm', byId[r.id].name));
+    [r.p, r.w, r.d, r.l, r.gf, r.ga].forEach(v => tr.appendChild(el('td', '', String(v))));
+    tr.appendChild(el('td', '', (r.gd > 0 ? '+' : '') + r.gd));
+    tr.appendChild(el('td', 'pts', String(r.pts)));
+    tb.appendChild(tr);
+  });
+  table.appendChild(tb);
+  host.appendChild(table);
+  const bands = el('div', 'bands');
+  bands.innerHTML = '<span><i class="swatch" style="background:rgba(35,37,110,.35)"></i>1-8 son 16\'ya doğrudan</span>'
+    + '<span><i class="swatch" style="background:rgba(178,106,0,.35)"></i>9-24 play-off</span>'
+    + '<span><i class="swatch" style="background:var(--paper-3)"></i>25-36 elendi</span>';
+  host.appendChild(bands);
+}
+
+// ---------------------------------------------------------------------------
+// 5. Olasiliklar
+// ---------------------------------------------------------------------------
+function runMonteCarlo() {
+  const mode = $('#mcmode').value;
+  const total = mode === 'fixed' ? 3000 : 120;
+  const btn = $('#mcrun'); btn.disabled = true;
+  const out = $('#probs'); out.innerHTML = '';
+  const prog = el('div', 'progress', 'Hesaplanıyor…'); out.appendChild(prog);
+
+  const acc = Object.fromEntries(ORDER.map(id => [id, { q: 0, p: 0, pts: 0, pos: 0 }]));
+  const rng = makeRng((Math.random() * 1e9) | 0);
+  let done = 0, fixtures = state.fixtures;
+
+  const chunk = () => {
+    const t0 = performance.now();
+    while (done < total && performance.now() - t0 < 60) {
+      if (mode !== 'fixed') {
+        const f = runDraw(TEAMS, (rng() * 1e9) | 0);
+        if (f) fixtures = f;
+      }
+      const rows = buildTable(simulateSeason(fixtures, TEAMS, rng), TEAMS);
+      rows.forEach((r, i) => {
+        const a = acc[r.id];
+        a.pts += r.pts; a.pos += i + 1;
+        if (i < 8) a.q++; else if (i < 24) a.p++;
+      });
+      done++;
+    }
+    prog.textContent = `Hesaplanıyor… ${done}/${total} sezon`;
+    if (done < total) return requestAnimationFrame(chunk);
+    btn.disabled = false;
+    renderProbs(acc, total, mode);
+  };
+  requestAnimationFrame(chunk);
+}
+
+function renderProbs(acc, total, mode) {
+  const out = $('#probs'); out.innerHTML = '';
+  out.appendChild(el('p', 'hint', mode === 'fixed'
+    ? `${total} sezon, bu kura sabit tutularak. Fikstür şansı hesaba katılmıyor.`
+    : `${total} sezon, her sezon kura da yeniden çekilerek. Örneklem küçük, ±%4 oynar.`));
+  const list = ORDER.slice().sort((a, b) => acc[b].q - acc[a].q || acc[b].p - acc[a].p);
+  const head = el('div', 'prob');
+  head.appendChild(el('div', 'nm', ''));
+  head.appendChild(el('div', 'hint', 'ilk 8  ·  play-off  ·  elendi'));
+  head.appendChild(el('div', 'hint', 'ort. P'));
+  out.appendChild(head);
+  list.forEach(id => {
+    const a = acc[id];
+    const row = el('div', 'prob');
+    row.appendChild(el('div', 'nm', byId[id].name));
+    const bar = el('div', 'pbar');
+    const q = el('i', 'q'); q.style.width = (100 * a.q / total) + '%';
+    const p = el('i', 'p'); p.style.width = (100 * a.p / total) + '%';
+    bar.append(q, p);
+    bar.title = `ilk 8: %${(100 * a.q / total).toFixed(1)} · play-off: %${(100 * a.p / total).toFixed(1)}`;
+    row.appendChild(bar);
+    row.appendChild(el('div', '', (a.pts / total).toFixed(1)));
+    out.appendChild(row);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// sekmeler + baslangic
+// ---------------------------------------------------------------------------
+function renderAll() {
+  renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+  $('#probs').innerHTML = '';
+  $('#probs').appendChild(el('p', 'hint', 'Hesapla butonuna bas.'));
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(x =>
+      x.setAttribute('aria-selected', String(x === b)));
+    document.querySelectorAll('main section').forEach(s =>
+      (s.hidden = s.id !== 'view-' + b.dataset.view));
+  });
+});
+$('#redraw').addEventListener('click', () => newDraw(Number($('#seed').value) || 1));
+$('#random').addEventListener('click', () => {
+  const s = (Math.random() * 99999) | 0;
+  $('#seed').value = s; newDraw(s);
+});
+$('#play').addEventListener('click', playSeason);
+$('#mcrun').addEventListener('click', runMonteCarlo);
+
+$('#seed').value = state.seed;
+newDraw(state.seed);
+
+</script>
+</body>
+</html>
