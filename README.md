@@ -1,6 +1,23 @@
-# UCL Lig Aşaması Simülatörü
+# DrawLab
 
-**Canlı: https://cmcygz.github.io/ucl-draw-simulator/**
+**Canlı: https://drawlab.cmcygz.workers.dev/**
+
+Avrupa kupalarının 36 takımlı lig aşamasını kuradan puan tablosuna kadar üreten
+simülatör. Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi.
+
+| Turnuva | Torba | Maç | Ev/Dep | Hafta |
+|---|---|---|---|---|
+| Şampiyonlar Ligi | 4 x 9 | 8 | 4/4 | 8 |
+| Avrupa Ligi | 4 x 9 | 8 | 4/4 | 8 |
+| Konferans Ligi | 6 x 6 | 6 | 3/3 | 6 |
+
+## Barındırma notu
+
+Site Cloudflare Worker'dan sunuluyor, Pages'ten değil. Sebebi teknik değil:
+`*.pages.dev` Türkiye'de ISS seviyesinde engelli, DNS Cloudflare yerine bir
+Türk Telekom IP'sine (213.14.227.50) yönlendiriyor ve bağlantı kurulmuyor.
+`workers.dev` engelli değil. Worker hem siteyi hem API'yi sunduğu için her şey
+tek origin'de.
 
 Şampiyonlar Ligi'nin yeni 36 takımlı lig aşamasını kuradan puan tablosuna kadar üreten
 bağımsız Python projesi. Harici bağımlılık yok, sadece standart kütüphane.

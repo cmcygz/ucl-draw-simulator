@@ -1,3 +1,5 @@
+import { SITE_HTML } from './site.js';
+
 const MAX_NAME = 60;
 const MAX_MATCHES = 200;
 const MAX_BODY = 64 * 1024;
@@ -145,8 +147,25 @@ export default {
       return json({ error: 'bu origin izinli değil' }, 403, cors);
     }
 
-    const parts = new URL(request.url).pathname.split('/').filter(Boolean);
-    if (parts[0] !== 'api' || parts[1] !== 'saves') return json({ error: 'bulunamadı' }, 404, cors);
+    const url = new URL(request.url);
+    const parts = url.pathname.split('/').filter(Boolean);
+
+    if (parts[0] !== 'api') {
+      if (request.method !== 'GET') return json({ error: 'desteklenmeyen istek' }, 405, cors);
+      if (url.pathname === '/robots.txt') {
+        return new Response('User-agent: *\nDisallow: /\n', {
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }
+      return new Response(SITE_HTML, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'X-Robots-Tag': 'noindex, nofollow'
+        }
+      });
+    }
+    if (parts[1] !== 'saves') return json({ error: 'bulunamadı' }, 404, cors);
     const id = parts[2];
 
     try {

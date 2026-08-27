@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """engine.js + ui.part.html + app.part.js -> tek dosya index.html"""
+import json
 import pathlib
 
 here = pathlib.Path(__file__).parent
@@ -159,4 +160,10 @@ dist = here / "dist"
 dist.mkdir(exist_ok=True)
 (dist / "index.html").write_text(out, encoding="utf-8")
 (dist / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+
+site_js = (here / "api" / "src" / "site.js")
+site_js.write_text(
+    "// build.py tarafindan uretilir, elle duzenleme.\n"
+    "export const SITE_HTML = " + json.dumps(out) + ";\n",
+    encoding="utf-8")
 print(f"index.html ve dist/ yazildi: {len(out)} bayt")

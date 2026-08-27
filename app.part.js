@@ -941,7 +941,9 @@ async function runCeremony() {
 // ---------------------------------------------------------------------------
 // 7. Kayitlar
 // ---------------------------------------------------------------------------
-const API = 'https://ucl-draw-saves.cmcygz.workers.dev';
+const API = location.hostname.endsWith('workers.dev')
+  ? ''
+  : 'https://drawlab.cmcygz.workers.dev';
 const TOKENS_KEY = 'ucl:tokens';
 let savesLoaded = false;
 
