@@ -38,13 +38,19 @@ tıklayarak tek takımın fikstürü), **Haftalar**, **Puan tablosu**, **Olasıl
 
 ### Çekiliş töreni
 
-Dört torba, torba başına 9 top. **Varsayılan mod elle seçim:** herhangi bir topa
-tıklarsın, o takım sahneye çıkar, sekiz rakibi tek tek açılır; bitince sıradaki
-topu seçersin. Çekiliş sürerken diğer toplar kilitlenir.
+Dört torba, torba başına 9 **kapalı** top. Topların üzerinde takım yazmaz; hangi
+takımı çektiğin ancak top açılınca belli olur.
 
-**Hepsini otomatik çek** kalan takımları sırayla çeker (torba 1'den başlar, torba
-içindeki sıra tohuma bağlıdır); bu modda duraklat ve sonuca atla vardır. Elle
-başlayıp otomatiğe devam etmek mümkündür, otomatik kaldığı yerden sürer.
+**Varsayılan mod elle seçim:** bir torbadaki herhangi bir topa tıklarsın, o
+torbada kalanlar arasından **rastgele** bir takım çıkar (`Math.random`), top
+üzerinde takımın kodu belirir, takım sahneye gelir ve sekiz rakibi tek tek
+açılır. Bitince sıradaki topu seçersin. Çekiliş sürerken diğer toplar kilitlenir.
+Bir torbadan çekilen top her zaman o torbanın takımıdır.
+
+**Hepsini otomatik çek** kalan takımları çeker: torba 1'den başlar, her torbanın
+içinde rastgele ilerler. Bu modda duraklat ve sonuca atla vardır. Elle başlayıp
+otomatiğe devam etmek mümkündür, otomatik kaldığı yerden sürer. Sonuca atlandığında
+kalan bütün toplar açılır ve torbalarda kimin nerede olduğu görünür.
 
 Hız 1x/2x/4x. 1x'te tek takım yaklaşık 4.7 saniye sürer (top 0.9 sn çalkalanır,
 takım 0.7 sn sahnede bekler, her rakip 0.42 sn arayla açılır). **Baştan al**

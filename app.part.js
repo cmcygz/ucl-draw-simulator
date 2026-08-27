@@ -612,7 +612,10 @@ function renderProbs(acc, total, mode) {
 // ---------------------------------------------------------------------------
 // 6. Cekilis toreni
 // ---------------------------------------------------------------------------
-const ceremony = { gen: 0, busy: false, auto: false, paused: false, skip: false, speed: 1, pot: 0, drawn: 0 };
+const ceremony = {
+  gen: 0, busy: false, auto: false, paused: false, skip: false,
+  speed: 1, pot: 0, drawn: 0, taken: new Set()
+};
 const CTIME = { spin: 900, reveal: 700, opponent: 420, rest: 600 };
 
 function drawStatus(msg) { $('#drawstatus').textContent = msg; }
@@ -633,16 +636,21 @@ function cwait(ms, gen) {
   });
 }
 
-function ballEl(t, opts) {
-  const o = opts || {};
-  const b = el(o.interactive ? 'button' : 'div', 'ball p' + t.pot + (o.big ? ' big' : ''));
-  if (o.interactive) {
-    b.type = 'button';
-    b.setAttribute('aria-label', t.name + ' topunu çek');
-  }
-  b.dataset.team = t.id;
-  b.title = o.interactive ? t.name + ' · topu çekmek için tıkla' : t.name;
+/** Sahnedeki acilmis top: takim kodunu tasir. */
+function stageBall(t) {
+  const b = el('div', 'ball big p' + t.pot);
+  b.title = t.name;
   b.textContent = t.code;
+  return b;
+}
+
+/** Torbadaki kapali top: hangi takim oldugu belli degildir. */
+function closedBall(pot) {
+  const b = el('button', 'ball p' + pot);
+  b.type = 'button';
+  b.dataset.pot = String(pot);
+  b.title = 'Torba ' + pot + ' · top çek';
+  b.setAttribute('aria-label', 'Torba ' + pot + ' torbasından top çek');
   return b;
 }
 
@@ -654,16 +662,27 @@ function renderBowls() {
     bowl.dataset.pot = String(pot);
     bowl.appendChild(el('h4', null, 'Torba ' + pot));
     const balls = el('div', 'balls');
-    ORDER.filter(id => byId[id].pot === pot)
-      .forEach(id => balls.appendChild(ballEl(byId[id], { interactive: true })));
+    ORDER.filter(id => byId[id].pot === pot).forEach(() => balls.appendChild(closedBall(pot)));
     bowl.appendChild(balls);
     host.appendChild(bowl);
   });
 }
 
-function isPicked(id) {
-  const b = document.querySelector('#drawbowls .ball[data-team="' + id + '"]');
-  return !!b && b.classList.contains('picked');
+function remainingInPot(pot) {
+  return ORDER.filter(id => byId[id].pot === pot && !ceremony.taken.has(id));
+}
+
+function freeBall(pot) {
+  return document.querySelector('#drawbowls .bowl[data-pot="' + pot + '"] .ball:not(.picked)');
+}
+
+/** Kapali topu acar: takim kodunu yazar ve sonencesine soluklastirir. */
+function openBall(ball, t) {
+  if (!ball) return;
+  ball.textContent = t.code;
+  ball.title = t.name;
+  ball.setAttribute('aria-label', t.name + ' çekildi');
+  ball.classList.add('picked');
 }
 
 function setDrawUI() {
@@ -689,7 +708,7 @@ function stageTeam(t) {
   const stage = $('#drawstage');
   stage.innerHTML = '';
   const card = el('div', 'drawcard');
-  card.appendChild(ballEl(t, { big: true }));
+  card.appendChild(stageBall(t));
   const info = el('div', 'info');
   info.appendChild(el('h3', null, t.name));
   info.appendChild(el('div', 'meta', t.country + ' · Torba ' + t.pot + ' · 8 rakip çekiliyor'));
@@ -718,16 +737,22 @@ function resetCeremony() {
   ceremony.skip = false;
   ceremony.drawn = 0;
   ceremony.pot = 0;
+  ceremony.taken = new Set();
   $('#drawpause').textContent = 'Duraklat';
   renderBowls();
   $('#drawstage').innerHTML = '';
   setDrawUI();
-  drawStatus('Bir topa tıkla: o takım sahneye çıkar, sekiz rakibi tek tek açılır. '
-    + 'Dilersen hepsini otomatik de çektirebilirsin.');
+  drawStatus('Toplar kapalı. Bir torbadan top çek — hangi takım çıkacağı belli değil, '
+    + 'o torbada kalanlar arasından rastgele biri açılır ve sekiz rakibi tek tek gelir.');
 }
 
 function finishCeremony() {
-  document.querySelectorAll('#drawbowls .ball').forEach(b => b.classList.add('picked'));
+  [1, 2, 3, 4].forEach(pot => {
+    remainingInPot(pot).forEach(id => {
+      ceremony.taken.add(id);
+      openBall(freeBall(pot), byId[id]);
+    });
+  });
   activateBowl(0);
   ceremony.drawn = 36;
   ceremony.busy = false;
@@ -739,15 +764,15 @@ function finishCeremony() {
   drawStatus('36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.');
 }
 
-/** Tek takimin cekilisi: top calkalanir, takim sahneye cikar, rakipler tek tek acilir. */
-async function revealTeam(t, gen) {
+/** Tek takimin cekilisi: top calkalanir, acilir, rakipler tek tek gelir. */
+async function revealTeam(t, gen, ball) {
   ceremony.pot = t.pot;
+  ceremony.taken.add(t.id);
   activateBowl(t.pot);
   drawStatus(`Torba ${t.pot} · top çalkalanıyor…`);
   if (!await cwait(CTIME.spin, gen)) return false;
 
-  const ball = document.querySelector('#drawbowls .ball[data-team="' + t.id + '"]');
-  if (ball) ball.classList.add('picked');
+  openBall(ball || freeBall(t.pot), t);
   activateBowl(0);
   ceremony.drawn++;
   stageTeam(t);
@@ -764,18 +789,21 @@ async function revealTeam(t, gen) {
   return true;
 }
 
-async function pickBall(id) {
+/** Tiklanan torbadan kalanlar arasindan rastgele bir takim ceker. */
+async function pickBall(ball) {
   if (ceremony.busy || !state.fixtures.length) return;
-  const t = byId[id];
-  if (!t || isPicked(id)) return;
+  const pot = Number(ball.dataset.pot);
+  const left = remainingInPot(pot);
+  if (!left.length) return;
 
+  const t = byId[left[Math.floor(Math.random() * left.length)]];
   const gen = ceremony.gen;
   ceremony.busy = true;
   ceremony.auto = false;
   ceremony.skip = false;
   setDrawUI();
 
-  const ok = await revealTeam(t, gen);
+  const ok = await revealTeam(t, gen, ball);
   if (ceremony.gen !== gen) return;
 
   ceremony.busy = false;
@@ -795,30 +823,19 @@ async function runCeremony() {
   $('#drawpause').textContent = 'Duraklat';
   setDrawUI();
 
-  for (const id of ceremonyOrder()) {
-    if (ceremony.skip) break;
-    if (isPicked(id)) continue;
-    if (!await revealTeam(byId[id], gen)) return;
-    if (!await cwait(CTIME.rest, gen)) return;
+  for (let pot = 1; pot <= 4 && !ceremony.skip; pot++) {
+    let left = remainingInPot(pot);
+    while (left.length && !ceremony.skip) {
+      const t = byId[left[Math.floor(Math.random() * left.length)]];
+      if (!await revealTeam(t, gen)) return;
+      if (!await cwait(CTIME.rest, gen)) return;
+      left = remainingInPot(pot);
+    }
   }
   if (ceremony.gen !== gen) return;
   finishCeremony();
 }
 
-/** Torbalara gore sirali, torba icinde tohuma bagli karisik cekilis sirasi. */
-function ceremonyOrder() {
-  const rng = makeRng((state.seed * 7919 + 13) >>> 0);
-  const out = [];
-  [1, 2, 3, 4].forEach(pot => {
-    const ids = ORDER.filter(id => byId[id].pot === pot);
-    for (let i = ids.length - 1; i > 0; i--) {
-      const j = Math.floor(rng() * (i + 1));
-      const tmp = ids[i]; ids[i] = ids[j]; ids[j] = tmp;
-    }
-    out.push.apply(out, ids);
-  });
-  return out;
-}
 
 // ---------------------------------------------------------------------------
 // 7. Kayitlar
@@ -1091,7 +1108,7 @@ $('#drawreset').addEventListener('click', resetCeremony);
 $('#drawskip').addEventListener('click', () => { ceremony.skip = true; });
 $('#drawbowls').addEventListener('click', e => {
   const ball = e.target.closest('button.ball');
-  if (ball) pickBall(ball.dataset.team);
+  if (ball && !ball.classList.contains('picked')) pickBall(ball);
 });
 $('#drawpause').addEventListener('click', () => {
   ceremony.paused = !ceremony.paused;
