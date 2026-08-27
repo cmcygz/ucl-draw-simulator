@@ -43,6 +43,7 @@ __UI__
 
 <nav class="tabs" role="tablist">
   <button data-view="matrix" aria-selected="true">Matris</button>
+  <button data-view="draw" aria-selected="false">Çekiliş</button>
   <button data-view="teams" aria-selected="false">Takımlar</button>
   <button data-view="matchdays" aria-selected="false">Haftalar</button>
   <button data-view="table" aria-selected="false">Puan tablosu</button>
@@ -62,6 +63,24 @@ __UI__
       <span><i class="key" style="background:var(--p4)"></i> Torba 4</span>
     </div>
     <div class="detail" id="detail"></div>
+  </section>
+
+  <section id="view-draw" hidden>
+    <div class="bar">
+      <button id="drawstart">Çekilişi başlat</button>
+      <button id="drawpause" class="ghost" hidden>Duraklat</button>
+      <button id="drawskip" class="ghost" hidden>Sonuca atla</button>
+      <label class="seedbox">hız
+        <select id="drawspeed">
+          <option value="1">1x</option>
+          <option value="2" selected>2x</option>
+          <option value="4">4x</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint" id="drawstatus"></p>
+    <div id="drawstage" class="stage"></div>
+    <div id="drawbowls" class="bowls"></div>
   </section>
 
   <section id="view-teams" hidden>

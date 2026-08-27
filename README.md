@@ -32,8 +32,20 @@ python3 build.py      # parçaları değiştirdikten sonra
 ```
 
 Sekmeler: **Matris** (36x36 fikstür ızgarası, dolu kare iç saha, çerçeveli kare
-deplasman, renk rakibin torbası), **Takımlar** (listeden ya da karta tıklayarak
-tek takımın fikstürü), **Haftalar**, **Puan tablosu**, **Olasılıklar** (Monte Carlo).
+deplasman, renk rakibin torbası), **Çekiliş**, **Takımlar** (listeden ya da karta
+tıklayarak tek takımın fikstürü), **Haftalar**, **Puan tablosu**, **Olasılıklar**
+(Monte Carlo), **Kayıtlar**.
+
+### Çekiliş töreni
+
+Dört torba, torba başına 9 top. Torbadan bir top çekilir, takım sahneye çıkar,
+sekiz rakibi tek tek açılır; sıra torba 1'den başlar, torba içindeki sıra tohuma
+bağlıdır. Duraklat, sonuca atla ve 1x/2x/4x hız kontrolleri var.
+
+Bu bir **canlandırma**: kura zaten hesaplanmıştır, tören onu tekrar oynatır.
+Kısıt çözücü canlı çalışmaz, dolayısıyla gerçek çekilişteki gibi bir fizibilite
+kontrolü ya da tıkanma ihtimali yoktur. Yeni kura çekilince tören sıfırlanır.
+`prefers-reduced-motion` açıksa animasyonlar kapanır.
 
 ### Tohum adreste
 

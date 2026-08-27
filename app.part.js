@@ -610,7 +610,163 @@ function renderProbs(acc, total, mode) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. Kayitlar
+// 6. Cekilis toreni
+// ---------------------------------------------------------------------------
+const ceremony = { gen: 0, running: false, paused: false, skip: false, speed: 2 };
+
+function drawStatus(msg) { $('#drawstatus').textContent = msg; }
+
+/** Duraklatma ve hiza saygi duyan bekleme; kura degisirse false doner. */
+function cwait(ms, gen) {
+  return new Promise(resolve => {
+    let left = ms / (ceremony.speed || 1);
+    const step = () => {
+      if (ceremony.gen !== gen) return resolve(false);
+      if (ceremony.paused) return setTimeout(step, 80);
+      if (left <= 0) return resolve(true);
+      const slice = Math.min(50, left);
+      left -= slice;
+      setTimeout(step, slice);
+    };
+    step();
+  });
+}
+
+function ballEl(t, extra) {
+  const b = el('div', 'ball p' + t.pot + (extra ? ' ' + extra : ''));
+  b.dataset.team = t.id;
+  b.title = t.name;
+  b.textContent = t.code;
+  return b;
+}
+
+function renderBowls() {
+  const host = $('#drawbowls');
+  host.innerHTML = '';
+  [1, 2, 3, 4].forEach(pot => {
+    const bowl = el('div', 'bowl p' + pot);
+    bowl.dataset.pot = String(pot);
+    bowl.appendChild(el('h4', null, 'Torba ' + pot));
+    const balls = el('div', 'balls');
+    ORDER.filter(id => byId[id].pot === pot).forEach(id => balls.appendChild(ballEl(byId[id])));
+    bowl.appendChild(balls);
+    host.appendChild(bowl);
+  });
+}
+
+function activateBowl(pot) {
+  document.querySelectorAll('#drawbowls .bowl').forEach(b =>
+    b.classList.toggle('active', b.dataset.pot === String(pot)));
+}
+
+function stageTeam(t) {
+  const stage = $('#drawstage');
+  stage.innerHTML = '';
+  const card = el('div', 'drawcard');
+  card.appendChild(ballEl(t, 'big'));
+  const info = el('div', 'info');
+  info.appendChild(el('h3', null, t.name));
+  info.appendChild(el('div', 'meta', t.country + ' · Torba ' + t.pot + ' · 8 rakip çekiliyor'));
+  card.appendChild(info);
+  stage.appendChild(card);
+  const opps = el('div', 'opps');
+  opps.id = 'drawopps';
+  stage.appendChild(opps);
+}
+
+function revealOpponent(r) {
+  const opp = byId[r.opp];
+  const row = el('div', 'opp p' + opp.pot);
+  row.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
+  row.appendChild(el('span', 'nm', opp.name));
+  row.appendChild(el('span', 'vn', r.venue === 'H' ? 'iç saha' : 'deplasman'));
+  $('#drawopps').appendChild(row);
+  requestAnimationFrame(() => row.classList.add('in'));
+}
+
+function drawButtons(running) {
+  $('#drawstart').textContent = running ? 'Çekiliyor…' : 'Çekilişi başlat';
+  $('#drawstart').disabled = running;
+  $('#drawpause').hidden = !running;
+  $('#drawskip').hidden = !running;
+  $('#drawpause').textContent = 'Duraklat';
+}
+
+function resetCeremony() {
+  ceremony.gen++;
+  ceremony.running = false;
+  ceremony.paused = false;
+  ceremony.skip = false;
+  drawButtons(false);
+  renderBowls();
+  $('#drawstage').innerHTML = '';
+  drawStatus('36 top sırayla çekilir, her takımın 8 rakibi tek tek açılır. '
+    + 'Kura zaten hazır; bu onun canlandırması.');
+}
+
+function finishCeremony() {
+  document.querySelectorAll('#drawbowls .ball').forEach(b => b.classList.add('picked'));
+  activateBowl(0);
+  ceremony.running = false;
+  ceremony.paused = false;
+  ceremony.skip = false;
+  drawButtons(false);
+  drawStatus('36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.');
+}
+
+/** Torbalara gore sirali, torba icinde tohuma bagli karisik cekilis sirasi. */
+function ceremonyOrder() {
+  const rng = makeRng((state.seed * 7919 + 13) >>> 0);
+  const out = [];
+  [1, 2, 3, 4].forEach(pot => {
+    const ids = ORDER.filter(id => byId[id].pot === pot);
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      const tmp = ids[i]; ids[i] = ids[j]; ids[j] = tmp;
+    }
+    out.push.apply(out, ids);
+  });
+  return out;
+}
+
+async function runCeremony() {
+  if (ceremony.running || !state.fixtures.length) return;
+  const gen = ++ceremony.gen;
+  ceremony.running = true;
+  ceremony.paused = false;
+  ceremony.skip = false;
+  ceremony.speed = Number($('#drawspeed').value) || 1;
+  drawButtons(true);
+  renderBowls();
+  $('#drawstage').innerHTML = '';
+
+  const order = ceremonyOrder();
+  for (let i = 0; i < order.length; i++) {
+    if (ceremony.skip) break;
+    const t = byId[order[i]];
+    ceremony.pot = t.pot;
+    drawStatus(`Torba ${t.pot} · ${i + 1}/36 · top çalkalanıyor`);
+    activateBowl(t.pot);
+    if (!await cwait(420, gen)) return;
+
+    const ball = document.querySelector('#drawbowls .ball[data-team="' + t.id + '"]');
+    if (ball) ball.classList.add('picked');
+    stageTeam(t);
+    drawStatus(`Torba ${t.pot} · ${i + 1}/36 · ${t.name}`);
+    if (!await cwait(340, gen)) return;
+
+    for (const r of state.view[t.id]) {
+      if (ceremony.skip) break;
+      revealOpponent(r);
+      if (!await cwait(120, gen)) return;
+    }
+    if (!await cwait(280, gen)) return;
+  }
+  if (ceremony.gen === gen) finishCeremony();
+}
+
+// ---------------------------------------------------------------------------
+// 7. Kayitlar
 // ---------------------------------------------------------------------------
 const API = 'https://ucl-draw-saves.cmcygz.workers.dev';
 const TOKENS_KEY = 'ucl:tokens';
@@ -850,6 +1006,7 @@ async function removeSave(id) {
 // ---------------------------------------------------------------------------
 function renderAll() {
   renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+  resetCeremony();
   $('#probs').innerHTML = '';
   $('#probs').appendChild(el('p', 'hint', 'Hesapla butonuna bas.'));
 }
@@ -874,6 +1031,16 @@ $('#teampick').addEventListener('change', e => selectTeam(e.target.value || null
 $('#teamall').addEventListener('click', () => selectTeam(null));
 $('#pickclear').addEventListener('click', clearPicks);
 $('#autofill').addEventListener('click', autofillPicks);
+$('#drawstart').addEventListener('click', runCeremony);
+$('#drawskip').addEventListener('click', () => { ceremony.skip = true; });
+$('#drawpause').addEventListener('click', () => {
+  ceremony.paused = !ceremony.paused;
+  $('#drawpause').textContent = ceremony.paused ? 'Devam et' : 'Duraklat';
+  activateBowl(ceremony.paused ? 0 : ceremony.pot);
+});
+$('#drawspeed').addEventListener('change', e => {
+  ceremony.speed = Number(e.target.value) || 1;
+});
 $('#savefixture').addEventListener('click', saveFixture);
 $('#matchdays').addEventListener('input', e => {
   const inp = e.target.closest('input[data-fx]');
