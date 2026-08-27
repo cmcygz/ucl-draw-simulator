@@ -14,6 +14,7 @@ function useCompetition(id) {
   FORMAT = FORMATS[COMP.format];
   byId = Object.fromEntries(TEAMS.map(t => [t.id, t]));
   ORDER = TEAMS.map(t => t.id);
+  document.body.dataset.comp = COMP.id;
 }
 
 const POTS = () => Array.from({ length: FORMAT.pots }, (_, i) => i + 1);
@@ -51,16 +52,16 @@ function setStatus(key, vars) {
   $('#status').textContent = tx(key, state.status.vars);
 }
 
-/**
- * Adres parçasını çözer: `#2027` tohum, `#k=ysjgzzsv` kayıt linki.
- * Tanınmayan biçimde boş nesne döner.
- */
 /** Yoldaki /ucl gibi bir parca varsa turnuvayi oradan da okur. */
 function compFromPath() {
   const slug = location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
   return COMP_IDS.indexOf(slug) === -1 ? null : slug;
 }
 
+/**
+ * Adresi cozer: `#k=ysjgzzsv` kayit linki, `#ucl-2027` turnuva ve tohum,
+ * `#2027` eski bicim. Hicbiri yoksa yoldaki /ucl parcasina bakar.
+ */
 function parseHash() {
   const raw = location.hash.replace(/^#/, '').trim();
   const saved = raw.match(/^k=([A-Za-z0-9]{4,32})$/);
@@ -157,11 +158,8 @@ function newDraw(seed, apply, opts) {
 }
 
 /**
- * Kutudaki tohumla yeniden kura çeker. Tohum değişmemişse bir artırır, çünkü
- * aynı tohum aynı kurayı üretir ve buton etkisiz görünür.
- */
-/**
- * Kutudaki tohumla yeniden kura ceker ve cekilis ekranini acar. Toplar kapali
+ * Kutudaki tohumla yeniden kura ceker ve cekilis ekranini acar. Tohum
+ * degismemisse bir artirir, cunku ayni tohum ayni kurayi uretir. Toplar kapali
  * baslar; fikstur ancak kullanici topları cektikce goruntulenir.
  */
 function redrawFromInput() {
@@ -721,7 +719,7 @@ function renderTable() {
   table.appendChild(tb);
   host.appendChild(table);
   const bands = el('div', 'bands');
-  [['rgba(35,37,110,.35)', 'bands.q'], ['rgba(178,106,0,.35)', 'bands.po'],
+  [['var(--accent)', 'bands.q'], ['rgba(178,106,0,.35)', 'bands.po'],
    ['var(--paper-3)', 'bands.out']].forEach(pair => {
     const span = el('span');
     const sw = el('i', 'swatch');

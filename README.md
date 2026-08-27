@@ -91,6 +91,23 @@ Kısıt çözücü canlı çalışmaz, dolayısıyla gerçek çekilişteki gibi 
 kontrolü ya da tıkanma ihtimali yoktur. Yeni kura çekilince tören sıfırlanır.
 `prefers-reduced-motion` açıksa animasyonlar kapanır.
 
+### Turnuva teması
+
+Her turnuvanın kendi vurgu rengi var: Şampiyonlar Ligi `#1B4FB0`, Avrupa Ligi
+`#A84A00`, Konferans Ligi `#0B6136`. Vurgu yalnızca kromda kullanılıyor — aktif
+turnuva segmenti, sekme altı çizgisi, başlık kuralı, puan tablosundaki ilk-8
+bandı ve olasılık çubuğu.
+
+**Torba renkleri turnuvadan turnuvaya değişmiyor**, çünkü onlar süs değil veri:
+matriste, kartlarda, odak tablosunda ve çekiliş toplarında rakibin hangi
+torbadan olduğunu taşıyorlar. Turnuva başına değiştirmek hem kodlamayı bozar
+(UEL turuncusu torba 3 amber'ıyla karışır) hem de kullanıcıyı her geçişte
+yeniden öğrenmeye zorlar.
+
+Renkler beyaz yazıyla kontrast ölçülerek seçildi: sırasıyla 7.52, 5.76 ve 7.56,
+üçü de WCAG AA eşiğinin (4.5) üzerinde. Avrupa Ligi için parlak turuncu yerine
+koyu turuncu alındı; parlak olan 3.37'de kalıyordu.
+
 ### Dil
 
 Arayüz İngilizce ve Türkçe. **Varsayılan İngilizce**; başlıktaki seçiciden
