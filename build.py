@@ -90,7 +90,6 @@ __UI__
       <button id="drawstart" data-i18n="draw.auto">Auto-draw everything</button>
       <button id="drawpause" class="ghost" hidden data-i18n="draw.pause">Pause</button>
       <button id="drawskip" class="ghost" hidden data-i18n="draw.skipTeam">Speed up this club</button>
-      <button id="drawreset" class="ghost" hidden data-i18n="draw.reset">Start over</button>
       <label class="seedbox"><span data-i18n="draw.speed">speed</span>
         <select id="drawspeed">
           <option value="1" selected>1x</option>

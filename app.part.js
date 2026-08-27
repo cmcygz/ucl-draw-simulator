@@ -39,6 +39,7 @@ const el = (tag, cls, txt) => {
 const state = {
   seed: 2027, fixtures: [], results: null, simIndex: null,
   selected: null, view: {}, picks: {}, dirty: false,
+  drawn: new Set(), drawComplete: false,
   status: { key: 'status.preparing', vars: {} }
 };
 
@@ -106,7 +107,7 @@ function scoreFor(f) {
 
 function mergedResults() {
   const out = [];
-  for (const f of state.fixtures) {
+  for (const f of visibleFixtures()) {
     const s = scoreFor(f);
     if (s) out.push({ f, hg: s.hg, ag: s.ag });
   }
@@ -132,7 +133,8 @@ function buildView(fixtures) {
  * Tohumla kurayi ceker. `apply` verilirse fikstur hazir olduktan sonra, ekranlar
  * cizilmeden once calisir; kayitli skorlari yerlestirmek icin kullanilir.
  */
-function newDraw(seed, apply) {
+function newDraw(seed, apply, opts) {
+  const o = opts || {};
   const btn = $('#redraw');
   btn.disabled = true; btn.textContent = tx('status.drawing');
   setTimeout(() => {
@@ -143,6 +145,8 @@ function newDraw(seed, apply) {
     state.view = buildView(f);
     state.picks = {};
     state.dirty = false;
+    state.drawn = new Set();
+    state.drawComplete = !!o.revealed;
     writeHash(COMP.id + '-' + seed);
     if (apply) apply();
     const problems = verify(f, TEAMS, drawOpt());
@@ -156,12 +160,17 @@ function newDraw(seed, apply) {
  * Kutudaki tohumla yeniden kura çeker. Tohum değişmemişse bir artırır, çünkü
  * aynı tohum aynı kurayı üretir ve buton etkisiz görünür.
  */
+/**
+ * Kutudaki tohumla yeniden kura ceker ve cekilis ekranini acar. Toplar kapali
+ * baslar; fikstur ancak kullanici topları cektikce goruntulenir.
+ */
 function redrawFromInput() {
   if (!confirmDiscard()) return;
   const typed = Number($('#seed').value) || 1;
   const seed = typed === state.seed ? (typed % 999999) + 1 : typed;
   $('#seed').value = seed;
-  newDraw(seed);
+  newDraw(seed, null, { revealed: false });
+  showTab('draw');
 }
 
 /** Torba renk anahtarlarini aktif bicime gore cizer. */
@@ -233,7 +242,8 @@ function switchCompetition(id) {
   $('#comp').value = COMP.id;
   if (!COMP.available || !TEAMS.length) { renderUnavailable(); writeHash(COMP.id); return; }
   fillTeamPicker();
-  newDraw(state.seed);
+  newDraw(state.seed, null, { revealed: false });
+  showTab('draw');
 }
 
 // Ic saha / deplasman ikonlari. Satir ici SVG cunku emoji her platformda
@@ -254,13 +264,53 @@ function venueIcon(venue) {
   return wrap;
 }
 
+// --- cekilis gorunurlugu ------------------------------------------------
+// Bir takim torbadan cikinca sekiz rakibi de aciklanmis olur, dolayisiyla
+// iki taraftan biri cekilmisse mac gorunur hale gelir.
+function fixtureRevealed(f) {
+  return state.drawComplete || state.drawn.has(f.home) || state.drawn.has(f.away);
+}
+
+function visibleFixtures() {
+  return state.drawComplete ? state.fixtures : state.fixtures.filter(fixtureRevealed);
+}
+
+function visibleRows(teamId) {
+  const rows = state.view[teamId] || [];
+  return state.drawComplete ? rows : rows.filter(r => fixtureRevealed(r.f));
+}
+
+function drawPending() {
+  return !state.drawComplete && state.drawn.size === 0;
+}
+
+/** Cekilis beklerken diger sekmelerde gosterilen yonlendirme. */
+function drawNotice() {
+  const box = el('div', 'compnote');
+  box.appendChild(el('div', null, tx(drawPending() ? 'draw.notYet' : 'draw.partial',
+    { n: state.drawn.size, total: teamCount() })));
+  const go = el('button', null, tx('draw.goToDraw'));
+  go.style.marginTop = '14px';
+  go.addEventListener('click', () => showTab('draw'));
+  box.appendChild(go);
+  return box;
+}
+
+let viewsStale = false;
+
+function refreshViews() {
+  viewsStale = false;
+  renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+}
+
 // ---------------------------------------------------------------------------
 // 1. Matris
 // ---------------------------------------------------------------------------
 function renderMatrix() {
   const host = $('#matrix'); host.innerHTML = '';
+  if (drawPending()) { host.appendChild(drawNotice()); return; }
   const map = new Map();
-  for (const f of state.fixtures) {
+  for (const f of visibleFixtures()) {
     map.set(f.home + '>' + f.away, { venue: 'H', f });
     map.set(f.away + '>' + f.home, { venue: 'A', f });
   }
@@ -343,14 +393,14 @@ function renderDetail() {
   const t = byId[state.selected];
   host.appendChild(el('h3', null, t.name));
   const counts = {};
-  state.view[t.id].forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
+  visibleRows(t.id).forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
   host.appendChild(el('div', 'meta',
     tx('detail.meta', { country: t.country, pot: t.pot, n: perTeam() / 2 })
     + (doubled.length ? ' · ' + tx('detail.doubled', { list: doubled.join(', ') }) : '')));
 
   const ol = el('ol', 'fix');
-  state.view[t.id].forEach(r => {
+  visibleRows(t.id).forEach(r => {
     const li = el('li');
     li.appendChild(el('span', 'md', 'MD' + r.md));
     li.appendChild(venueIcon(r.venue));
@@ -393,6 +443,7 @@ function renderTeams() {
     ? tx('teams.hintSelected')
     : tx('teams.hint');
 
+  if (drawPending()) { host.appendChild(drawNotice()); return; }
   if (state.selected) { host.appendChild(teamFocus(byId[state.selected])); return; }
 
   POTS().forEach(pot => {
@@ -401,7 +452,7 @@ function renderTeams() {
     head.appendChild(el('div', 'line'));
     host.appendChild(head);
     const grid = el('div', 'cards');
-    ORDER.filter(id => byId[id].pot === pot).forEach(id => {
+    ORDER.filter(id => byId[id].pot === pot && visibleRows(id).length).forEach(id => {
       const t = byId[id];
       const card = el('button', 'card p' + pot);
       card.type = 'button';
@@ -411,7 +462,7 @@ function renderTeams() {
       card.appendChild(h);
       card.appendChild(el('div', 'sub', t.country));
       const ul = el('ul');
-      state.view[id].forEach(r => {
+      visibleRows(id).forEach(r => {
         const li = el('li');
         li.appendChild(el('span', 'md', 'MD' + r.md));
         li.appendChild(venueIcon(r.venue));
@@ -431,7 +482,7 @@ function renderTeams() {
 
 /** Tek takimin sezonluk fikstur paneli; skor sutunu ancak skor varsa cikar. */
 function teamFocus(t) {
-  const rows = state.view[t.id];
+  const rows = visibleRows(t.id);
   const scores = new Map(rows.map(r => [r, scoreFor(r.f)]));
   const hasScores = rows.some(r => scores.get(r));
 
@@ -523,12 +574,13 @@ function goalInput(key, side, value, placeholder) {
 
 function renderMatchdays() {
   const host = $('#matchdays'); host.innerHTML = '';
+  if (drawPending()) { host.appendChild(drawNotice()); updatePickCount(); return; }
   const grid = el('div', 'mdgrid');
   for (let md = 1; md <= FORMAT.matchdays; md++) {
     const b = el('div', 'mdblock');
     b.appendChild(el('h4', null, tx('md.week', { n: md })));
     b.appendChild(el('div', 'hint', compDate(md)));
-    state.fixtures.filter(f => f.md === md).forEach(f => {
+    visibleFixtures().filter(f => f.md === md).forEach(f => {
       const key = fxKey(f);
       const pick = state.picks[key] || null;
       const sim = (state.simIndex && state.simIndex.get(f)) || null;
@@ -590,7 +642,7 @@ function autofillPicks() {
   const sim = simulateSeason(state.fixtures, TEAMS, rng);
   for (const r of sim) {
     const k = fxKey(r.f);
-    if (state.picks[k]) continue;
+    if (state.picks[k] || !fixtureRevealed(r.f)) continue;
     state.picks[k] = { hg: r.hg, ag: r.ag };
   }
   state.dirty = true;
@@ -636,6 +688,7 @@ function sourceNote(played, picked) {
 
 function renderTable() {
   const host = $('#table'); host.innerHTML = '';
+  if (drawPending()) { host.appendChild(drawNotice()); return; }
   const results = mergedResults();
   if (!results.length) {
     host.appendChild(el('p', 'hint', tx('table.hint')));
@@ -678,6 +731,11 @@ function renderTable() {
 // 5. Olasiliklar
 // ---------------------------------------------------------------------------
 function runMonteCarlo() {
+  if (!state.drawComplete) {
+    const out = $('#probs'); out.innerHTML = '';
+    out.appendChild(drawNotice());
+    return;
+  }
   const mode = $('#mcmode').value;
   const total = mode === 'fixed' ? 3000 : 120;
   const btn = $('#mcrun'); btn.disabled = true;
@@ -814,7 +872,9 @@ function openBall(ball, t) {
 
 function setDrawUI() {
   const busy = ceremony.busy;
+  const done = state.drawComplete;
   const left = teamCount() - ceremony.drawn;
+  $('#drawstart').hidden = done;
   $('#drawstart').disabled = busy || left === 0;
   $('#drawstart').textContent = busy && ceremony.auto
     ? tx('draw.drawing')
@@ -822,8 +882,7 @@ function setDrawUI() {
   $('#drawpause').hidden = !(busy && ceremony.auto);
   $('#drawskip').hidden = !busy;
   $('#drawskip').textContent = tx(ceremony.auto ? 'draw.skipAll' : 'draw.skipTeam');
-  $('#drawreset').hidden = ceremony.drawn === 0 || busy;
-  $('#drawbowls').classList.toggle('locked', busy);
+  $('#drawbowls').classList.toggle('locked', busy || done);
 }
 
 function activateBowl(pot) {
@@ -868,6 +927,18 @@ function resetCeremony() {
   $('#drawpause').textContent = tx('draw.pause');
   renderBowls();
   $('#drawstage').innerHTML = '';
+  if (state.drawComplete) {
+    POTS().forEach(pot => {
+      remainingInPot(pot).forEach(id => {
+        ceremony.taken.add(id);
+        openBall(freeBall(pot), byId[id]);
+      });
+    });
+    ceremony.drawn = teamCount();
+    setDrawUI();
+    drawStatus(tx('draw.alreadyDone', { teams: teamCount(), matches: matchCount() }));
+    return;
+  }
   setDrawUI();
   drawStatus(tx('draw.intro'));
 }
@@ -881,6 +952,7 @@ function finishCeremony() {
   });
   activateBowl(0);
   ceremony.drawn = teamCount();
+  state.drawComplete = true;
   ceremony.busy = false;
   ceremony.auto = false;
   ceremony.paused = false;
@@ -888,6 +960,7 @@ function finishCeremony() {
   $('#drawpause').textContent = 'Duraklat';
   setDrawUI();
   drawStatus(tx('draw.finished', { teams: teamCount(), matches: matchCount() }));
+  refreshViews();
 }
 
 /** Tek takimin cekilisi: top calkalanir, acilir, rakipler tek tek gelir. */
@@ -900,6 +973,8 @@ async function revealTeam(t, gen, ball) {
 
   openBall(ball || freeBall(t.pot), t);
   activateBowl(0);
+  state.drawn.add(t.id);
+  viewsStale = true;
   ceremony.drawn++;
   stageTeam(t);
   drawStatus(tx('draw.opening', { n: ceremony.drawn, total: teamCount(), team: t.name }));
@@ -1184,7 +1259,7 @@ async function openSave(id, fromLink) {
     newDraw(payload.seed, () => {
       applySave(payload);
       writeHash('k=' + id);
-    });
+    }, { revealed: true });
     const note = tx('saves.opened', { name: data.name, comp: tx('comp.' + wanted), seed: payload.seed, matches: data.matches });
     saveStatus(note);
     if (fromLink) { mdStatus(note); showTab('table'); }
@@ -1228,6 +1303,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
       x.setAttribute('aria-selected', String(x === b)));
     document.querySelectorAll('main section').forEach(s =>
       (s.hidden = s.id !== 'view-' + b.dataset.view));
+    if (viewsStale) refreshViews();
     if (b.dataset.view === 'saves' && !savesLoaded) listSaves();
   });
 });
@@ -1235,7 +1311,8 @@ $('#redraw').addEventListener('click', redrawFromInput);
 $('#random').addEventListener('click', () => {
   if (!confirmDiscard()) return;
   const s = 1 + ((Math.random() * 999999) | 0);
-  $('#seed').value = s; newDraw(s);
+  $('#seed').value = s;
+  newDraw(s, null, { revealed: true });
 });
 $('#play').addEventListener('click', playSeason);
 $('#mcrun').addEventListener('click', runMonteCarlo);
@@ -1244,7 +1321,6 @@ $('#teamall').addEventListener('click', () => selectTeam(null));
 $('#pickclear').addEventListener('click', clearPicks);
 $('#autofill').addEventListener('click', autofillPicks);
 $('#drawstart').addEventListener('click', runCeremony);
-$('#drawreset').addEventListener('click', resetCeremony);
 $('#drawskip').addEventListener('click', () => { ceremony.skip = true; });
 $('#drawbowls').addEventListener('click', e => {
   const ball = e.target.closest('button.ball');
@@ -1278,7 +1354,7 @@ window.addEventListener('hashchange', () => {
   if (h.saveId) return openSave(h.saveId, true);
   if (h.seed && h.seed !== state.seed && confirmDiscard()) {
     $('#seed').value = h.seed;
-    newDraw(h.seed);
+    newDraw(h.seed, null, { revealed: true });
   }
 });
 
@@ -1338,6 +1414,10 @@ if (!COMP.available || !TEAMS.length) {
   renderUnavailable();
 } else {
   fillTeamPicker();
-  newDraw(state.seed);
+  // Adreste tohum varsa paylasilmis bir kuradir, dogrudan acilir; temiz
+  // ziyarette cekilis kullanicinin yapmasi icin bekler.
+  const shared = !!initialHash.seed;
+  newDraw(state.seed, null, { revealed: shared });
+  if (!shared && !initialHash.saveId) showTab('draw');
 }
 if (initialHash.saveId) openSave(initialHash.saveId, true);

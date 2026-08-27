@@ -143,6 +143,12 @@ const I18N = {
     'draw.skipAll': 'Skip to the end',
     'draw.reset': 'Start over',
     'draw.speed': 'speed',
+    'draw.notYet': 'The draw has not been made yet. Pull the balls from the pots and the '
+      + 'fixtures will appear as each club comes out.',
+    'draw.partial': '{n} of {total} clubs drawn so far. Keep going to reveal the rest.',
+    'draw.goToDraw': 'Go to the draw',
+    'draw.alreadyDone': 'Draw complete \u00b7 {teams} clubs, {matches} matches. '
+      + 'Use "New draw" for a fresh one.',
     'draw.intro': 'The balls are closed. Draw one from a pot — you cannot tell which club it '
       + 'holds; a random one of the remaining clubs in that pot comes out and its eight '
       + 'opponents appear one by one.',
@@ -335,6 +341,12 @@ const I18N = {
     'draw.skipAll': 'Sonuca atla',
     'draw.reset': 'Baştan al',
     'draw.speed': 'hız',
+    'draw.notYet': 'Kura henüz çekilmedi. Torbalardan topları çek, her takım çıktıkça '
+      + 'eşleşmeleri burada belirsin.',
+    'draw.partial': '{total} takımın {n} tanesi çekildi. Kalanı açmak için devam et.',
+    'draw.goToDraw': 'Çekilişe git',
+    'draw.alreadyDone': 'Kura tamamlandı · {teams} takım, {matches} maç. '
+      + 'Yenisi için "Yeni kura" de.',
     'draw.intro': 'Toplar kapalı. Bir torbadan top çek — hangi takım çıkacağı belli değil, '
       + 'o torbada kalanlar arasından rastgele biri açılır ve sekiz rakibi tek tek gelir.',
     'draw.ballLabel': 'Torba {n} torbasından top çek',

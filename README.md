@@ -58,6 +58,16 @@ tıklayarak tek takımın fikstürü), **Haftalar**, **Puan tablosu**, **Olasıl
 
 ### Çekiliş töreni
 
+**Çekiliş yapılmadan fikstür görünmez.** Temiz bir ziyarette site Çekiliş
+sekmesiyle açılır; Matris, Takımlar, Haftalar ve Puan tablosu "kura henüz
+çekilmedi" der. Her top çekildiğinde o takımın sekiz eşleşmesi açılır ve diğer
+sekmelerde belirir, yani kura ilerledikçe fikstür parça parça ortaya çıkar.
+
+**Yeni kura** Çekiliş sekmesini açar ve topları kapatır. **Rastgele** eşleşmeleri
+anında hazırlar, Çekiliş sekmesi sonucu gösterir ama tıklanamaz. Kura bir kez
+tamamlandıktan sonra sekme sonucu göstermeye devam eder, tekrar çekilemez.
+Adreste tohum olan bir link (paylaşılmış kura) doğrudan açık gelir.
+
 Dört torba, torba başına 9 **kapalı** top. Topların üzerinde takım yazmaz; hangi
 takımı çektiğin ancak top açılınca belli olur.
 
