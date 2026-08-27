@@ -71,7 +71,13 @@ __UI__
     </div>
     <div id="teams"></div>
   </section>
-  <section id="view-matchdays" hidden><div id="matchdays"></div></section>
+  <section id="view-matchdays" hidden>
+    <div class="bar">
+      <span class="hint" id="pickcount"></span>
+      <button id="pickclear" class="ghost" hidden>Tahminleri sil</button>
+    </div>
+    <div id="matchdays"></div>
+  </section>
   <section id="view-table" hidden><div id="table"></div></section>
 
   <section id="view-probs" hidden>

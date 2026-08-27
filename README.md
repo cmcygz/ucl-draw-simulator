@@ -32,8 +32,28 @@ python3 build.py      # parçaları değiştirdikten sonra
 ```
 
 Sekmeler: **Matris** (36x36 fikstür ızgarası, dolu kare iç saha, çerçeveli kare
-deplasman, renk rakibin torbası), **Takımlar**, **Haftalar**, **Puan tablosu**,
-**Olasılıklar** (Monte Carlo).
+deplasman, renk rakibin torbası), **Takımlar** (listeden ya da karta tıklayarak
+tek takımın fikstürü), **Haftalar**, **Puan tablosu**, **Olasılıklar** (Monte Carlo).
+
+### Tohum adreste
+
+Adresin sonundaki `#2027` o anki tohumu taşır. Link paylaşıldığında karşı taraf
+aynı fikstürü görür; kura her yeni çekilişte adres de güncellenir.
+
+```
+https://cmcygz.github.io/ucl-draw-simulator/#2027
+```
+
+### Kendi tahminin
+
+Haftalar sekmesindeki skor kutularına elle skor yazılabilir. Kural: **kullanıcı
+tahmini simülasyonu ezer.** Puan tablosu ve takım fikstür paneli, tahmin girilmiş
+maçlarda tahmini, kalanlarda (sezon oynandıysa) simülasyon skorunu kullanır.
+Yalnızca tahmin girilmişse tablo sadece o maçlar üzerinden hesaplanır.
+
+Tahminler tarayıcının `localStorage`'ında **tohum başına** saklanır
+(`ucl:picks:<tohum>`), yani başka bir kuraya geçip geri dönünce yerinde durur.
+Sunucuya gitmez, cihaz ve tarayıcı dışına çıkmaz.
 
 ## Kullanım (Python)
 
