@@ -1034,11 +1034,9 @@ async function runCeremony() {
 // ---------------------------------------------------------------------------
 // 7. Kayitlar
 // ---------------------------------------------------------------------------
-// Sayfayi Worker sunuyorsa API ayni origin'de; disaridan servis edilen
-// kopyalar (github.io, yerel test sunucusu) mutlak adrese gider.
-const API = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)
-  ? 'https://drawer.win'
-  : '';
+// Sayfayi Worker sunuyor, dolayisiyla API ayni origin'de: bos dize gorece
+// yol demek. Tek istisna github.io aynasi, oradan mutlak adrese gidilir.
+const API = /(^|\.)github\.io$/.test(location.hostname) ? 'https://drawer.win' : '';
 const TOKENS_KEY = 'ucl:tokens';
 let savesLoaded = false;
 
@@ -1153,7 +1151,6 @@ function renderShare(host, id) {
 
 /** Ekrandaki skorlari sunucuya yazar; id ve sayilari dondurur. */
 async function submitSave(name) {
-  if (!API) throw new Error(tx('saves.notConfigured'));
   if (!name) throw new Error(tx('saves.needName'));
   const { scores, picks } = currentScores();
   const total = Object.keys(scores).length;
@@ -1212,10 +1209,6 @@ async function saveFixture() {
 async function listSaves() {
   const host = $('#saves');
   host.innerHTML = '';
-  if (!API) {
-    host.appendChild(el('p', 'hint', tx('saves.notConfigured')));
-    return;
-  }
   host.appendChild(el('p', 'hint', tx('saves.loading')));
   try {
     const data = await apiCall('/api/saves');

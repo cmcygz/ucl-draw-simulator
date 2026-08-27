@@ -17,16 +17,24 @@ const PAGES = {
   uecl: { path: '/uecl', title: 'Conference League draw simulator \u00b7 DrawLab' }
 };
 
+/**
+ * Ayni origin her zaman izinlidir: siteyi bu Worker sunuyor, dolayisiyla kendi
+ * sayfasindan gelen istegi reddetmek anlamsiz ve alan adi degisince kayitlari
+ * sessizce bozuyordu. ALLOWED_ORIGINS yalnizca dis kaynaklar icin.
+ */
 function corsHeaders(request, env) {
   const allowed = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   const origin = request.headers.get('Origin') || '';
+  const self = new URL(request.url).origin;
   const headers = {
     'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type,X-Save-Token',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin'
   };
-  if (origin && allowed.includes(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  if (origin && (origin === self || allowed.includes(origin))) {
+    headers['Access-Control-Allow-Origin'] = origin;
+  }
   return headers;
 }
 
