@@ -1,0 +1,11 @@
+name = "ucl-draw-saves"
+main = "src/worker.js"
+compatibility_date = "2025-06-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ucl-draw-saves"
+database_id = "BURAYA_D1_ID"
+
+[vars]
+ALLOWED_ORIGINS = "https://cmcygz.github.io,http://localhost:8080,http://127.0.0.1:8080"

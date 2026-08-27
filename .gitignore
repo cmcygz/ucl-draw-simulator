@@ -6,3 +6,7 @@ venv/
 
 sample_draw.json
 out.json
+
+node_modules/
+.wrangler/
+.dev.vars

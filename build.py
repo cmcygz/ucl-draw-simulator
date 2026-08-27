@@ -47,6 +47,7 @@ __UI__
   <button data-view="matchdays" aria-selected="false">Haftalar</button>
   <button data-view="table" aria-selected="false">Puan tablosu</button>
   <button data-view="probs" aria-selected="false">Olasılıklar</button>
+  <button data-view="saves" aria-selected="false">Kayıtlar</button>
 </nav>
 
 <main>
@@ -89,6 +90,18 @@ __UI__
       <button id="mcrun">Hesapla</button>
     </div>
     <div id="probs" style="margin-top:18px"></div>
+  </section>
+
+  <section id="view-saves" hidden>
+    <div class="bar">
+      <label class="namebox">ad
+        <input id="savename" type="text" maxlength="60" placeholder="örn. Fener yılın kurası">
+      </label>
+      <button id="savebtn">Bu kurayı kaydet</button>
+      <button id="savereload" class="ghost">Listeyi yenile</button>
+    </div>
+    <p class="hint" id="savestatus"></p>
+    <div id="saves"></div>
   </section>
 </main>
 

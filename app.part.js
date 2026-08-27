@@ -78,7 +78,11 @@ function buildView(fixtures) {
   return v;
 }
 
-function newDraw(seed) {
+/**
+ * Tohumla kurayi ceker. `apply` verilirse fikstur hazir olduktan sonra, ekranlar
+ * cizilmeden once calisir; kayitli skorlari yerlestirmek icin kullanilir.
+ */
+function newDraw(seed, apply) {
   const btn = $('#redraw');
   btn.disabled = true; btn.textContent = 'Çekiliyor…';
   setTimeout(() => {
@@ -89,6 +93,7 @@ function newDraw(seed) {
     state.view = buildView(f);
     state.picks = loadPicks(seed);
     writeHash(seed);
+    if (apply) apply();
     const problems = verify(f, TEAMS);
     $('#status').textContent = problems.length
       ? 'Kural ihlali: ' + problems[0]
@@ -561,6 +566,177 @@ function renderProbs(acc, total, mode) {
 }
 
 // ---------------------------------------------------------------------------
+// 6. Kayitlar
+// ---------------------------------------------------------------------------
+const API = '';
+const TOKENS_KEY = 'ucl:tokens';
+let savesLoaded = false;
+
+function loadTokens() {
+  try { return JSON.parse(localStorage.getItem(TOKENS_KEY)) || {}; }
+  catch (e) { return {}; }
+}
+
+function storeTokens(t) {
+  try { localStorage.setItem(TOKENS_KEY, JSON.stringify(t)); } catch (e) { /* depolama kapali */ }
+}
+
+function saveStatus(msg, bad) {
+  const p = $('#savestatus');
+  p.textContent = msg;
+  p.classList.toggle('bad', !!bad);
+}
+
+/** O anda ekranda gecerli olan tum skorlar: tahminler ve simulasyon birlikte. */
+function currentScores() {
+  const scores = {}, picks = [];
+  for (const f of state.fixtures) {
+    const s = scoreFor(f);
+    if (!s) continue;
+    const k = fxKey(f);
+    scores[k] = [s.hg, s.ag];
+    if (s.pick) picks.push(k);
+  }
+  return { scores, picks };
+}
+
+function applySave(payload) {
+  const byKey = new Map(state.fixtures.map(f => [fxKey(f), f]));
+  const pickSet = new Set(payload.picks || []);
+  const picks = {}, sim = new Map();
+  for (const k of Object.keys(payload.scores || {})) {
+    const f = byKey.get(k);
+    if (!f) continue;
+    const [hg, ag] = payload.scores[k];
+    if (pickSet.has(k)) picks[k] = { hg, ag };
+    else sim.set(f, { f, hg, ag });
+  }
+  state.picks = picks;
+  state.simIndex = sim;
+  state.results = Array.from(sim.values());
+}
+
+async function apiCall(path, options) {
+  const res = await fetch(API + path, options);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+  return data;
+}
+
+async function createSave() {
+  if (!API) return saveStatus('Kayıt sunucusu henüz yapılandırılmadı.', true);
+  const name = $('#savename').value.trim();
+  if (!name) return saveStatus('Kayda bir ad ver.', true);
+  const { scores, picks } = currentScores();
+  const total = Object.keys(scores).length;
+  if (!total) return saveStatus('Kaydedecek skor yok: sezonu oyna ya da tahmin gir.', true);
+
+  const btn = $('#savebtn');
+  btn.disabled = true;
+  saveStatus('Kaydediliyor…');
+  try {
+    const data = await apiCall('/api/saves', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, seed: state.seed, scores, picks })
+    });
+    const tokens = loadTokens();
+    tokens[data.id] = data.token;
+    storeTokens(tokens);
+    $('#savename').value = '';
+    saveStatus(`Kaydedildi · ${total} maç, ${picks.length} tanesi senin tahminin.`);
+    listSaves();
+  } catch (e) {
+    saveStatus('Kaydedilemedi: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function listSaves() {
+  const host = $('#saves');
+  host.innerHTML = '';
+  if (!API) {
+    host.appendChild(el('p', 'hint', 'Kayıt sunucusu henüz yapılandırılmadı.'));
+    return;
+  }
+  host.appendChild(el('p', 'hint', 'Kayıtlar yükleniyor…'));
+  try {
+    const data = await apiCall('/api/saves');
+    savesLoaded = true;
+    renderSaves(data.saves || []);
+  } catch (e) {
+    host.innerHTML = '';
+    host.appendChild(el('p', 'hint bad', 'Liste alınamadı: ' + e.message));
+  }
+}
+
+function renderSaves(rows) {
+  const host = $('#saves');
+  host.innerHTML = '';
+  if (!rows.length) {
+    host.appendChild(el('p', 'hint', 'Henüz kayıt yok. Bir kura çek, sezonu oyna, sonra kaydet.'));
+    return;
+  }
+  const tokens = loadTokens();
+  const list = el('div', 'savelist');
+  rows.forEach(r => {
+    const mine = !!tokens[r.id];
+    const row = el('div', 'saverow' + (mine ? ' mine' : ''));
+    const left = el('div');
+    left.appendChild(el('h4', null, r.name));
+    const when = new Date(r.created_at).toLocaleDateString('tr-TR');
+    left.appendChild(el('div', 'meta',
+      `tohum ${r.seed} · ${r.matches} maç · ${r.picks} tahmin · ${when}`));
+    row.appendChild(left);
+
+    const acts = el('div', 'acts');
+    const open = el('button', null, 'Aç');
+    open.dataset.open = r.id;
+    acts.appendChild(open);
+    if (mine) {
+      const del = el('button', 'ghost', 'Sil');
+      del.dataset.del = r.id;
+      acts.appendChild(del);
+    }
+    row.appendChild(acts);
+    list.appendChild(row);
+  });
+  host.appendChild(list);
+}
+
+async function openSave(id) {
+  saveStatus('Kayıt açılıyor…');
+  try {
+    const data = await apiCall('/api/saves/' + encodeURIComponent(id));
+    const payload = data.payload || {};
+    $('#seed').value = payload.seed;
+    newDraw(payload.seed, () => applySave(payload));
+    saveStatus(`Açıldı: ${data.name} · tohum ${payload.seed}`);
+  } catch (e) {
+    saveStatus('Açılamadı: ' + e.message, true);
+  }
+}
+
+async function removeSave(id) {
+  const tokens = loadTokens();
+  if (!tokens[id]) return saveStatus('Bu kayıt sana ait değil.', true);
+  if (!confirm('Bu kayıt kalıcı olarak silinecek. Devam edilsin mi?')) return;
+  try {
+    await apiCall('/api/saves/' + encodeURIComponent(id), {
+      method: 'DELETE',
+      headers: { 'X-Save-Token': tokens[id] }
+    });
+    delete tokens[id];
+    storeTokens(tokens);
+    saveStatus('Kayıt silindi.');
+    listSaves();
+  } catch (e) {
+    saveStatus('Silinemedi: ' + e.message, true);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // sekmeler + baslangic
 // ---------------------------------------------------------------------------
 function renderAll() {
@@ -575,6 +751,7 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
       x.setAttribute('aria-selected', String(x === b)));
     document.querySelectorAll('main section').forEach(s =>
       (s.hidden = s.id !== 'view-' + b.dataset.view));
+    if (b.dataset.view === 'saves' && !savesLoaded) listSaves();
   });
 });
 $('#redraw').addEventListener('click', redrawFromInput);
@@ -590,6 +767,14 @@ $('#pickclear').addEventListener('click', clearPicks);
 $('#matchdays').addEventListener('input', e => {
   const inp = e.target.closest('input[data-fx]');
   if (inp) onPickInput(inp);
+});
+$('#savebtn').addEventListener('click', createSave);
+$('#savereload').addEventListener('click', listSaves);
+$('#saves').addEventListener('click', e => {
+  const open = e.target.closest('[data-open]');
+  if (open) return openSave(open.dataset.open);
+  const del = e.target.closest('[data-del]');
+  if (del) removeSave(del.dataset.del);
 });
 window.addEventListener('hashchange', () => {
   const s = seedFromHash();
