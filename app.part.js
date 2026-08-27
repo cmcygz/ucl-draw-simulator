@@ -229,6 +229,24 @@ function switchCompetition(id) {
   newDraw(state.seed);
 }
 
+// Ic saha / deplasman ikonlari. Satir ici SVG cunku emoji her platformda
+// farkli cizilir; SVG currentColor aldigi icin torba rengini de tasir.
+const VENUE_SVG = {
+  H: '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">'
+     + '<path d="M8 1.4 15.2 8H13v6.6H9.4v-4.2H6.6v4.2H3V8H.8z" fill="currentColor"/></svg>',
+  A: '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">'
+     + '<path d="M15.3 7.3 10 7.9 6.9 14H5.4l1.7-5.9L3 8.6 1.7 10.5H.6l1-3.2-1-3.2h1.1L3 6l4.1.5L5.4 1h1.5L10 6.7z"'
+     + ' fill="currentColor"/></svg>'
+};
+
+/** Saha ikonu; baslik olarak da metni tasir ki ikon tek basina kalmasin. */
+function venueIcon(venue) {
+  const wrap = el('span', 'vicon ' + (venue === 'H' ? 'home' : 'away'));
+  wrap.innerHTML = VENUE_SVG[venue === 'H' ? 'H' : 'A'];
+  wrap.title = tx(venue === 'H' ? 'venue.home' : 'venue.away');
+  return wrap;
+}
+
 // ---------------------------------------------------------------------------
 // 1. Matris
 // ---------------------------------------------------------------------------
@@ -328,7 +346,7 @@ function renderDetail() {
   state.view[t.id].forEach(r => {
     const li = el('li');
     li.appendChild(el('span', 'md', 'MD' + r.md));
-    li.appendChild(el('span', 'vs ' + (r.venue === 'H' ? 'h' : 'a'), r.venue === 'H' ? 'vs' : '@'));
+    li.appendChild(venueIcon(r.venue));
     li.appendChild(el('span', 'nm', byId[r.opp].name));
     li.appendChild(el('span', 'pt', 'T' + r.pot));
     ol.appendChild(li);
@@ -389,7 +407,7 @@ function renderTeams() {
       state.view[id].forEach(r => {
         const li = el('li');
         li.appendChild(el('span', 'md', 'MD' + r.md));
-        li.appendChild(el('span', 'vs', r.venue === 'H' ? 'vs' : '@'));
+        li.appendChild(venueIcon(r.venue));
         li.appendChild(el('span', 'nm', byId[r.opp].name));
         ul.appendChild(li);
       });
@@ -452,7 +470,7 @@ function teamFocus(t) {
     tr.appendChild(el('td', 'dt', compDate(r.md)));
 
     const vn = el('td', 'vn p' + opp.pot);
-    vn.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
+    vn.appendChild(venueIcon(r.venue));
     vn.appendChild(el('span', 'vt', tx(r.venue === 'H' ? 'venue.home' : 'venue.away')));
     tr.appendChild(vn);
 
@@ -824,7 +842,7 @@ function stageTeam(t) {
 function revealOpponent(r) {
   const opp = byId[r.opp];
   const row = el('div', 'opp p' + opp.pot);
-  row.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
+  row.appendChild(venueIcon(r.venue));
   row.appendChild(el('span', 'nm', opp.name));
   row.appendChild(el('span', 'vn', tx(r.venue === 'H' ? 'venue.home' : 'venue.away')));
   $('#drawopps').appendChild(row);
