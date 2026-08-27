@@ -941,9 +941,11 @@ async function runCeremony() {
 // ---------------------------------------------------------------------------
 // 7. Kayitlar
 // ---------------------------------------------------------------------------
-const API = location.hostname.endsWith('workers.dev')
-  ? ''
-  : 'https://drawlab.cmcygz.workers.dev';
+// Sayfayi Worker sunuyorsa API ayni origin'de; disaridan servis edilen
+// kopyalar (github.io, yerel test sunucusu) mutlak adrese gider.
+const API = /(^|\.)github\.io$|^localhost$|^127\.0\.0\.1$/.test(location.hostname)
+  ? 'https://drawlab.cmcygz.workers.dev'
+  : '';
 const TOKENS_KEY = 'ucl:tokens';
 let savesLoaded = false;
 

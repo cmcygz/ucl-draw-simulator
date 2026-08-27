@@ -1,6 +1,6 @@
 # DrawLab
 
-**Canlı: https://drawlab.cmcygz.workers.dev/**
+**Canlı: https://drawer.win/**
 
 Avrupa kupalarının 36 takımlı lig aşamasını kuradan puan tablosuna kadar üreten
 simülatör. Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi.
@@ -11,13 +11,15 @@ simülatör. Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi.
 | Avrupa Ligi | 4 x 9 | 8 | 4/4 | 8 |
 | Konferans Ligi | 6 x 6 | 6 | 3/3 | 6 |
 
-## Barındırma notu
+## Barındırma
 
-Site Cloudflare Worker'dan sunuluyor, Pages'ten değil. Sebebi teknik değil:
-`*.pages.dev` Türkiye'de ISS seviyesinde engelli, DNS Cloudflare yerine bir
-Türk Telekom IP'sine (213.14.227.50) yönlendiriyor ve bağlantı kurulmuyor.
-`workers.dev` engelli değil. Worker hem siteyi hem API'yi sunduğu için her şey
-tek origin'de.
+Cloudflare Worker hem siteyi hem API'yi sunuyor, yani her şey tek origin'de.
+Alan adı `drawer.win`, Worker'a custom domain olarak bağlı; `www.drawer.win` de
+aynı içeriği veriyor. Yedek adres `drawlab.cmcygz.workers.dev`.
+
+Cloudflare Pages denendi ve elendi: `*.pages.dev` Türkiye'de ISS seviyesinde
+engelli, DNS Cloudflare yerine bir Türk Telekom IP'sine (213.14.227.50)
+yönlendiriyor ve bağlantı kurulmuyor. `workers.dev` ve custom domain engelli değil.
 
 Şampiyonlar Ligi'nin yeni 36 takımlı lig aşamasını kuradan puan tablosuna kadar üreten
 bağımsız Python projesi. Harici bağımlılık yok, sadece standart kütüphane.
@@ -96,7 +98,7 @@ Adresin sonundaki `#2027` o anki tohumu taşır. Link paylaşıldığında karş
 aynı fikstürü görür; kura her yeni çekilişte adres de güncellenir.
 
 ```
-https://cmcygz.github.io/ucl-draw-simulator/#2027
+https://drawer.win/#ucl-2027
 ```
 
 ### Kendi tahminin
@@ -144,7 +146,7 @@ paylaşım linkini hemen gösterir) ve Kayıtlar sekmesindeki form. İkisi de ka
 sonra linki üretir; listedeki her satırın **Link** butonu da aynı adresi kopyalar.
 
 ```
-https://cmcygz.github.io/ucl-draw-simulator/#k=ysjgzzsv
+https://drawer.win/#k=ysjgzzsv
 ```
 
 Bu adres açıldığında kayıt sunucudan çekilir, kura tohumdan yeniden üretilir,

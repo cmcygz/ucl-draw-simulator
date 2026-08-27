@@ -8,4 +8,12 @@ database_name = "ucl-draw-saves"
 database_id = "9af830be-ba5e-40d8-9373-86e1bb3bce9d"
 
 [vars]
-ALLOWED_ORIGINS = "https://drawlab.cmcygz.workers.dev,https://cmcygz.github.io,http://localhost:8080,http://127.0.0.1:8080"
+ALLOWED_ORIGINS = "https://drawer.win,https://www.drawer.win,https://drawlab.cmcygz.workers.dev,https://cmcygz.github.io,http://localhost:8080,http://127.0.0.1:8080"
+
+[[routes]]
+pattern = "drawer.win"
+custom_domain = true
+
+[[routes]]
+pattern = "www.drawer.win"
+custom_domain = true
