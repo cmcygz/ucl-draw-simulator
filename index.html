@@ -35,12 +35,22 @@
   --accent-soft:rgba(27,79,176,.10);
   --cell:20px;
 }
-body[data-comp="uel"]{--accent:#A84A00;--accent-soft:rgba(168,74,0,.10)}
-body[data-comp="uecl"]{--accent:#0B6136;--accent-soft:rgba(11,97,54,.10)}
+/* Zemin turnuvaya gore ton degistirir; aciklik ve doygunluk ayni kalir, bu
+   yuzden metin ve torba renklerinin kontrasti korunur. Metin renkleri bilerek
+   sabit: kaydirmak ipucu yazilarinin kontrastini dusuruyordu. */
+body[data-comp="uel"]{
+  --accent:#A84A00; --accent-soft:rgba(168,74,0,.10);
+  --paper:#EEE9E4; --paper-2:#F7F4F1; --paper-3:#E5DDD6; --rule:#D0C4B9;
+}
+body[data-comp="uecl"]{
+  --accent:#0B6136; --accent-soft:rgba(11,97,54,.10);
+  --paper:#E4EEE7; --paper-2:#F1F7F3; --paper-3:#D6E5DB; --rule:#B9D0C1;
+}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
   background:var(--paper); color:var(--ink);
+  transition:background-color .25s ease;
   font-family:'Inter Tight',system-ui,-apple-system,'Segoe UI',sans-serif;
   font-size:14px; line-height:1.45;
   -webkit-font-smoothing:antialiased;

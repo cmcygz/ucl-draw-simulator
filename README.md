@@ -108,6 +108,13 @@ Renkler beyaz yazıyla kontrast ölçülerek seçildi: sırasıyla 7.52, 5.76 ve
 üçü de WCAG AA eşiğinin (4.5) üzerinde. Avrupa Ligi için parlak turuncu yerine
 koyu turuncu alındı; parlak olan 3.37'de kalıyordu.
 
+Zemin de turnuvaya göre ton değiştiriyor: Şampiyonlar Ligi soğuk gri-mavi
+(`#E4EAEE`), Avrupa Ligi sıcak krem (`#EEE9E4`), Konferans Ligi nane (`#E4EEE7`).
+Yalnızca ton kaydırıldı, açıklık ve doygunluk sabit tutuldu; bu yüzden metin
+kontrastı üç temada da 14.5 civarında ve en zayıf torba rengi 3.0 eşiğinin
+üstünde kalıyor. Metin renkleri bilerek kaydırılmadı — onları da döndürmek ipucu
+yazılarının kontrastını 2.63'ten 2.38'e düşürüyordu.
+
 ### Dil
 
 Arayüz İngilizce ve Türkçe. **Varsayılan İngilizce**; başlıktaki seçiciden
