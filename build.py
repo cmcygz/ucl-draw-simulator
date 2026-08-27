@@ -58,7 +58,6 @@ __UI__
     opponents from each of the four pots, playing one at home and one away. This page reproduces
     that draw under the real constraints, then simulates the season.</p>
   <div class="bar">
-    <label class="seedbox"><span data-i18n="bar.seed">seed</span> <input id="seed" type="number" min="1" max="999999"></label>
     <button id="redraw" data-i18n="bar.redraw">New draw</button>
     <button id="random" class="ghost" data-i18n="bar.random">Random</button>
     <button id="play" class="ghost" data-i18n="bar.play">Play season</button>

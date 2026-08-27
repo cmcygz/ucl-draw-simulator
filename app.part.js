@@ -59,29 +59,25 @@ function compFromPath() {
 }
 
 /**
- * Adresi cozer: `#k=ysjgzzsv` kayit linki, `#ucl-2027` turnuva ve tohum,
- * `#2027` eski bicim. Hicbiri yoksa yoldaki /ucl parcasina bakar.
+ * Adres yalnizca kaydedilmis bir kurayi tasir (`#k=ysjgzzsv`). Tohumla paylasim
+ * kaldirildi: tohum fiksturu uretiyor ama skorlari tasimiyordu ve ureteci
+ * degistiren her guncelleme ayni tohumu farkli bir fikstüre baglardi.
  */
 function parseHash() {
   const raw = location.hash.replace(/^#/, '').trim();
   const saved = raw.match(/^k=([A-Za-z0-9]{4,32})$/);
   if (saved) return { saveId: saved[1] };
-  const withComp = raw.match(/^(ucl|uel|uecl)(?:-(\d{1,6}))?$/);
-  if (withComp) {
-    const out = { comp: withComp[1] };
-    const n = Number(withComp[2]);
-    if (Number.isInteger(n) && n >= 1 && n <= 999999) out.seed = n;
-    return out;
-  }
-  const n = Number(raw);
-  if (raw !== '' && Number.isInteger(n) && n >= 1 && n <= 999999) return { seed: n, comp: 'ucl' };
   const fromPath = compFromPath();
   return fromPath ? { comp: fromPath } : {};
 }
 
 function writeHash(fragment) {
-  try { history.replaceState(null, '', '#' + fragment); } catch (e) { /* file:// kısıtı */ }
+  try {
+    history.replaceState(null, '', fragment ? '#' + fragment : location.pathname);
+  } catch (e) { /* file:// kısıtı */ }
 }
+
+const randomSeed = () => 1 + ((Math.random() * 999999) | 0);
 
 function showTab(view) {
   const btn = document.querySelector('nav.tabs button[data-view="' + view + '"]');
@@ -148,7 +144,7 @@ function newDraw(seed, apply, opts) {
     state.dirty = false;
     state.drawn = new Set();
     state.drawComplete = !!o.revealed;
-    writeHash(COMP.id + '-' + seed);
+    writeHash('');
     if (apply) apply();
     const problems = verify(f, TEAMS, drawOpt());
     if (problems.length) setStatus('status.violation', { msg: problems[0] });
@@ -157,17 +153,10 @@ function newDraw(seed, apply, opts) {
   }, 10);
 }
 
-/**
- * Kutudaki tohumla yeniden kura ceker ve cekilis ekranini acar. Tohum
- * degismemisse bir artirir, cunku ayni tohum ayni kurayi uretir. Toplar kapali
- * baslar; fikstur ancak kullanici topları cektikce goruntulenir.
- */
-function redrawFromInput() {
+/** Yeni kura ceker ve cekilis ekranini acar; toplar kapali baslar. */
+function startNewDraw() {
   if (!confirmDiscard()) return;
-  const typed = Number($('#seed').value) || 1;
-  const seed = typed === state.seed ? (typed % 999999) + 1 : typed;
-  $('#seed').value = seed;
-  newDraw(seed, null, { revealed: false });
+  newDraw(randomSeed(), null, { revealed: false });
   showTab('draw');
 }
 
@@ -1068,6 +1057,32 @@ function saveStatus(msg, bad) {
   p.classList.toggle('bad', !!bad);
 }
 
+/** Kaydin fiksturu: [ev, deplasman, hafta]. Kayit boylece uretecten bagimsiz olur. */
+function currentFixture() {
+  return state.fixtures.map(f => [f.home, f.away, f.md]);
+}
+
+/**
+ * Kaydedilmis fiksturu dogrudan kurar. Tohumdan yeniden uretmek yerine bunu
+ * kullaniyoruz; kura algoritmasi degisse bile eski kayitlar bozulmaz.
+ */
+function loadSavedDraw(payload) {
+  state.fixtures = (payload.fixture || []).map(row => ({
+    home: row[0], away: row[1],
+    homePot: byId[row[0]] ? byId[row[0]].pot : 0,
+    awayPot: byId[row[1]] ? byId[row[1]].pot : 0,
+    md: row[2]
+  })).filter(f => byId[f.home] && byId[f.away]);
+  state.seed = payload.seed || 0;
+  state.view = buildView(state.fixtures);
+  state.results = null; state.simIndex = null;
+  state.picks = {}; state.dirty = false;
+  state.drawn = new Set(); state.drawComplete = true;
+  applySave(payload);
+  setStatus('status.ok', { matches: matchCount() });
+  renderAll();
+}
+
 /** O anda ekranda gecerli olan tum skorlar: tahminler ve simulasyon birlikte. */
 function currentScores() {
   const scores = {}, picks = [];
@@ -1147,7 +1162,10 @@ async function submitSave(name) {
   const data = await apiCall('/api/saves', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, comp: COMP.id, seed: state.seed, scores, picks })
+    body: JSON.stringify({
+      name, comp: COMP.id, seed: state.seed,
+      fixture: currentFixture(), scores, picks
+    })
   });
   const tokens = loadTokens();
   tokens[data.id] = data.token;
@@ -1225,7 +1243,7 @@ function renderSaves(rows) {
     left.appendChild(el('h4', null, r.name));
     const when = new Date(r.created_at).toLocaleDateString(tx('locale'));
     left.appendChild(el('div', 'meta',
-      tx('saves.meta', { comp: tx('comp.' + (r.comp || 'ucl')), seed: r.seed, matches: r.matches, picks: r.picks, date: when })));
+      tx('saves.meta', { comp: tx('comp.' + (r.comp || 'ucl')), matches: r.matches, picks: r.picks, date: when })));
     row.appendChild(left);
 
     const acts = el('div', 'acts');
@@ -1259,12 +1277,21 @@ async function openSave(id, fromLink) {
       renderCompNav();
       fillTeamPicker();
     }
-    $('#seed').value = payload.seed;
+    if (payload.fixture && payload.fixture.length) {
+      loadSavedDraw(payload);
+      writeHash('k=' + id);
+    } else {
+      // Fikstur alani eklenmeden once yazilmis kayitlar tohumdan uretilir.
+      newDraw(payload.seed, () => {
+        applySave(payload);
+        writeHash('k=' + id);
+      }, { revealed: true });
+    }
     newDraw(payload.seed, () => {
       applySave(payload);
       writeHash('k=' + id);
     }, { revealed: true });
-    const note = tx('saves.opened', { name: data.name, comp: tx('comp.' + wanted), seed: payload.seed, matches: data.matches });
+    const note = tx('saves.opened', { name: data.name, comp: tx('comp.' + wanted), matches: data.matches });
     saveStatus(note);
     if (fromLink) { mdStatus(note); showTab('table'); }
   } catch (e) {
@@ -1311,12 +1338,10 @@ document.querySelectorAll('nav.tabs button').forEach(b => {
     if (b.dataset.view === 'saves' && !savesLoaded) listSaves();
   });
 });
-$('#redraw').addEventListener('click', redrawFromInput);
+$('#redraw').addEventListener('click', startNewDraw);
 $('#random').addEventListener('click', () => {
   if (!confirmDiscard()) return;
-  const s = 1 + ((Math.random() * 999999) | 0);
-  $('#seed').value = s;
-  newDraw(s, null, { revealed: true });
+  newDraw(randomSeed(), null, { revealed: true });
 });
 $('#play').addEventListener('click', playSeason);
 $('#mcrun').addEventListener('click', runMonteCarlo);
@@ -1355,11 +1380,7 @@ $('#saves').addEventListener('click', e => {
 });
 window.addEventListener('hashchange', () => {
   const h = parseHash();
-  if (h.saveId) return openSave(h.saveId, true);
-  if (h.seed && h.seed !== state.seed && confirmDiscard()) {
-    $('#seed').value = h.seed;
-    newDraw(h.seed, null, { revealed: true });
-  }
+  if (h.saveId) openSave(h.saveId, true);
 });
 
 $('#lang').addEventListener('change', e => setLang(e.target.value));
@@ -1418,7 +1439,6 @@ const initialHash = parseHash();
 useCompetition(initialHash.comp || 'ucl');
 renderCompNav();
 state.seed = initialHash.seed || state.seed;
-$('#seed').value = state.seed;
 if (!COMP.available || !TEAMS.length) {
   renderUnavailable();
 } else {

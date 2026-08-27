@@ -126,13 +126,19 @@ Sözlük `i18n.part.js` içinde tek bir nesnede duruyor. Statik metinler HTML'de
 `tx('anahtar', { degisken })` çağrısıyla çevriliyor. Çeviri fonksiyonu `t` değil
 `tx`, çünkü kodda `t` zaten takım nesnesi için kullanılıyor.
 
-### Tohum adreste
+### Paylaşım yalnızca kayıtla
 
-Adresin sonundaki `#2027` o anki tohumu taşır. Link paylaşıldığında karşı taraf
-aynı fikstürü görür; kura her yeni çekilişte adres de güncellenir.
+Tohumla paylaşım kaldırıldı. Tohum yalnızca fikstürü üretiyordu, skorları ve
+tahminleri taşımıyordu; üstelik tohum-fikstür eşlemesi kura algoritmasına bağlı
+olduğu için motorun değişmesi eski kayıtlardaki skorları yanlış maçlara
+bağlardı. Tohum artık içeride rastgele üretiliyor ve arayüzde görünmüyor.
+
+Paylaşmanın tek yolu **Fikstürü kaydet**. Kayıt fikstürü `[ev, deplasman, hafta]`
+olarak doğrudan saklar (payload `v:2`), yani üreteçten bağımsızdır ve motor
+değişse bile bozulmaz. Eski `v:1` kayıtlar tohumdan üretilmeye devam eder.
 
 ```
-https://drawer.win/#ucl-2027
+https://drawer.win/#k=ysjgzzsv
 ```
 
 ### Kendi tahminin
@@ -167,7 +173,7 @@ olduğu gibi kalır. Kaydettikten sonra uyarı çıkmaz.
 
 ### Kayıtlar
 
-Kayıtlar sekmesi bir kurayı adlandırıp saklar: turnuva + tohum + o an ekranda geçerli olan
+Kayıtlar sekmesi bir kurayı adlandırıp saklar: turnuva + fikstür + o an ekranda geçerli olan
 tüm maç skorları + hangilerinin kullanıcı tahmini olduğu. Kayıt açıldığında kura
 tohumdan yeniden üretilir, skorlar üstüne yerleştirilir, tahmin işaretleri korunur.
 

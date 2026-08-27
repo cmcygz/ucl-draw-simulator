@@ -80,6 +80,17 @@ function validate(body) {
     }
   }
 
+  const fixture = body.fixture;
+  if (fixture !== undefined) {
+    if (!Array.isArray(fixture) || fixture.length > MAX_MATCHES) return 'fikstür listesi geçersiz';
+    for (const row of fixture) {
+      if (!Array.isArray(row) || row.length !== 3) return 'fikstür satırı [ev, deplasman, hafta] olmalı';
+      if (typeof row[0] !== 'string' || typeof row[1] !== 'string') return 'takım kimliği metin olmalı';
+      if (row[0].length > 40 || row[1].length > 40) return 'takım kimliği çok uzun';
+      if (!Number.isInteger(row[2]) || row[2] < 1 || row[2] > 20) return 'hafta 1-20 aralığında olmalı';
+    }
+  }
+
   const picks = body.picks;
   if (picks !== undefined) {
     if (!Array.isArray(picks) || picks.length > MAX_MATCHES) return 'tahmin listesi geçersiz';
@@ -128,7 +139,9 @@ async function createSave(request, env, cors) {
   const scores = body.scores;
   const picks = Array.from(new Set((body.picks || []).filter(k => Object.prototype.hasOwnProperty.call(scores, k))));
   const comp = COMPS.indexOf(body.comp) === -1 ? 'ucl' : body.comp;
-  const payload = JSON.stringify({ v: 1, comp, seed: body.seed, scores, picks });
+  const payload = JSON.stringify({
+    v: 2, comp, seed: body.seed, fixture: body.fixture || [], scores, picks
+  });
   const id = randomId(8);
   const token = randomToken();
 
