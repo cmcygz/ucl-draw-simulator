@@ -8,6 +8,15 @@ const RATE_PER_HOUR = 30;
 const ID_ALPHABET = '23456789abcdefghjkmnpqrstuvwxyz';
 const COMPS = ['ucl', 'uel', 'uecl'];
 
+// Yalnizca bu yollar sayfayi dondurur. Digerleri 404, aksi halde her
+// uydurma adres 200 doner ve arama motorlari sonsuz yinelenen sayfa gorur.
+const PAGES = {
+  '': { path: '/', title: 'DrawLab \u00b7 European league phase draw simulator' },
+  ucl: { path: '/ucl', title: 'Champions League draw simulator \u00b7 DrawLab' },
+  uel: { path: '/uel', title: 'Europa League draw simulator \u00b7 DrawLab' },
+  uecl: { path: '/uecl', title: 'Conference League draw simulator \u00b7 DrawLab' }
+};
+
 function corsHeaders(request, env) {
   const allowed = String(env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
   const origin = request.headers.get('Origin') || '';
@@ -173,19 +182,34 @@ export default {
         );
       }
       if (url.pathname === '/sitemap.xml') {
-        const pages = ['', '#ucl-2027', '#uel-2027', '#uecl-2027']
-          .map(h => '<url><loc>https://drawer.win/' + h + '</loc></url>').join('');
+        const pages = ['', 'ucl', 'uel', 'uecl']
+          .map(p => '<url><loc>https://drawer.win/' + p + '</loc></url>').join('');
         return new Response(
           '<?xml version="1.0" encoding="UTF-8"?>'
           + '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + pages + '</urlset>',
           { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
         );
       }
+
+      const slug = url.pathname.replace(/^\/|\/$/g, '');
+      const page = PAGES[slug];
+      if (!page) {
+        return new Response('Not found', {
+          status: 404,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      }
       // Tarayici 10 dakika onbellekte tutsun, sonrasinda bayat kopyayi
       // gosterip arkada tazelesin. Her yenilemenin Worker istegi harcamasi
       // ucretsiz plandaki gunluk 100 bin sinirini hizla tuketiyordu.
       // ETag denendi ve vazgecildi: Cloudflare yaniti akitirken dusuruyor.
-      return new Response(SITE_HTML, {
+      const body = SITE_HTML
+        .replace('<link rel="canonical" href="https://drawer.win/">',
+                 '<link rel="canonical" href="https://drawer.win' + page.path + '">')
+        .replace('<meta property="og:url" content="https://drawer.win/">',
+                 '<meta property="og:url" content="https://drawer.win' + page.path + '">');
+
+      return new Response(body, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=600, stale-while-revalidate=86400'

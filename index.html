@@ -1511,6 +1511,12 @@ function setStatus(key, vars) {
  * Adres parçasını çözer: `#2027` tohum, `#k=ysjgzzsv` kayıt linki.
  * Tanınmayan biçimde boş nesne döner.
  */
+/** Yoldaki /ucl gibi bir parca varsa turnuvayi oradan da okur. */
+function compFromPath() {
+  const slug = location.pathname.replace(/^\/|\/$/g, '').toLowerCase();
+  return COMP_IDS.indexOf(slug) === -1 ? null : slug;
+}
+
 function parseHash() {
   const raw = location.hash.replace(/^#/, '').trim();
   const saved = raw.match(/^k=([A-Za-z0-9]{4,32})$/);
@@ -1524,7 +1530,8 @@ function parseHash() {
   }
   const n = Number(raw);
   if (raw !== '' && Number.isInteger(n) && n >= 1 && n <= 999999) return { seed: n, comp: 'ucl' };
-  return {};
+  const fromPath = compFromPath();
+  return fromPath ? { comp: fromPath } : {};
 }
 
 function writeHash(fragment) {
