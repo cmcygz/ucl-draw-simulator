@@ -5,13 +5,23 @@ const I18N = {
   en: {
     'html.lang': 'en',
     'locale': 'en-GB',
-    'doc.title': 'UCL League Phase Draw Simulator 2026/27',
+    'doc.title': 'DrawLab · European league phase draw simulator',
+    'brand': 'DrawLab',
+    'bar.comp': 'competition',
+    'comp.ucl': 'Champions League',
+    'comp.uel': 'Europa League',
+    'comp.uecl': 'Conference League',
+    'comp.soon': 'not drawn yet',
+    'comp.awaiting': 'waiting for the draw',
+    'comp.notDrawn': 'The {comp} draw has not been held yet ({date}). '
+      + 'Once UEFA publishes the pots the competition opens here.',
+    'months': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 
-    'head.competition': 'Champions League',
     'head.phase': 'league phase',
-    'head.h1a': '36 clubs',
-    'head.h1b': '144 matches',
-    'head.h1c': '8 matchdays',
+    'head.clubs': '{n} clubs',
+    'head.matches': '{n} matches',
+    'head.weeks': '{n} matchdays',
     'head.lede': 'The new league phase has no groups. Every club draws two opponents from '
       + 'each of the four pots, playing one at home and one away. This page reproduces that '
       + 'draw under the real constraints, then simulates the season.',
@@ -41,7 +51,7 @@ const I18N = {
     'status.drawing': 'Drawing…',
     'status.failed': 'No valid draw found, try another seed.',
     'status.violation': 'Rule violated: {msg}',
-    'status.ok': '144 matches · all rules satisfied',
+    'status.ok': '{matches} matches · all rules satisfied',
 
     'discard.confirm': 'This fixture has {n} unsaved match scores.\n\n'
       + 'A new draw wipes all of them. If you want to keep them, use "Save fixture" first.'
@@ -55,7 +65,7 @@ const I18N = {
 
     'detail.hint': 'Pick a club: every filled square in its row is a match. '
       + 'Solid square means home, outlined means away. Colour shows the opponent\'s pot.',
-    'detail.meta': '{country} · Pot {pot} · 4 home / 4 away',
+    'detail.meta': '{country} · Pot {pot} · {n} home / {n} away',
     'detail.doubled': 'two opponents from {list}',
     'matrix.rowTitle': 'Show {team} fixtures',
     'matrix.cellHome': 'MD{md} · {home} - {away} (home)',
@@ -67,7 +77,7 @@ const I18N = {
     'teams.hint': 'pick from the list or click a card',
     'teams.hintSelected': 'the same club is selected on the Matrix tab',
     'teams.cardTitle': 'Open {team} fixtures',
-    'focus.homeAway': '4 home / 4 away',
+    'focus.homeAway': '{n} home / {n} away',
     'focus.record': '{n} matches · {w}W {d}D {l}L · {gf}-{ga} · {pts} pts',
     'focus.col.md': 'MD',
     'focus.col.date': 'Date',
@@ -77,8 +87,6 @@ const I18N = {
     'focus.col.pot': 'Pot',
     'focus.col.score': 'Score',
 
-    'md.dates': ['8-10 Sep 2026', '13/14 Oct 2026', '20/21 Oct 2026', '3/4 Nov 2026',
-                 '24/25 Nov 2026', '8/9 Dec 2026', '19/20 Jan 2027', '27 Jan 2027'],
     'md.week': 'Matchday {n}',
     'md.autofill': 'Fill in scores',
     'md.saveFixture': 'Save fixture',
@@ -86,7 +94,7 @@ const I18N = {
     'md.goalHome': 'home goals prediction',
     'md.goalAway': 'away goals prediction',
     'md.countNone': 'type your own scores in the boxes and the standings will follow them',
-    'md.countSome': 'you filled {n} of 144 matches · the standings use them',
+    'md.countSome': 'you filled {n} of {total} matches · the standings use them',
     'md.filled': '{n} matches filled by the model.',
     'md.filledKept': '{n} matches filled by the model, your {kept} entries untouched.',
     'md.allFull': 'No empty boxes left, everything was already filled.',
@@ -94,7 +102,7 @@ const I18N = {
     'md.savePrompt': 'Name this save:',
     'md.saveDefault': 'Draw {seed}',
 
-    'table.hint': 'Play season: 144 matches are generated with the Poisson model and the '
+    'table.hint': 'Play season: every match is generated with the Poisson model and the '
       + 'table is ordered by the UEFA criteria. You can also type your own predictions '
       + 'on the Matchdays tab.',
     'table.col.pos': '#',
@@ -142,11 +150,11 @@ const I18N = {
     'draw.ballTitle': 'Pot {n} · draw a ball',
     'draw.ballDrawn': '{team} drawn',
     'draw.spinning': 'Pot {pot} · shaking the ball…',
-    'draw.opening': '{n}/36 · {team} drawn, opponents coming up…',
-    'draw.teamDone': '{n}/36 · {team} complete · 4 home, 4 away',
-    'draw.next': '{n}/36 drawn · pick the next ball or let it run automatically',
-    'draw.finished': 'All 36 balls drawn · 144 matches ready. The Matrix and Matchdays tabs have the details.',
-    'draw.opponentsOf': '{country} · Pot {pot} · drawing 8 opponents',
+    'draw.opening': '{n}/{total} · {team} drawn, opponents coming up…',
+    'draw.teamDone': '{n}/{total} · {team} complete · {h} home, {h} away',
+    'draw.next': '{n}/{total} drawn · pick the next ball or let it run automatically',
+    'draw.finished': 'All {teams} balls drawn · {matches} matches ready. The Matrix and Matchdays tabs have the details.',
+    'draw.opponentsOf': '{country} · Pot {pot} · drawing {n} opponents',
 
     'saves.nameLabel': 'name',
     'saves.namePlaceholder': 'e.g. Arsenal treble run',
@@ -190,13 +198,23 @@ const I18N = {
   tr: {
     'html.lang': 'tr',
     'locale': 'tr-TR',
-    'doc.title': 'UCL Lig Aşaması Kura Simülatörü 2026/27',
+    'doc.title': 'DrawLab · Avrupa kupaları lig aşaması kura simülatörü',
+    'brand': 'DrawLab',
+    'bar.comp': 'turnuva',
+    'comp.ucl': 'Şampiyonlar Ligi',
+    'comp.uel': 'Avrupa Ligi',
+    'comp.uecl': 'Konferans Ligi',
+    'comp.soon': 'kura çekilmedi',
+    'comp.awaiting': 'kura bekleniyor',
+    'comp.notDrawn': '{comp} kurası henüz çekilmedi ({date}). '
+      + 'UEFA torbaları yayımlayınca turnuva burada açılacak.',
+    'months': ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+               'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
 
-    'head.competition': 'Şampiyonlar Ligi',
     'head.phase': 'lig aşaması',
-    'head.h1a': '36 takım',
-    'head.h1b': '144 maç',
-    'head.h1c': '8 hafta',
+    'head.clubs': '{n} takım',
+    'head.matches': '{n} maç',
+    'head.weeks': '{n} hafta',
     'head.lede': 'Yeni lig aşamasında grup yok. Her takım dört torbanın her birinden iki rakip '
       + 'çekiyor, birini evinde birini deplasmanda oynuyor. Bu sayfa o kurayı kurallara uyarak '
       + 'yeniden üretiyor, sonra sezonu simüle ediyor.',
@@ -226,7 +244,7 @@ const I18N = {
     'status.drawing': 'Çekiliyor…',
     'status.failed': 'Kura çıkmadı, başka bir tohum dene.',
     'status.violation': 'Kural ihlali: {msg}',
-    'status.ok': '144 maç · tüm kurallar sağlandı',
+    'status.ok': '{matches} maç · tüm kurallar sağlandı',
 
     'discard.confirm': 'Bu fikstürde kaydedilmemiş {n} maç skoru var.\n\n'
       + 'Yeni kura çekilirse hepsi silinir. Saklamak istiyorsan önce "Fikstürü kaydet" de.'
@@ -240,7 +258,7 @@ const I18N = {
 
     'detail.hint': 'Bir takım seç: satırdaki her dolu kare bir maç. '
       + 'Dolu kare iç saha, çerçeveli kare deplasman. Renk rakibin torbası.',
-    'detail.meta': '{country} · Torba {pot} · 4 iç saha / 4 deplasman',
+    'detail.meta': '{country} · Torba {pot} · {n} iç saha / {n} deplasman',
     'detail.doubled': 'aynı ülkeden çift rakip: {list}',
     'matrix.rowTitle': '{team} fikstürünü göster',
     'matrix.cellHome': 'MD{md} · {home} - {away} (ev sahibi)',
@@ -252,7 +270,7 @@ const I18N = {
     'teams.hint': 'listeden seç ya da bir karta tıkla',
     'teams.hintSelected': 'matris sekmesinde de bu takım seçili',
     'teams.cardTitle': '{team} fikstürünü aç',
-    'focus.homeAway': '4 iç saha / 4 deplasman',
+    'focus.homeAway': '{n} iç saha / {n} deplasman',
     'focus.record': '{n} maç · {w}G {d}B {l}M · {gf}-{ga} · {pts} puan',
     'focus.col.md': 'Hafta',
     'focus.col.date': 'Tarih',
@@ -262,8 +280,6 @@ const I18N = {
     'focus.col.pot': 'Torba',
     'focus.col.score': 'Skor',
 
-    'md.dates': ['8-10 Eyl 2026', '13/14 Eki 2026', '20/21 Eki 2026', '3/4 Kas 2026',
-                 '24/25 Kas 2026', '8/9 Ara 2026', '19/20 Oca 2027', '27 Oca 2027'],
     'md.week': 'Hafta {n}',
     'md.autofill': 'Skorları doldur',
     'md.saveFixture': 'Fikstürü kaydet',
@@ -271,7 +287,7 @@ const I18N = {
     'md.goalHome': 'ev sahibi gol tahmini',
     'md.goalAway': 'deplasman gol tahmini',
     'md.countNone': 'skor kutularına kendi tahminini yaz, puan tablosu ona göre hesaplansın',
-    'md.countSome': '144 maçın {n} tanesini sen doldurdun · puan tablosu bunları kullanıyor',
+    'md.countSome': '{total} maçın {n} tanesini sen doldurdun · puan tablosu bunları kullanıyor',
     'md.filled': '{n} maç modele göre dolduruldu.',
     'md.filledKept': '{n} maç modele göre dolduruldu, senin girdiğin {kept} maça dokunulmadı.',
     'md.allFull': 'Boş kutu kalmamış, hepsi zaten doluydu.',
@@ -279,7 +295,7 @@ const I18N = {
     'md.savePrompt': 'Kayda bir ad ver:',
     'md.saveDefault': 'Kura {seed}',
 
-    'table.hint': 'Sezonu oyna: 144 maç Poisson modeliyle üretilir, tablo UEFA sıralama '
+    'table.hint': 'Sezonu oyna: her maç Poisson modeliyle üretilir, tablo UEFA sıralama '
       + 'kriterlerine göre dizilir. Haftalar sekmesinden kendi tahminlerini de yazabilirsin.',
     'table.col.pos': '#',
     'table.col.club': 'Takım',
@@ -325,11 +341,11 @@ const I18N = {
     'draw.ballTitle': 'Torba {n} · top çek',
     'draw.ballDrawn': '{team} çekildi',
     'draw.spinning': 'Torba {pot} · top çalkalanıyor…',
-    'draw.opening': '{n}/36 · {team} çekildi, rakipleri açılıyor…',
-    'draw.teamDone': '{n}/36 · {team} tamamlandı · 4 iç saha, 4 deplasman',
-    'draw.next': '{n}/36 çekildi · sıradaki topu seç ya da otomatik devam et',
-    'draw.finished': '36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.',
-    'draw.opponentsOf': '{country} · Torba {pot} · 8 rakip çekiliyor',
+    'draw.opening': '{n}/{total} · {team} çekildi, rakipleri açılıyor…',
+    'draw.teamDone': '{n}/{total} · {team} tamamlandı · {h} iç saha, {h} deplasman',
+    'draw.next': '{n}/{total} çekildi · sıradaki topu seç ya da otomatik devam et',
+    'draw.finished': '{teams} top çekildi · {matches} maç hazır. Matris ve Haftalar sekmelerinde tamamı var.',
+    'draw.opponentsOf': '{country} · Torba {pot} · {n} rakip çekiliyor',
 
     'saves.nameLabel': 'ad',
     'saves.namePlaceholder': 'örn. Fener yılın kurası',

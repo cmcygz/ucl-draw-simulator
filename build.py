@@ -5,6 +5,7 @@ import pathlib
 here = pathlib.Path(__file__).parent
 engine = (here / "engine.js").read_text(encoding="utf-8").split("if (typeof module")[0].rstrip()
 ui = (here / "ui.part.html").read_text(encoding="utf-8")
+comps = (here / "competitions.part.js").read_text(encoding="utf-8").split("if (typeof module")[0].rstrip()
 i18n = (here / "i18n.part.js").read_text(encoding="utf-8")
 app = (here / "app.part.js").read_text(encoding="utf-8")
 
@@ -13,7 +14,8 @@ HTML = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UCL League Phase Draw Simulator 2026/27</title>
+<meta name="robots" content="noindex,nofollow">
+<title>DrawLab · European league phase draw simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
@@ -24,12 +26,15 @@ __UI__
 
 <header>
   <div class="eyebrow">
-    <b>2026/27</b><span data-i18n="head.competition">Champions League</span><span data-i18n="head.phase">league phase</span>
+    <b data-i18n="brand">DrawLab</b><span id="compname"></span><span data-i18n="head.phase">league phase</span><span id="season"></span>
     <span id="status">preparing the draw</span>
   </div>
-  <h1><span data-i18n="head.h1a">36 clubs</span><span data-i18n="head.h1b">144 matches</span><span data-i18n="head.h1c">8 matchdays</span></h1>
+  <h1><span id="h1clubs" class="lead"></span><span id="h1matches"></span><span id="h1weeks"></span></h1>
   <p class="lede" data-i18n="head.lede"></p>
   <div class="bar">
+    <label class="seedbox"><span data-i18n="bar.comp">competition</span>
+      <select id="comp"></select>
+    </label>
     <label class="seedbox"><span data-i18n="bar.seed">seed</span> <input id="seed" type="number" min="1" max="999999"></label>
     <label class="seedbox"><span data-i18n="bar.lang">language</span>
       <select id="lang">
@@ -57,14 +62,7 @@ __UI__
 <main>
   <section id="view-matrix">
     <div class="matrixScroll"><div id="matrix"></div></div>
-    <div class="legend">
-      <span><i class="key home"></i> <span data-i18n="legend.home">home</span></span>
-      <span><i class="key away"></i> <span data-i18n="legend.away">away</span></span>
-      <span><i class="key" style="background:var(--p1)"></i> <span data-i18n="legend.pot1">Pot 1</span></span>
-      <span><i class="key" style="background:var(--p2)"></i> <span data-i18n="legend.pot2">Pot 2</span></span>
-      <span><i class="key" style="background:var(--p3)"></i> <span data-i18n="legend.pot3">Pot 3</span></span>
-      <span><i class="key" style="background:var(--p4)"></i> <span data-i18n="legend.pot4">Pot 4</span></span>
-    </div>
+    <div class="legend" id="legend"></div>
     <div class="detail" id="detail"></div>
   </section>
 
@@ -143,6 +141,8 @@ __UI__
 <script>
 __ENGINE__
 
+__COMPS__
+
 __I18N__
 
 __APP__
@@ -152,6 +152,11 @@ __APP__
 """
 
 out = (HTML.replace("__UI__", ui).replace("__ENGINE__", engine)
-       .replace("__I18N__", i18n).replace("__APP__", app))
+       .replace("__COMPS__", comps).replace("__I18N__", i18n).replace("__APP__", app))
 (here / "index.html").write_text(out, encoding="utf-8")
-print(f"index.html yazildi: {len(out)} bayt")
+
+dist = here / "dist"
+dist.mkdir(exist_ok=True)
+(dist / "index.html").write_text(out, encoding="utf-8")
+(dist / "robots.txt").write_text("User-agent: *\nDisallow: /\n", encoding="utf-8")
+print(f"index.html ve dist/ yazildi: {len(out)} bayt")

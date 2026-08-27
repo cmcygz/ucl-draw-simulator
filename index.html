@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UCL League Phase Draw Simulator 2026/27</title>
+<meta name="robots" content="noindex,nofollow">
+<title>DrawLab · European league phase draw simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600&display=swap" rel="stylesheet">
@@ -13,6 +14,7 @@
   --ink:#0C1A26; --ink-2:#41586A; --ink-3:#7E93A2;
   --rule:#B9C7D0;
   --p1:#23256E; --p2:#0B6E6B; --p3:#B26A00; --p4:#8B2A63;
+  --p5:#2E6B3A; --p6:#7A2233;
   --mark:#FFE14D;
   --cell:20px;
 }
@@ -39,6 +41,9 @@ h1{
   margin:10px 0 0; letter-spacing:-.01em; text-transform:uppercase;
 }
 h1 span{display:block;color:var(--ink-3)}
+h1 span.lead{color:var(--ink)}
+.compnote{border:1.5px dashed var(--rule);background:var(--paper-2);padding:18px 20px;
+  font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--ink-2);line-height:1.6}
 .lede{max-width:52ch;margin:16px 0 0;color:var(--ink-2)}
 .rule{height:2px;background:var(--ink);margin:22px 0 0}
 .rule.thin{height:1px;background:var(--rule)}
@@ -103,12 +108,14 @@ td.c.away i{box-shadow:inset 0 0 0 2.5px currentColor}
 td.c.self{background:repeating-linear-gradient(45deg,var(--paper-3) 0 2px,transparent 2px 4px)}
 td.c.p1,th.p1{color:var(--p1)} td.c.p2,th.p2{color:var(--p2)}
 td.c.p3,th.p3{color:var(--p3)} td.c.p4,th.p4{color:var(--p4)}
+td.c.p5,th.p5{color:var(--p5)} td.c.p6,th.p6{color:var(--p6)}
 td.c.lit{background:var(--mark)}
 tr.sel th.row{background:var(--ink);color:var(--paper);border-right-color:var(--ink)}
 tr.sel th.row em{color:var(--paper-3)}
 .potrail{width:6px;padding:0}
 .potrail.p1{background:var(--p1)} .potrail.p2{background:var(--p2)}
 .potrail.p3{background:var(--p3)} .potrail.p4{background:var(--p4)}
+.potrail.p5{background:var(--p5)} .potrail.p6{background:var(--p6)}
 
 .legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;
   font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-2)}
@@ -155,6 +162,7 @@ ol.fix .pt{font-size:10px;color:var(--ink-3)}
 .card:active{transform:translateY(1px)}
 .card.p1{border-left-color:var(--p1)} .card.p2{border-left-color:var(--p2)}
 .card.p3{border-left-color:var(--p3)} .card.p4{border-left-color:var(--p4)}
+.card.p5{border-left-color:var(--p5)} .card.p6{border-left-color:var(--p6)}
 
 /* ---------- tek takim odagi ---------- */
 .focushead{display:flex;align-items:baseline;gap:14px;margin:2px 0 8px}
@@ -163,6 +171,7 @@ ol.fix .pt{font-size:10px;color:var(--ink-3)}
 .focushead .line{flex:1;height:3px;background:var(--ink)}
 .focus.p1 .focushead .line{background:var(--p1)} .focus.p2 .focushead .line{background:var(--p2)}
 .focus.p3 .focushead .line{background:var(--p3)} .focus.p4 .focushead .line{background:var(--p4)}
+.focus.p5 .focushead .line{background:var(--p5)} .focus.p6 .focushead .line{background:var(--p6)}
 .focus .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--ink-2)}
 .fixscroll{overflow-x:auto;margin-top:18px}
@@ -177,6 +186,7 @@ table.fixtab td.nm{font-family:'Inter Tight',sans-serif;font-size:14.5px;font-we
 table.fixtab td.cn,table.fixtab td.pt{color:var(--ink-3);font-size:11px}
 table.fixtab td.vn.p1{color:var(--p1)} table.fixtab td.vn.p2{color:var(--p2)}
 table.fixtab td.vn.p3{color:var(--p3)} table.fixtab td.vn.p4{color:var(--p4)}
+table.fixtab td.vn.p5{color:var(--p5)} table.fixtab td.vn.p6{color:var(--p6)}
 table.fixtab td.vn .key{width:11px;height:11px;vertical-align:-1px}
 table.fixtab .key.home{background:currentColor}
 table.fixtab .key.away{background:transparent;box-shadow:inset 0 0 0 2.5px currentColor}
@@ -253,6 +263,7 @@ table.std td.pts{font-weight:600}
 }
 .ball.p1{background:var(--p1)} .ball.p2{background:var(--p2)}
 .ball.p3{background:var(--p3)} .ball.p4{background:var(--p4)}
+.ball.p5{background:var(--p5)} .ball.p6{background:var(--p6)}
 .ball.picked{opacity:.22;filter:grayscale(1);transform:scale(.86)}
 button.ball{cursor:pointer}
 button.ball:hover{color:#fff}
@@ -267,6 +278,7 @@ button.ball.picked{cursor:default;pointer-events:none}
   border-top:5px solid var(--rule);transition:border-color .25s,background .25s}
 .bowl.p1{border-top-color:var(--p1)} .bowl.p2{border-top-color:var(--p2)}
 .bowl.p3{border-top-color:var(--p3)} .bowl.p4{border-top-color:var(--p4)}
+.bowl.p5{border-top-color:var(--p5)} .bowl.p6{border-top-color:var(--p6)}
 .bowl.active{background:#fff;border-color:var(--ink)}
 .bowl h4{font-family:'Big Shoulders Display',sans-serif;font-weight:800;font-size:20px;
   text-transform:uppercase;margin:0 0 10px}
@@ -295,6 +307,7 @@ button.ball.picked{cursor:default;pointer-events:none}
 .opp .key{width:12px;height:12px}
 .opp.p1{color:var(--p1)} .opp.p2{color:var(--p2)}
 .opp.p3{color:var(--p3)} .opp.p4{color:var(--p4)}
+.opp.p5{color:var(--p5)} .opp.p6{color:var(--p6)}
 .opp .key.home{background:currentColor}
 .opp .key.away{background:transparent;box-shadow:inset 0 0 0 2.5px currentColor}
 .opp .nm{flex:1;font-size:13.5px;color:var(--ink)}
@@ -359,12 +372,15 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 
 <header>
   <div class="eyebrow">
-    <b>2026/27</b><span data-i18n="head.competition">Champions League</span><span data-i18n="head.phase">league phase</span>
+    <b data-i18n="brand">DrawLab</b><span id="compname"></span><span data-i18n="head.phase">league phase</span><span id="season"></span>
     <span id="status">preparing the draw</span>
   </div>
-  <h1><span data-i18n="head.h1a">36 clubs</span><span data-i18n="head.h1b">144 matches</span><span data-i18n="head.h1c">8 matchdays</span></h1>
+  <h1><span id="h1clubs" class="lead"></span><span id="h1matches"></span><span id="h1weeks"></span></h1>
   <p class="lede" data-i18n="head.lede"></p>
   <div class="bar">
+    <label class="seedbox"><span data-i18n="bar.comp">competition</span>
+      <select id="comp"></select>
+    </label>
     <label class="seedbox"><span data-i18n="bar.seed">seed</span> <input id="seed" type="number" min="1" max="999999"></label>
     <label class="seedbox"><span data-i18n="bar.lang">language</span>
       <select id="lang">
@@ -392,14 +408,7 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 <main>
   <section id="view-matrix">
     <div class="matrixScroll"><div id="matrix"></div></div>
-    <div class="legend">
-      <span><i class="key home"></i> <span data-i18n="legend.home">home</span></span>
-      <span><i class="key away"></i> <span data-i18n="legend.away">away</span></span>
-      <span><i class="key" style="background:var(--p1)"></i> <span data-i18n="legend.pot1">Pot 1</span></span>
-      <span><i class="key" style="background:var(--p2)"></i> <span data-i18n="legend.pot2">Pot 2</span></span>
-      <span><i class="key" style="background:var(--p3)"></i> <span data-i18n="legend.pot3">Pot 3</span></span>
-      <span><i class="key" style="background:var(--p4)"></i> <span data-i18n="legend.pot4">Pot 4</span></span>
-    </div>
+    <div class="legend" id="legend"></div>
     <div class="detail" id="detail"></div>
   </section>
 
@@ -477,50 +486,9 @@ footer{margin-top:56px;border-top:1px solid var(--rule);padding-top:16px;
 </div>
 <script>
 // ---------------------------------------------------------------------------
-// UCL lig asamasi kura motoru (JS portu)
+// Lig asamasi kura motoru (JS portu) - turnuvadan bagimsiz
 // ---------------------------------------------------------------------------
 
-const TEAMS = [
-  { id:'psg',        name:'Paris',        code:'PAR', country:'FRA', pot:1, rating:1950 },
-  { id:'bayern',     name:'Bayern',       code:'BAY', country:'GER', pot:1, rating:1930 },
-  { id:'real',       name:'Real Madrid',  code:'RMA', country:'ESP', pot:1, rating:1910 },
-  { id:'arsenal',    name:'Arsenal',      code:'ARS', country:'ENG', pot:1, rating:1905 },
-  { id:'liverpool',  name:'Liverpool',    code:'LIV', country:'ENG', pot:1, rating:1900 },
-  { id:'mancity',    name:'Man City',     code:'MCI', country:'ENG', pot:1, rating:1890 },
-  { id:'barcelona',  name:'Barcelona',    code:'BAR', country:'ESP', pot:1, rating:1885 },
-  { id:'inter',      name:'Inter',        code:'INT', country:'ITA', pot:1, rating:1880 },
-  { id:'atleti',     name:'Atlético',     code:'ATM', country:'ESP', pot:1, rating:1850 },
-
-  { id:'dortmund',   name:'Dortmund',     code:'DOR', country:'GER', pot:2, rating:1790 },
-  { id:'villa',      name:'Aston Villa',  code:'AVL', country:'ENG', pot:2, rating:1780 },
-  { id:'manutd',     name:'Man Utd',      code:'MUN', country:'ENG', pot:2, rating:1775 },
-  { id:'roma',       name:'Roma',         code:'ROM', country:'ITA', pot:2, rating:1770 },
-  { id:'sporting',   name:'Sporting CP',  code:'SPO', country:'POR', pot:2, rating:1760 },
-  { id:'porto',      name:'Porto',        code:'POR', country:'POR', pot:2, rating:1740 },
-  { id:'betis',      name:'Real Betis',   code:'BET', country:'ESP', pot:2, rating:1730 },
-  { id:'psv',        name:'PSV',          code:'PSV', country:'NED', pot:2, rating:1720 },
-  { id:'brugge',     name:'Club Brugge',  code:'BRU', country:'BEL', pot:2, rating:1700 },
-
-  { id:'napoli',     name:'Napoli',       code:'NAP', country:'ITA', pot:3, rating:1710 },
-  { id:'leipzig',    name:'Leipzig',      code:'RBL', country:'GER', pot:3, rating:1690 },
-  { id:'villarreal', name:'Villarreal',   code:'VIL', country:'ESP', pot:3, rating:1680 },
-  { id:'feyenoord',  name:'Feyenoord',    code:'FEY', country:'NED', pot:3, rating:1660 },
-  { id:'galatasaray',name:'Galatasaray',  code:'GAL', country:'TUR', pot:3, rating:1655 },
-  { id:'lille',      name:'Lille',        code:'LIL', country:'FRA', pot:3, rating:1650 },
-  { id:'fenerbahce', name:'Fenerbahçe',   code:'FEN', country:'TUR', pot:3, rating:1640 },
-  { id:'bodo',       name:'Bodø/Glimt',   code:'BOD', country:'NOR', pot:3, rating:1600 },
-  { id:'shakhtar',   name:'Shakhtar',     code:'SHA', country:'UKR', pot:3, rating:1590 },
-
-  { id:'stuttgart',  name:'Stuttgart',    code:'VFB', country:'GER', pot:4, rating:1580 },
-  { id:'como',       name:'Como',         code:'COM', country:'ITA', pot:4, rating:1550 },
-  { id:'lens',       name:'Lens',         code:'LEN', country:'FRA', pot:4, rating:1545 },
-  { id:'slavia',     name:'Slavia Praha', code:'SLA', country:'CZE', pot:4, rating:1540 },
-  { id:'aek',        name:'AEK Athens',   code:'AEK', country:'GRE', pot:4, rating:1520 },
-  { id:'lask',       name:'LASK',         code:'LSK', country:'AUT', pot:4, rating:1490 },
-  { id:'viking',     name:'Viking',       code:'VIK', country:'NOR', pot:4, rating:1470 },
-  { id:'slovan',     name:'S. Bratislava',code:'SLO', country:'SVK', pot:4, rating:1460 },
-  { id:'sabah',      name:'Sabah',        code:'SAB', country:'AZE', pot:4, rating:1420 },
-];
 
 // deterministik RNG (mulberry32)
 function makeRng(seed) {
@@ -921,19 +889,140 @@ function buildTable(results, teams) {
 }
 
 // ---------------------------------------------------------------------------
+// Turnuvalar: bicim + takim listesi
+// ---------------------------------------------------------------------------
+// `format` engine.js icindeki FORMATS anahtari.
+// `dates` her hafta icin { day, month, year }; ay adi dile gore cevrilir.
+// `teams` bos ve `available:false` ise kura henuz cekilmemis demektir.
+
+const UCL_TEAMS = [
+  { id:'psg',        name:'Paris',        code:'PAR', country:'FRA', pot:1, rating:1950 },
+  { id:'bayern',     name:'Bayern',       code:'BAY', country:'GER', pot:1, rating:1930 },
+  { id:'real',       name:'Real Madrid',  code:'RMA', country:'ESP', pot:1, rating:1910 },
+  { id:'arsenal',    name:'Arsenal',      code:'ARS', country:'ENG', pot:1, rating:1905 },
+  { id:'liverpool',  name:'Liverpool',    code:'LIV', country:'ENG', pot:1, rating:1900 },
+  { id:'mancity',    name:'Man City',     code:'MCI', country:'ENG', pot:1, rating:1890 },
+  { id:'barcelona',  name:'Barcelona',    code:'BAR', country:'ESP', pot:1, rating:1885 },
+  { id:'inter',      name:'Inter',        code:'INT', country:'ITA', pot:1, rating:1880 },
+  { id:'atleti',     name:'Atlético',     code:'ATM', country:'ESP', pot:1, rating:1850 },
+
+  { id:'dortmund',   name:'Dortmund',     code:'DOR', country:'GER', pot:2, rating:1790 },
+  { id:'villa',      name:'Aston Villa',  code:'AVL', country:'ENG', pot:2, rating:1780 },
+  { id:'manutd',     name:'Man Utd',      code:'MUN', country:'ENG', pot:2, rating:1775 },
+  { id:'roma',       name:'Roma',         code:'ROM', country:'ITA', pot:2, rating:1770 },
+  { id:'sporting',   name:'Sporting CP',  code:'SPO', country:'POR', pot:2, rating:1760 },
+  { id:'porto',      name:'Porto',        code:'POR', country:'POR', pot:2, rating:1740 },
+  { id:'betis',      name:'Real Betis',   code:'BET', country:'ESP', pot:2, rating:1730 },
+  { id:'psv',        name:'PSV',          code:'PSV', country:'NED', pot:2, rating:1720 },
+  { id:'brugge',     name:'Club Brugge',  code:'BRU', country:'BEL', pot:2, rating:1700 },
+
+  { id:'napoli',     name:'Napoli',       code:'NAP', country:'ITA', pot:3, rating:1710 },
+  { id:'leipzig',    name:'Leipzig',      code:'RBL', country:'GER', pot:3, rating:1690 },
+  { id:'villarreal', name:'Villarreal',   code:'VIL', country:'ESP', pot:3, rating:1680 },
+  { id:'feyenoord',  name:'Feyenoord',    code:'FEY', country:'NED', pot:3, rating:1660 },
+  { id:'galatasaray',name:'Galatasaray',  code:'GAL', country:'TUR', pot:3, rating:1655 },
+  { id:'lille',      name:'Lille',        code:'LIL', country:'FRA', pot:3, rating:1650 },
+  { id:'fenerbahce', name:'Fenerbahçe',   code:'FEN', country:'TUR', pot:3, rating:1640 },
+  { id:'bodo',       name:'Bodø/Glimt',   code:'BOD', country:'NOR', pot:3, rating:1600 },
+  { id:'shakhtar',   name:'Shakhtar',     code:'SHA', country:'UKR', pot:3, rating:1590 },
+
+  { id:'stuttgart',  name:'Stuttgart',    code:'VFB', country:'GER', pot:4, rating:1580 },
+  { id:'como',       name:'Como',         code:'COM', country:'ITA', pot:4, rating:1550 },
+  { id:'lens',       name:'Lens',         code:'LEN', country:'FRA', pot:4, rating:1545 },
+  { id:'slavia',     name:'Slavia Praha', code:'SLA', country:'CZE', pot:4, rating:1540 },
+  { id:'aek',        name:'AEK Athens',   code:'AEK', country:'GRE', pot:4, rating:1520 },
+  { id:'lask',       name:'LASK',         code:'LSK', country:'AUT', pot:4, rating:1490 },
+  { id:'viking',     name:'Viking',       code:'VIK', country:'NOR', pot:4, rating:1470 },
+  { id:'slovan',     name:'S. Bratislava',code:'SLO', country:'SVK', pot:4, rating:1460 },
+  { id:'sabah',      name:'Sabah',        code:'SAB', country:'AZE', pot:4, rating:1420 },
+];
+
+const COMPETITIONS = {
+  ucl: {
+    id: 'ucl',
+    format: 'ucl',
+    season: '2026/27',
+    available: true,
+    teamCount: 36,
+    drawnOn: '2026-08-27',
+    dates: [
+      { day: '8-10', month: 9, year: 2026 },
+      { day: '13/14', month: 10, year: 2026 },
+      { day: '20/21', month: 10, year: 2026 },
+      { day: '3/4', month: 11, year: 2026 },
+      { day: '24/25', month: 11, year: 2026 },
+      { day: '8/9', month: 12, year: 2026 },
+      { day: '19/20', month: 1, year: 2027 },
+      { day: '27', month: 1, year: 2027 }
+    ],
+    teams: UCL_TEAMS
+  },
+
+  uel: {
+    id: 'uel',
+    format: 'uel',
+    season: '2026/27',
+    available: false,
+    teamCount: 36,
+    drawnOn: '2026-08-28',
+    dates: [
+      { day: '24/25', month: 9, year: 2026 },
+      { day: '1/2', month: 10, year: 2026 },
+      { day: '22/23', month: 10, year: 2026 },
+      { day: '5/6', month: 11, year: 2026 },
+      { day: '26/27', month: 11, year: 2026 },
+      { day: '10/11', month: 12, year: 2026 },
+      { day: '21/22', month: 1, year: 2027 },
+      { day: '28/29', month: 1, year: 2027 }
+    ],
+    teams: []
+  },
+
+  uecl: {
+    id: 'uecl',
+    format: 'uecl',
+    season: '2026/27',
+    available: false,
+    teamCount: 36,
+    drawnOn: '2026-08-28',
+    dates: [
+      { day: '24/25', month: 9, year: 2026 },
+      { day: '1/2', month: 10, year: 2026 },
+      { day: '22/23', month: 10, year: 2026 },
+      { day: '5/6', month: 11, year: 2026 },
+      { day: '26/27', month: 11, year: 2026 },
+      { day: '10/11', month: 12, year: 2026 }
+    ],
+    teams: []
+  }
+};
+
+const COMP_IDS = ['ucl', 'uel', 'uecl'];
+
+// ---------------------------------------------------------------------------
 // Diller
 // ---------------------------------------------------------------------------
 const I18N = {
   en: {
     'html.lang': 'en',
     'locale': 'en-GB',
-    'doc.title': 'UCL League Phase Draw Simulator 2026/27',
+    'doc.title': 'DrawLab · European league phase draw simulator',
+    'brand': 'DrawLab',
+    'bar.comp': 'competition',
+    'comp.ucl': 'Champions League',
+    'comp.uel': 'Europa League',
+    'comp.uecl': 'Conference League',
+    'comp.soon': 'not drawn yet',
+    'comp.awaiting': 'waiting for the draw',
+    'comp.notDrawn': 'The {comp} draw has not been held yet ({date}). '
+      + 'Once UEFA publishes the pots the competition opens here.',
+    'months': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 
-    'head.competition': 'Champions League',
     'head.phase': 'league phase',
-    'head.h1a': '36 clubs',
-    'head.h1b': '144 matches',
-    'head.h1c': '8 matchdays',
+    'head.clubs': '{n} clubs',
+    'head.matches': '{n} matches',
+    'head.weeks': '{n} matchdays',
     'head.lede': 'The new league phase has no groups. Every club draws two opponents from '
       + 'each of the four pots, playing one at home and one away. This page reproduces that '
       + 'draw under the real constraints, then simulates the season.',
@@ -963,7 +1052,7 @@ const I18N = {
     'status.drawing': 'Drawing…',
     'status.failed': 'No valid draw found, try another seed.',
     'status.violation': 'Rule violated: {msg}',
-    'status.ok': '144 matches · all rules satisfied',
+    'status.ok': '{matches} matches · all rules satisfied',
 
     'discard.confirm': 'This fixture has {n} unsaved match scores.\n\n'
       + 'A new draw wipes all of them. If you want to keep them, use "Save fixture" first.'
@@ -977,7 +1066,7 @@ const I18N = {
 
     'detail.hint': 'Pick a club: every filled square in its row is a match. '
       + 'Solid square means home, outlined means away. Colour shows the opponent\'s pot.',
-    'detail.meta': '{country} · Pot {pot} · 4 home / 4 away',
+    'detail.meta': '{country} · Pot {pot} · {n} home / {n} away',
     'detail.doubled': 'two opponents from {list}',
     'matrix.rowTitle': 'Show {team} fixtures',
     'matrix.cellHome': 'MD{md} · {home} - {away} (home)',
@@ -989,7 +1078,7 @@ const I18N = {
     'teams.hint': 'pick from the list or click a card',
     'teams.hintSelected': 'the same club is selected on the Matrix tab',
     'teams.cardTitle': 'Open {team} fixtures',
-    'focus.homeAway': '4 home / 4 away',
+    'focus.homeAway': '{n} home / {n} away',
     'focus.record': '{n} matches · {w}W {d}D {l}L · {gf}-{ga} · {pts} pts',
     'focus.col.md': 'MD',
     'focus.col.date': 'Date',
@@ -999,8 +1088,6 @@ const I18N = {
     'focus.col.pot': 'Pot',
     'focus.col.score': 'Score',
 
-    'md.dates': ['8-10 Sep 2026', '13/14 Oct 2026', '20/21 Oct 2026', '3/4 Nov 2026',
-                 '24/25 Nov 2026', '8/9 Dec 2026', '19/20 Jan 2027', '27 Jan 2027'],
     'md.week': 'Matchday {n}',
     'md.autofill': 'Fill in scores',
     'md.saveFixture': 'Save fixture',
@@ -1008,7 +1095,7 @@ const I18N = {
     'md.goalHome': 'home goals prediction',
     'md.goalAway': 'away goals prediction',
     'md.countNone': 'type your own scores in the boxes and the standings will follow them',
-    'md.countSome': 'you filled {n} of 144 matches · the standings use them',
+    'md.countSome': 'you filled {n} of {total} matches · the standings use them',
     'md.filled': '{n} matches filled by the model.',
     'md.filledKept': '{n} matches filled by the model, your {kept} entries untouched.',
     'md.allFull': 'No empty boxes left, everything was already filled.',
@@ -1016,7 +1103,7 @@ const I18N = {
     'md.savePrompt': 'Name this save:',
     'md.saveDefault': 'Draw {seed}',
 
-    'table.hint': 'Play season: 144 matches are generated with the Poisson model and the '
+    'table.hint': 'Play season: every match is generated with the Poisson model and the '
       + 'table is ordered by the UEFA criteria. You can also type your own predictions '
       + 'on the Matchdays tab.',
     'table.col.pos': '#',
@@ -1064,11 +1151,11 @@ const I18N = {
     'draw.ballTitle': 'Pot {n} · draw a ball',
     'draw.ballDrawn': '{team} drawn',
     'draw.spinning': 'Pot {pot} · shaking the ball…',
-    'draw.opening': '{n}/36 · {team} drawn, opponents coming up…',
-    'draw.teamDone': '{n}/36 · {team} complete · 4 home, 4 away',
-    'draw.next': '{n}/36 drawn · pick the next ball or let it run automatically',
-    'draw.finished': 'All 36 balls drawn · 144 matches ready. The Matrix and Matchdays tabs have the details.',
-    'draw.opponentsOf': '{country} · Pot {pot} · drawing 8 opponents',
+    'draw.opening': '{n}/{total} · {team} drawn, opponents coming up…',
+    'draw.teamDone': '{n}/{total} · {team} complete · {h} home, {h} away',
+    'draw.next': '{n}/{total} drawn · pick the next ball or let it run automatically',
+    'draw.finished': 'All {teams} balls drawn · {matches} matches ready. The Matrix and Matchdays tabs have the details.',
+    'draw.opponentsOf': '{country} · Pot {pot} · drawing {n} opponents',
 
     'saves.nameLabel': 'name',
     'saves.namePlaceholder': 'e.g. Arsenal treble run',
@@ -1112,13 +1199,23 @@ const I18N = {
   tr: {
     'html.lang': 'tr',
     'locale': 'tr-TR',
-    'doc.title': 'UCL Lig Aşaması Kura Simülatörü 2026/27',
+    'doc.title': 'DrawLab · Avrupa kupaları lig aşaması kura simülatörü',
+    'brand': 'DrawLab',
+    'bar.comp': 'turnuva',
+    'comp.ucl': 'Şampiyonlar Ligi',
+    'comp.uel': 'Avrupa Ligi',
+    'comp.uecl': 'Konferans Ligi',
+    'comp.soon': 'kura çekilmedi',
+    'comp.awaiting': 'kura bekleniyor',
+    'comp.notDrawn': '{comp} kurası henüz çekilmedi ({date}). '
+      + 'UEFA torbaları yayımlayınca turnuva burada açılacak.',
+    'months': ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz',
+               'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
 
-    'head.competition': 'Şampiyonlar Ligi',
     'head.phase': 'lig aşaması',
-    'head.h1a': '36 takım',
-    'head.h1b': '144 maç',
-    'head.h1c': '8 hafta',
+    'head.clubs': '{n} takım',
+    'head.matches': '{n} maç',
+    'head.weeks': '{n} hafta',
     'head.lede': 'Yeni lig aşamasında grup yok. Her takım dört torbanın her birinden iki rakip '
       + 'çekiyor, birini evinde birini deplasmanda oynuyor. Bu sayfa o kurayı kurallara uyarak '
       + 'yeniden üretiyor, sonra sezonu simüle ediyor.',
@@ -1148,7 +1245,7 @@ const I18N = {
     'status.drawing': 'Çekiliyor…',
     'status.failed': 'Kura çıkmadı, başka bir tohum dene.',
     'status.violation': 'Kural ihlali: {msg}',
-    'status.ok': '144 maç · tüm kurallar sağlandı',
+    'status.ok': '{matches} maç · tüm kurallar sağlandı',
 
     'discard.confirm': 'Bu fikstürde kaydedilmemiş {n} maç skoru var.\n\n'
       + 'Yeni kura çekilirse hepsi silinir. Saklamak istiyorsan önce "Fikstürü kaydet" de.'
@@ -1162,7 +1259,7 @@ const I18N = {
 
     'detail.hint': 'Bir takım seç: satırdaki her dolu kare bir maç. '
       + 'Dolu kare iç saha, çerçeveli kare deplasman. Renk rakibin torbası.',
-    'detail.meta': '{country} · Torba {pot} · 4 iç saha / 4 deplasman',
+    'detail.meta': '{country} · Torba {pot} · {n} iç saha / {n} deplasman',
     'detail.doubled': 'aynı ülkeden çift rakip: {list}',
     'matrix.rowTitle': '{team} fikstürünü göster',
     'matrix.cellHome': 'MD{md} · {home} - {away} (ev sahibi)',
@@ -1174,7 +1271,7 @@ const I18N = {
     'teams.hint': 'listeden seç ya da bir karta tıkla',
     'teams.hintSelected': 'matris sekmesinde de bu takım seçili',
     'teams.cardTitle': '{team} fikstürünü aç',
-    'focus.homeAway': '4 iç saha / 4 deplasman',
+    'focus.homeAway': '{n} iç saha / {n} deplasman',
     'focus.record': '{n} maç · {w}G {d}B {l}M · {gf}-{ga} · {pts} puan',
     'focus.col.md': 'Hafta',
     'focus.col.date': 'Tarih',
@@ -1184,8 +1281,6 @@ const I18N = {
     'focus.col.pot': 'Torba',
     'focus.col.score': 'Skor',
 
-    'md.dates': ['8-10 Eyl 2026', '13/14 Eki 2026', '20/21 Eki 2026', '3/4 Kas 2026',
-                 '24/25 Kas 2026', '8/9 Ara 2026', '19/20 Oca 2027', '27 Oca 2027'],
     'md.week': 'Hafta {n}',
     'md.autofill': 'Skorları doldur',
     'md.saveFixture': 'Fikstürü kaydet',
@@ -1193,7 +1288,7 @@ const I18N = {
     'md.goalHome': 'ev sahibi gol tahmini',
     'md.goalAway': 'deplasman gol tahmini',
     'md.countNone': 'skor kutularına kendi tahminini yaz, puan tablosu ona göre hesaplansın',
-    'md.countSome': '144 maçın {n} tanesini sen doldurdun · puan tablosu bunları kullanıyor',
+    'md.countSome': '{total} maçın {n} tanesini sen doldurdun · puan tablosu bunları kullanıyor',
     'md.filled': '{n} maç modele göre dolduruldu.',
     'md.filledKept': '{n} maç modele göre dolduruldu, senin girdiğin {kept} maça dokunulmadı.',
     'md.allFull': 'Boş kutu kalmamış, hepsi zaten doluydu.',
@@ -1201,7 +1296,7 @@ const I18N = {
     'md.savePrompt': 'Kayda bir ad ver:',
     'md.saveDefault': 'Kura {seed}',
 
-    'table.hint': 'Sezonu oyna: 144 maç Poisson modeliyle üretilir, tablo UEFA sıralama '
+    'table.hint': 'Sezonu oyna: her maç Poisson modeliyle üretilir, tablo UEFA sıralama '
       + 'kriterlerine göre dizilir. Haftalar sekmesinden kendi tahminlerini de yazabilirsin.',
     'table.col.pos': '#',
     'table.col.club': 'Takım',
@@ -1247,11 +1342,11 @@ const I18N = {
     'draw.ballTitle': 'Torba {n} · top çek',
     'draw.ballDrawn': '{team} çekildi',
     'draw.spinning': 'Torba {pot} · top çalkalanıyor…',
-    'draw.opening': '{n}/36 · {team} çekildi, rakipleri açılıyor…',
-    'draw.teamDone': '{n}/36 · {team} tamamlandı · 4 iç saha, 4 deplasman',
-    'draw.next': '{n}/36 çekildi · sıradaki topu seç ya da otomatik devam et',
-    'draw.finished': '36 top çekildi · 144 maç hazır. Matris ve Haftalar sekmelerinde tamamı var.',
-    'draw.opponentsOf': '{country} · Torba {pot} · 8 rakip çekiliyor',
+    'draw.opening': '{n}/{total} · {team} çekildi, rakipleri açılıyor…',
+    'draw.teamDone': '{n}/{total} · {team} tamamlandı · {h} iç saha, {h} deplasman',
+    'draw.next': '{n}/{total} çekildi · sıradaki topu seç ya da otomatik devam et',
+    'draw.finished': '{teams} top çekildi · {matches} maç hazır. Matris ve Haftalar sekmelerinde tamamı var.',
+    'draw.opponentsOf': '{country} · Torba {pot} · {n} rakip çekiliyor',
 
     'saves.nameLabel': 'ad',
     'saves.namePlaceholder': 'örn. Fener yılın kurası',
@@ -1337,8 +1432,33 @@ function applyStaticI18n() {
 // ---------------------------------------------------------------------------
 // Arayuz
 // ---------------------------------------------------------------------------
-const byId = Object.fromEntries(TEAMS.map(t => [t.id, t]));
-const ORDER = TEAMS.map(t => t.id);           // torbaya gore siralanmis
+let COMP = COMPETITIONS.ucl;
+let TEAMS = COMP.teams;
+let FORMAT = FORMATS[COMP.format];
+let byId = {};
+let ORDER = [];                               // torbaya gore siralanmis
+
+/** Aktif turnuvayi degistirir: takim listesi, bicim ve turetilmis indeksler. */
+function useCompetition(id) {
+  COMP = COMPETITIONS[id] || COMPETITIONS.ucl;
+  TEAMS = COMP.teams;
+  FORMAT = FORMATS[COMP.format];
+  byId = Object.fromEntries(TEAMS.map(t => [t.id, t]));
+  ORDER = TEAMS.map(t => t.id);
+}
+
+const POTS = () => Array.from({ length: FORMAT.pots }, (_, i) => i + 1);
+const drawOpt = () => ({ ...DEFAULTS, ...FORMAT });
+const teamCount = () => TEAMS.length || COMP.teamCount || 36;
+const matchCount = () => teamCount() * FORMAT.pots * FORMAT.oppPerPot / 2;
+const perTeam = () => FORMAT.pots * FORMAT.oppPerPot;
+
+/** Haftanin tarihi; ay adi aktif dilden gelir. */
+function compDate(md) {
+  const d = COMP.dates && COMP.dates[md - 1];
+  if (!d) return '';
+  return d.day + ' ' + txraw('months')[d.month - 1] + ' ' + d.year;
+}
 const $ = s => document.querySelector(s);
 const el = (tag, cls, txt) => {
   const n = document.createElement(tag);
@@ -1369,8 +1489,15 @@ function parseHash() {
   const raw = location.hash.replace(/^#/, '').trim();
   const saved = raw.match(/^k=([A-Za-z0-9]{4,32})$/);
   if (saved) return { saveId: saved[1] };
+  const withComp = raw.match(/^(ucl|uel|uecl)(?:-(\d{1,6}))?$/);
+  if (withComp) {
+    const out = { comp: withComp[1] };
+    const n = Number(withComp[2]);
+    if (Number.isInteger(n) && n >= 1 && n <= 999999) out.seed = n;
+    return out;
+  }
   const n = Number(raw);
-  if (raw !== '' && Number.isInteger(n) && n >= 1 && n <= 999999) return { seed: n };
+  if (raw !== '' && Number.isInteger(n) && n >= 1 && n <= 999999) return { seed: n, comp: 'ucl' };
   return {};
 }
 
@@ -1433,18 +1560,18 @@ function newDraw(seed, apply) {
   const btn = $('#redraw');
   btn.disabled = true; btn.textContent = tx('status.drawing');
   setTimeout(() => {
-    const f = runDraw(TEAMS, seed);
+    const f = runDraw(TEAMS, seed, FORMAT);
     btn.disabled = false; btn.textContent = tx('bar.redraw');
     if (!f) { setStatus('status.failed'); return; }
     state.seed = seed; state.fixtures = f; state.results = null; state.simIndex = null;
     state.view = buildView(f);
     state.picks = {};
     state.dirty = false;
-    writeHash(seed);
+    writeHash(COMP.id + '-' + seed);
     if (apply) apply();
-    const problems = verify(f, TEAMS);
+    const problems = verify(f, TEAMS, drawOpt());
     if (problems.length) setStatus('status.violation', { msg: problems[0] });
-    else setStatus('status.ok');
+    else setStatus('status.ok', { matches: matchCount() });
     renderAll();
   }, 10);
 }
@@ -1459,6 +1586,78 @@ function redrawFromInput() {
   const seed = typed === state.seed ? (typed % 999999) + 1 : typed;
   $('#seed').value = seed;
   newDraw(seed);
+}
+
+/** Torba renk anahtarlarini aktif bicime gore cizer. */
+function renderLegend() {
+  const host = $('#legend');
+  host.innerHTML = '';
+  const add = (mk, label) => {
+    const span = el('span');
+    span.appendChild(mk);
+    span.append(' ' + label);
+    host.appendChild(span);
+  };
+  add(el('i', 'key home'), tx('legend.home'));
+  add(el('i', 'key away'), tx('legend.away'));
+  POTS().forEach(pot => {
+    const sw = el('i', 'key');
+    sw.style.background = 'var(--p' + pot + ')';
+    add(sw, tx('pot', { n: pot }));
+  });
+}
+
+/** Baslik ve alt basliktaki sayilari aktif turnuvadan turetir. */
+function renderHeader() {
+  $('#compname').textContent = tx('comp.' + COMP.id);
+  $('#season').textContent = COMP.season;
+  $('#h1clubs').textContent = tx('head.clubs', { n: teamCount() });
+  $('#h1matches').textContent = tx('head.matches', { n: matchCount() });
+  $('#h1weeks').textContent = tx('head.weeks', { n: FORMAT.matchdays });
+}
+
+function fillCompPicker() {
+  const pick = $('#comp');
+  pick.innerHTML = '';
+  COMP_IDS.forEach(id => {
+    const o = el('option', null, tx('comp.' + id)
+      + (COMPETITIONS[id].available ? '' : ' — ' + tx('comp.soon')));
+    o.value = id;
+    pick.appendChild(o);
+  });
+  pick.value = COMP.id;
+}
+
+/** Kurasi henuz cekilmemis turnuva icin bilgi ekrani. */
+function renderUnavailable() {
+  renderHeader();
+  renderLegend();
+  const note = () => {
+    const d = el('div', 'compnote');
+    d.textContent = tx('comp.notDrawn', { comp: tx('comp.' + COMP.id), date: COMP.drawnOn });
+    return d;
+  };
+  ['#matrix', '#teams', '#matchdays', '#table', '#probs', '#drawbowls'].forEach(sel => {
+    const host = $(sel);
+    host.innerHTML = '';
+    host.appendChild(note());
+  });
+  $('#detail').innerHTML = '';
+  $('#drawstage').innerHTML = '';
+  setStatus('comp.awaiting');
+}
+
+function switchCompetition(id) {
+  if (id === COMP.id) return;
+  if (!confirmDiscard()) { $('#comp').value = COMP.id; return; }
+  useCompetition(id);
+  state.picks = {}; state.results = null; state.simIndex = null;
+  state.selected = null; state.dirty = false;
+  savesLoaded = false;
+  $('#comp').value = COMP.id;
+  if (!COMP.available || !TEAMS.length) { renderUnavailable(); writeHash(COMP.id); return; }
+  fillTeamPicker();
+  newDraw(state.seed);
 }
 
 // ---------------------------------------------------------------------------
@@ -1553,7 +1752,7 @@ function renderDetail() {
   state.view[t.id].forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
   host.appendChild(el('div', 'meta',
-    tx('detail.meta', { country: t.country, pot: t.pot })
+    tx('detail.meta', { country: t.country, pot: t.pot, n: perTeam() / 2 })
     + (doubled.length ? ' · ' + tx('detail.doubled', { list: doubled.join(', ') }) : '')));
 
   const ol = el('ol', 'fix');
@@ -1578,7 +1777,7 @@ function fillTeamPicker() {
   const all = el('option', null, tx('teams.allOption'));
   all.value = '';
   pick.appendChild(all);
-  [1, 2, 3, 4].forEach(pot => {
+  POTS().forEach(pot => {
     const group = document.createElement('optgroup');
     group.label = tx('pot', { n: pot });
     ORDER.filter(id => byId[id].pot === pot)
@@ -1602,7 +1801,7 @@ function renderTeams() {
 
   if (state.selected) { host.appendChild(teamFocus(byId[state.selected])); return; }
 
-  [1, 2, 3, 4].forEach(pot => {
+  POTS().forEach(pot => {
     const head = el('div', 'pothead');
     head.appendChild(el('h2', null, tx('pot', { n: pot })));
     head.appendChild(el('div', 'line'));
@@ -1651,7 +1850,7 @@ function teamFocus(t) {
   const counts = {};
   rows.forEach(r => (counts[byId[r.opp].country] = (counts[byId[r.opp].country] || 0) + 1));
   const doubled = Object.entries(counts).filter(([, n]) => n > 1).map(([c]) => c);
-  const bits = [t.country, tx('pot', { n: t.pot }), tx('focus.homeAway')];
+  const bits = [t.country, tx('pot', { n: t.pot }), tx('focus.homeAway', { n: perTeam() / 2 })];
   if (doubled.length) bits.push(tx('detail.doubled', { list: doubled.join(', ') }));
   if (hasScores) {
     let w = 0, d = 0, l = 0, gf = 0, ga = 0, n = 0;
@@ -1681,7 +1880,7 @@ function teamFocus(t) {
     const opp = byId[r.opp];
     const tr = el('tr');
     tr.appendChild(el('td', 'md', 'MD' + r.md));
-    tr.appendChild(el('td', 'dt', txraw('md.dates')[r.md - 1]));
+    tr.appendChild(el('td', 'dt', compDate(r.md)));
 
     const vn = el('td', 'vn p' + opp.pot);
     vn.appendChild(el('i', 'key ' + (r.venue === 'H' ? 'home' : 'away')));
@@ -1731,10 +1930,10 @@ function goalInput(key, side, value, placeholder) {
 function renderMatchdays() {
   const host = $('#matchdays'); host.innerHTML = '';
   const grid = el('div', 'mdgrid');
-  for (let md = 1; md <= 8; md++) {
+  for (let md = 1; md <= FORMAT.matchdays; md++) {
     const b = el('div', 'mdblock');
     b.appendChild(el('h4', null, tx('md.week', { n: md })));
-    b.appendChild(el('div', 'hint', txraw('md.dates')[md - 1]));
+    b.appendChild(el('div', 'hint', compDate(md)));
     state.fixtures.filter(f => f.md === md).forEach(f => {
       const key = fxKey(f);
       const pick = state.picks[key] || null;
@@ -1758,7 +1957,9 @@ function renderMatchdays() {
 function updatePickCount() {
   const n = pickCount();
   $('#pickclear').hidden = n === 0;
-  $('#pickcount').textContent = n ? tx('md.countSome', { n: n }) : tx('md.countNone');
+  $('#pickcount').textContent = n
+    ? tx('md.countSome', { n: n, total: matchCount() })
+    : tx('md.countNone');
 }
 
 /** Bir skor kutusu degistiginde state'i tazeler; haftalar ekrani yeniden cizilmez. */
@@ -1897,7 +2098,7 @@ function runMonteCarlo() {
     const t0 = performance.now();
     while (done < total && performance.now() - t0 < 60) {
       if (mode !== 'fixed') {
-        const f = runDraw(TEAMS, (rng() * 1e9) | 0);
+        const f = runDraw(TEAMS, (rng() * 1e9) | 0, FORMAT);
         if (f) fixtures = f;
       }
       const rows = buildTable(simulateSeason(fixtures, TEAMS, rng), TEAMS);
@@ -1989,7 +2190,7 @@ function closedBall(pot) {
 function renderBowls() {
   const host = $('#drawbowls');
   host.innerHTML = '';
-  [1, 2, 3, 4].forEach(pot => {
+  POTS().forEach(pot => {
     const bowl = el('div', 'bowl p' + pot);
     bowl.dataset.pot = String(pot);
     bowl.appendChild(el('h4', null, tx('pot', { n: pot })));
@@ -2019,7 +2220,7 @@ function openBall(ball, t) {
 
 function setDrawUI() {
   const busy = ceremony.busy;
-  const left = 36 - ceremony.drawn;
+  const left = teamCount() - ceremony.drawn;
   $('#drawstart').disabled = busy || left === 0;
   $('#drawstart').textContent = busy && ceremony.auto
     ? tx('draw.drawing')
@@ -2043,7 +2244,7 @@ function stageTeam(t) {
   card.appendChild(stageBall(t));
   const info = el('div', 'info');
   info.appendChild(el('h3', null, t.name));
-  info.appendChild(el('div', 'meta', tx('draw.opponentsOf', { country: t.country, pot: t.pot })));
+  info.appendChild(el('div', 'meta', tx('draw.opponentsOf', { country: t.country, pot: t.pot, n: perTeam() })));
   card.appendChild(info);
   stage.appendChild(card);
   const opps = el('div', 'opps');
@@ -2078,21 +2279,21 @@ function resetCeremony() {
 }
 
 function finishCeremony() {
-  [1, 2, 3, 4].forEach(pot => {
+  POTS().forEach(pot => {
     remainingInPot(pot).forEach(id => {
       ceremony.taken.add(id);
       openBall(freeBall(pot), byId[id]);
     });
   });
   activateBowl(0);
-  ceremony.drawn = 36;
+  ceremony.drawn = teamCount();
   ceremony.busy = false;
   ceremony.auto = false;
   ceremony.paused = false;
   ceremony.skip = false;
   $('#drawpause').textContent = 'Duraklat';
   setDrawUI();
-  drawStatus(tx('draw.finished'));
+  drawStatus(tx('draw.finished', { teams: teamCount(), matches: matchCount() }));
 }
 
 /** Tek takimin cekilisi: top calkalanir, acilir, rakipler tek tek gelir. */
@@ -2107,7 +2308,7 @@ async function revealTeam(t, gen, ball) {
   activateBowl(0);
   ceremony.drawn++;
   stageTeam(t);
-  drawStatus(tx('draw.opening', { n: ceremony.drawn, team: t.name }));
+  drawStatus(tx('draw.opening', { n: ceremony.drawn, total: teamCount(), team: t.name }));
   if (!await cwait(CTIME.reveal, gen)) return false;
 
   const rows = state.view[t.id];
@@ -2116,7 +2317,7 @@ async function revealTeam(t, gen, ball) {
     if (ceremony.skip) continue;
     if (!await cwait(CTIME.opponent, gen)) return false;
   }
-  drawStatus(tx('draw.teamDone', { n: ceremony.drawn, team: t.name }));
+  drawStatus(tx('draw.teamDone', { n: ceremony.drawn, total: teamCount(), team: t.name, h: perTeam() / 2 }));
   return true;
 }
 
@@ -2139,9 +2340,9 @@ async function pickBall(ball) {
 
   ceremony.busy = false;
   ceremony.skip = false;
-  if (ok && ceremony.drawn >= 36) { finishCeremony(); return; }
+  if (ok && ceremony.drawn >= teamCount()) { finishCeremony(); return; }
   setDrawUI();
-  if (ok) drawStatus(tx('draw.next', { n: ceremony.drawn }));
+  if (ok) drawStatus(tx('draw.next', { n: ceremony.drawn, total: teamCount() }));
 }
 
 async function runCeremony() {
@@ -2154,7 +2355,7 @@ async function runCeremony() {
   $('#drawpause').textContent = 'Duraklat';
   setDrawUI();
 
-  for (let pot = 1; pot <= 4 && !ceremony.skip; pot++) {
+  for (let pot = 1; pot <= FORMAT.pots && !ceremony.skip; pot++) {
     let left = remainingInPot(pot);
     while (left.length && !ceremony.skip) {
       const t = byId[left[Math.floor(Math.random() * left.length)]];
@@ -2411,7 +2612,7 @@ async function removeSave(id) {
 // sekmeler + baslangic
 // ---------------------------------------------------------------------------
 function renderAll() {
-  renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
+  renderHeader(); renderLegend(); renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
   resetCeremony();
   $('#probs').innerHTML = '';
   $('#probs').appendChild(el('p', 'hint', tx('probs.press')));
@@ -2488,7 +2689,11 @@ function setLang(lang) {
   try { localStorage.setItem(LANG_KEY, LANG); } catch (e) { /* depolama kapalı */ }
   $('#lang').value = LANG;
   applyStaticI18n();
+  fillCompPicker();
+  renderHeader();
+  renderLegend();
   setStatus(state.status.key, state.status.vars);
+  if (!COMP.available || !TEAMS.length) { renderUnavailable(); return; }
   fillTeamPicker();
   renderMatrix(); renderDetail(); renderTeams(); renderMatchdays(); renderTable();
   relabelCeremony();
@@ -2511,18 +2716,26 @@ function relabelCeremony() {
   });
   setDrawUI();
   if (!ceremony.busy && ceremony.drawn === 0) drawStatus(tx('draw.intro'));
-  else if (!ceremony.busy && ceremony.drawn >= 36) drawStatus(tx('draw.finished'));
+  else if (!ceremony.busy && ceremony.drawn >= teamCount()) drawStatus(tx('draw.finished', { teams: teamCount(), matches: matchCount() }));
 }
+
+$('#comp').addEventListener('change', e => switchCompetition(e.target.value));
 
 LANG = detectLang();
 $('#lang').value = LANG;
 applyStaticI18n();
 
 const initialHash = parseHash();
+useCompetition(initialHash.comp || 'ucl');
+fillCompPicker();
 state.seed = initialHash.seed || state.seed;
 $('#seed').value = state.seed;
-fillTeamPicker();
-newDraw(state.seed);
+if (!COMP.available || !TEAMS.length) {
+  renderUnavailable();
+} else {
+  fillTeamPicker();
+  newDraw(state.seed);
+}
 if (initialHash.saveId) openSave(initialHash.saveId, true);
 
 </script>
