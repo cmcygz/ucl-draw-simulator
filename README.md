@@ -1,5 +1,7 @@
 # UCL Lig Aşaması Simülatörü
 
+**Canlı: https://cmcygz.github.io/ucl-draw-simulator/**
+
 Şampiyonlar Ligi'nin yeni 36 takımlı lig aşamasını kuradan puan tablosuna kadar üreten
 bağımsız Python projesi. Harici bağımlılık yok, sadece standart kütüphane.
 
