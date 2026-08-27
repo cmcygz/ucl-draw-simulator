@@ -63,21 +63,35 @@ const shuffle = (arr, rng) => {
 };
 
 const DEFAULTS = {
+  pots: 4,             // torba sayisi   (UCL/UEL 4, UECL 6)
+  oppPerPot: 2,        // torba basina rakip (UCL/UEL 2, UECL 1)
+  matchdays: 8,        // hafta sayisi   (UCL/UEL 8, UECL 6)
   maxSameCountry: 2,
   allowSameCountry: false,
   bannedHome: [],      // ['liverpool>real', ...]  ev sahibi > deplasman
   nodeBudget: 60000,
 };
 
+/** UEFA'nin uc kulup turnuvasinin lig asamasi bicimleri. */
+const FORMATS = {
+  ucl:  { pots: 4, oppPerPot: 2, matchdays: 8 },
+  uel:  { pots: 4, oppPerPot: 2, matchdays: 8 },
+  uecl: { pots: 6, oppPerPot: 1, matchdays: 6 }
+};
+
+const potList = opt => Array.from({ length: opt.pots }, (_, i) => i + 1);
+const matchesPerTeam = opt => opt.pots * opt.oppPerPot;
+
 // --- 1. rakip atamasi -------------------------------------------------------
 function drawOpponents(teams, opt, rng) {
   const byId = Object.fromEntries(teams.map(t => [t.id, t]));
   const ids = teams.map(t => t.id);
-  const potMembers = { 1: [], 2: [], 3: [], 4: [] };
+  const pots = potList(opt);
+  const potMembers = Object.fromEntries(pots.map(p => [p, []]));
   teams.forEach(t => potMembers[t.pot].push(t.id));
 
   const need = {};
-  ids.forEach(i => [1, 2, 3, 4].forEach(p => (need[i + '|' + p] = 2)));
+  ids.forEach(i => pots.forEach(p => (need[i + '|' + p] = opt.oppPerPot)));
   const opp = Object.fromEntries(ids.map(i => [i, new Set()]));
   const cc = Object.fromEntries(ids.map(i => [i, {}]));
   const edges = [];
@@ -97,7 +111,7 @@ function drawOpponents(teams, opt, rng) {
     if (--budget <= 0) throw new Error('budget');
     let best = null, bestCands = null;
     for (const id of ids) {
-      for (const p of [1, 2, 3, 4]) {
+      for (const p of pots) {
         const k = id + '|' + p;
         if (need[k] <= 0) continue;
         const cands = potMembers[p].filter(o => compatible(id, o));
@@ -134,9 +148,70 @@ function drawOpponents(teams, opt, rng) {
 }
 
 // --- 2. ic saha / deplasman -------------------------------------------------
+/**
+ * Yonlendirmeyi bicime gore secer. Torba basina 2 rakip varsa her (potA,potB)
+ * blogu ayri dengelenir; 1 rakip varsa blok basina denge imkansizdir, bu yuzden
+ * fikstur grafinin tamami dongulere ayrilip toplam ev/deplasman dengelenir.
+ */
+function orient(edges, teams, opt, rng) {
+  return opt.oppPerPot === 1
+    ? orientBalanced(edges, teams, opt, rng)
+    : orientBlocks(edges, teams, opt, rng);
+}
+
+/**
+ * Cift dereceli grafi ayrik dongulere ayirir. Her dongu tek yonde dolasilinca
+ * her takimin ev sayisi deplasman sayisina esitlenir (UECL'de 3-3).
+ */
+function cycleDecompose(edges, ids) {
+  const adj = new Map(ids.map(i => [i, []]));
+  edges.forEach(([a, b], e) => {
+    adj.get(a).push({ to: b, e });
+    adj.get(b).push({ to: a, e });
+  });
+  const used = new Array(edges.length).fill(false);
+  const free = node => adj.get(node).find(x => !used[x.e]);
+  const cycles = [];
+
+  for (const start of ids) {
+    for (;;) {
+      if (!free(start)) break;
+      const cycle = [];
+      let cur = start;
+      do {
+        const step = free(cur);
+        if (!step) break;
+        used[step.e] = true;
+        cycle.push([cur, step.to]);
+        cur = step.to;
+      } while (cur !== start);
+      if (cycle.length) cycles.push(cycle);
+    }
+  }
+  return cycles;
+}
+
+function orientBalanced(edges, teams, opt, rng) {
+  const byId = Object.fromEntries(teams.map(t => [t.id, t]));
+  const banned = new Set(opt.bannedHome);
+  const fixtures = [];
+
+  for (const cycle of cycleDecompose(edges, teams.map(t => t.id))) {
+    const fwdBad = cycle.some(([h, a]) => banned.has(h + '>' + a));
+    const revBad = cycle.some(([h, a]) => banned.has(a + '>' + h));
+    if (fwdBad && revBad) return null;
+    const flip = fwdBad || (!revBad && rng() < 0.5);
+    for (const [h, a] of cycle) {
+      const [home, away] = flip ? [a, h] : [h, a];
+      fixtures.push({ home, away, homePot: byId[home].pot, awayPot: byId[away].pot, md: null });
+    }
+  }
+  return fixtures;
+}
+
 // Her (potA,potB) blogu 2-regular graf -> dongulere ayrilir. Donguyu tek yonde
 // dolasmak her takima tam 1 ic saha + 1 deplasman verir.
-function orient(edges, teams, opt, rng) {
+function orientBlocks(edges, teams, opt, rng) {
   const byId = Object.fromEntries(teams.map(t => [t.id, t]));
   const banned = new Set(opt.bannedHome);
   const blocks = new Map();
@@ -208,7 +283,7 @@ function perfectMatching(adj, ids, rng, budgetRef) {
   return rec() ? out : null;
 }
 
-function assignMatchdays(fixtures, ids, rng, { avoidThreeInARow = true, tries = 60, altPerRound = 5, budget = 600 } = {}) {
+function assignMatchdays(fixtures, ids, rng, { matchdays = 8, avoidThreeInARow = true, tries = 60, altPerRound = 5, budget = 600 } = {}) {
   const key = (x, y) => (x < y ? x + '|' + y : y + '|' + x);
   const pool = new Map(fixtures.map(f => [key(f.home, f.away), f]));
 
@@ -239,7 +314,7 @@ function assignMatchdays(fixtures, ids, rng, { avoidThreeInARow = true, tries = 
     // haftalari sirayla kur; bir hafta cikmazsa o haftayi birkac kez farkli
     // eslesmeyle dene, olmazsa bir onceki haftaya geri don (backtracking)
     const rec = (md) => {
-      if (md === 8) return true;
+      if (md === matchdays) return true;
       for (let k = 0; k < altPerRound; k++) {
         if (--calls <= 0) return false;
         const m = buildRound(left, hist);
@@ -279,8 +354,9 @@ function runDraw(teams, seed, options = {}) {
     if (!edges) continue;
     const fixtures = orient(edges, teams, opt, rng);
     if (!fixtures) continue;
-    if (!assignMatchdays(fixtures, ids, rng) &&
-        !assignMatchdays(fixtures, ids, rng, { avoidThreeInARow: false })) continue;
+    const md = { matchdays: opt.matchdays };
+    if (!assignMatchdays(fixtures, ids, rng, md) &&
+        !assignMatchdays(fixtures, ids, rng, { ...md, avoidThreeInARow: false })) continue;
     return fixtures;
   }
   return null;
@@ -289,7 +365,7 @@ function runDraw(teams, seed, options = {}) {
 function verify(fixtures, teams, opt = DEFAULTS) {
   const byId = Object.fromEntries(teams.map(t => [t.id, t]));
   const problems = [];
-  if (fixtures.length !== teams.length * 4) problems.push('mac sayisi yanlis');
+  if (fixtures.length !== teams.length * matchesPerTeam(opt) / 2) problems.push('mac sayisi yanlis');
   const seen = new Set(), hp = {}, ap = {}, oc = {}, mds = {};
   for (const t of teams) { hp[t.id] = {}; ap[t.id] = {}; oc[t.id] = {}; mds[t.id] = new Set(); }
   for (const f of fixtures) {
@@ -307,14 +383,23 @@ function verify(fixtures, teams, opt = DEFAULTS) {
       mds[id].add(f.md);
     }
   }
+  const perPotHome = opt.oppPerPot / 2;
   for (const t of teams) {
-    for (const p of [1, 2, 3, 4]) {
-      if (hp[t.id][p] !== 1) problems.push(t.id + ' pot' + p + ' ic saha != 1');
-      if (ap[t.id][p] !== 1) problems.push(t.id + ' pot' + p + ' deplasman != 1');
+    let home = 0, away = 0;
+    for (const p of potList(opt)) {
+      const h = hp[t.id][p] || 0, a = ap[t.id][p] || 0;
+      home += h; away += a;
+      if (h + a !== opt.oppPerPot) problems.push(t.id + ' torba' + p + ' rakip sayisi ' + (h + a));
+      if (Number.isInteger(perPotHome) && h !== perPotHome) {
+        problems.push(t.id + ' torba' + p + ' ic saha ' + h);
+      }
     }
+    const half = matchesPerTeam(opt) / 2;
+    if (home !== half) problems.push(t.id + ' ic saha ' + home + ' != ' + half);
+    if (away !== half) problems.push(t.id + ' deplasman ' + away + ' != ' + half);
     for (const [c, n] of Object.entries(oc[t.id]))
       if (n > opt.maxSameCountry) problems.push(t.id + ' ' + c + ' rakip sayisi ' + n);
-    if (mds[t.id].size !== 8) problems.push(t.id + ' 8 hafta degil');
+    if (mds[t.id].size !== opt.matchdays) problems.push(t.id + ' ' + opt.matchdays + ' hafta degil');
   }
   return problems;
 }
@@ -358,5 +443,5 @@ function buildTable(results, teams) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { TEAMS, makeRng, runDraw, verify, simulateSeason, buildTable, DEFAULTS };
+  module.exports = { TEAMS, makeRng, runDraw, verify, simulateSeason, buildTable, DEFAULTS, FORMATS };
 }
