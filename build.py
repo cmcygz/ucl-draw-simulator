@@ -74,9 +74,13 @@ __UI__
   </section>
   <section id="view-matchdays" hidden>
     <div class="bar">
-      <span class="hint" id="pickcount"></span>
+      <button id="autofill">Skorları doldur</button>
+      <button id="savefixture">Fikstürü kaydet</button>
       <button id="pickclear" class="ghost" hidden>Tahminleri sil</button>
     </div>
+    <p class="hint" id="pickcount"></p>
+    <p class="hint" id="mdstatus"></p>
+    <div id="mdshare"></div>
     <div id="matchdays"></div>
   </section>
   <section id="view-table" hidden><div id="table"></div></section>
@@ -101,6 +105,7 @@ __UI__
       <button id="savereload" class="ghost">Listeyi yenile</button>
     </div>
     <p class="hint" id="savestatus"></p>
+    <div id="saveshare"></div>
     <div id="saves"></div>
   </section>
 </main>

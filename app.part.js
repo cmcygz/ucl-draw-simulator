@@ -18,15 +18,26 @@ const state = {
 
 const fxKey = f => f.home + '>' + f.away;
 
-/** Adresteki #2027 parçasından tohumu okur; geçersizse null döner. */
-function seedFromHash() {
+/**
+ * Adres parçasını çözer: `#2027` tohum, `#k=ysjgzzsv` kayıt linki.
+ * Tanınmayan biçimde boş nesne döner.
+ */
+function parseHash() {
   const raw = location.hash.replace(/^#/, '').trim();
+  const saved = raw.match(/^k=([A-Za-z0-9]{4,32})$/);
+  if (saved) return { saveId: saved[1] };
   const n = Number(raw);
-  return Number.isInteger(n) && n >= 1 && n <= 999999 ? n : null;
+  if (raw !== '' && Number.isInteger(n) && n >= 1 && n <= 999999) return { seed: n };
+  return {};
 }
 
-function writeHash(seed) {
-  try { history.replaceState(null, '', '#' + seed); } catch (e) { /* file:// kısıtı */ }
+function writeHash(fragment) {
+  try { history.replaceState(null, '', '#' + fragment); } catch (e) { /* file:// kısıtı */ }
+}
+
+function showTab(view) {
+  const btn = document.querySelector('nav.tabs button[data-view="' + view + '"]');
+  if (btn) btn.click();
 }
 
 const picksKey = seed => 'ucl:picks:' + seed;
@@ -432,6 +443,34 @@ function onPickInput(inp) {
   renderTeams();
 }
 
+function mdStatus(msg, bad) {
+  const p = $('#mdstatus');
+  p.textContent = msg;
+  p.classList.toggle('bad', !!bad);
+}
+
+/**
+ * Bos skor kutularini modelin urettigi skorlarla doldurur: rating farki ve
+ * ic saha avantaji Poisson gol beklentisine cevrilir, skor oradan cekilir.
+ * Elle girilmis skorlara dokunmaz.
+ */
+function autofillPicks() {
+  const before = pickCount();
+  const rng = makeRng((Math.random() * 1e9) | 0);
+  const sim = simulateSeason(state.fixtures, TEAMS, rng);
+  for (const r of sim) {
+    const k = fxKey(r.f);
+    if (state.picks[k]) continue;
+    state.picks[k] = { hg: r.hg, ag: r.ag };
+  }
+  savePicks();
+  renderMatchdays(); renderTable(); renderTeams();
+  const added = pickCount() - before;
+  mdStatus(added
+    ? `${added} maç modele göre dolduruldu` + (before ? `, senin girdiğin ${before} maça dokunulmadı.` : '.')
+    : 'Boş kutu kalmamış, hepsi zaten doluydu.');
+}
+
 function clearPicks() {
   if (!pickCount()) return;
   if (!confirm('Bu kuradaki tüm tahminlerin silinecek. Devam edilsin mi?')) return;
@@ -452,10 +491,15 @@ function playSeason() {
 
 function sourceNote(played, picked) {
   const p = el('p', 'src');
+  const total = state.fixtures.length;
   if (picked && played > picked) {
     p.append(String(picked) + ' maç ');
     p.appendChild(el('b', null, 'senin tahminin'));
     p.append(` · ${played - picked} maç simülasyon`);
+  } else if (picked && played === total) {
+    p.append('Tablo tamamen ');
+    p.appendChild(el('b', null, `senin ${picked} tahminin`));
+    p.append('den hesaplandı.');
   } else if (picked) {
     p.append('Tablo yalnızca ');
     p.appendChild(el('b', null, `senin ${picked} tahminin`));
@@ -623,31 +667,86 @@ async function apiCall(path, options) {
   return data;
 }
 
-async function createSave() {
-  if (!API) return saveStatus('Kayıt sunucusu henüz yapılandırılmadı.', true);
-  const name = $('#savename').value.trim();
-  if (!name) return saveStatus('Kayda bir ad ver.', true);
+const shareUrl = id => location.origin + location.pathname + '#k=' + id;
+
+async function copyText(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const old = btn.textContent;
+    btn.textContent = 'Kopyalandı';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  } catch (e) {
+    prompt('Linki kopyala:', text);
+  }
+}
+
+function renderShare(host, id) {
+  host.innerHTML = '';
+  const box = el('div', 'sharebox');
+  box.appendChild(el('div', 'lbl', 'Paylaşım linki · açan kişi bu kurayı ve skorları görür'));
+  const row = el('div', 'row');
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.readOnly = true;
+  input.value = shareUrl(id);
+  input.addEventListener('focus', () => input.select());
+  row.appendChild(input);
+  const btn = el('button', null, 'Kopyala');
+  btn.addEventListener('click', () => copyText(input.value, btn));
+  row.appendChild(btn);
+  box.appendChild(row);
+  host.appendChild(box);
+}
+
+/** Ekrandaki skorlari sunucuya yazar; id ve sayilari dondurur. */
+async function submitSave(name) {
+  if (!API) throw new Error('kayıt sunucusu yapılandırılmadı');
+  if (!name) throw new Error('kayda bir ad gerekli');
   const { scores, picks } = currentScores();
   const total = Object.keys(scores).length;
-  if (!total) return saveStatus('Kaydedecek skor yok: sezonu oyna ya da tahmin gir.', true);
+  if (!total) throw new Error('kaydedecek skor yok, önce skorları doldur');
 
+  const data = await apiCall('/api/saves', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, seed: state.seed, scores, picks })
+  });
+  const tokens = loadTokens();
+  tokens[data.id] = data.token;
+  storeTokens(tokens);
+  savesLoaded = false;
+  return { id: data.id, total, picks: picks.length };
+}
+
+async function createSave() {
   const btn = $('#savebtn');
   btn.disabled = true;
   saveStatus('Kaydediliyor…');
   try {
-    const data = await apiCall('/api/saves', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, seed: state.seed, scores, picks })
-    });
-    const tokens = loadTokens();
-    tokens[data.id] = data.token;
-    storeTokens(tokens);
+    const r = await submitSave($('#savename').value.trim());
     $('#savename').value = '';
-    saveStatus(`Kaydedildi · ${total} maç, ${picks.length} tanesi senin tahminin.`);
+    saveStatus(`Kaydedildi · ${r.total} maç, ${r.picks} tanesi senin tahminin.`);
+    renderShare($('#saveshare'), r.id);
     listSaves();
   } catch (e) {
     saveStatus('Kaydedilemedi: ' + e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function saveFixture() {
+  const name = prompt('Kayda bir ad ver:', 'Kura ' + state.seed);
+  if (name === null) return;
+  const btn = $('#savefixture');
+  btn.disabled = true;
+  mdStatus('Kaydediliyor…');
+  try {
+    const r = await submitSave(name.trim());
+    mdStatus(`Kaydedildi · ${r.total} maç, ${r.picks} tanesi senin tahminin.`);
+    renderShare($('#mdshare'), r.id);
+  } catch (e) {
+    mdStatus('Kaydedilemedi: ' + e.message, true);
   } finally {
     btn.disabled = false;
   }
@@ -694,6 +793,9 @@ function renderSaves(rows) {
     const open = el('button', null, 'Aç');
     open.dataset.open = r.id;
     acts.appendChild(open);
+    const link = el('button', 'ghost', 'Link');
+    link.dataset.link = r.id;
+    acts.appendChild(link);
     if (mine) {
       const del = el('button', 'ghost', 'Sil');
       del.dataset.del = r.id;
@@ -705,16 +807,23 @@ function renderSaves(rows) {
   host.appendChild(list);
 }
 
-async function openSave(id) {
+async function openSave(id, fromLink) {
   saveStatus('Kayıt açılıyor…');
+  if (fromLink) mdStatus('Paylaşılan kayıt açılıyor…');
   try {
     const data = await apiCall('/api/saves/' + encodeURIComponent(id));
     const payload = data.payload || {};
     $('#seed').value = payload.seed;
-    newDraw(payload.seed, () => applySave(payload));
-    saveStatus(`Açıldı: ${data.name} · tohum ${payload.seed}`);
+    newDraw(payload.seed, () => {
+      applySave(payload);
+      writeHash('k=' + id);
+    });
+    const note = `Açıldı: ${data.name} · tohum ${payload.seed} · ${data.matches} maç`;
+    saveStatus(note);
+    if (fromLink) { mdStatus(note); showTab('table'); }
   } catch (e) {
     saveStatus('Açılamadı: ' + e.message, true);
+    if (fromLink) mdStatus('Paylaşılan kayıt açılamadı: ' + e.message, true);
   }
 }
 
@@ -764,6 +873,8 @@ $('#mcrun').addEventListener('click', runMonteCarlo);
 $('#teampick').addEventListener('change', e => selectTeam(e.target.value || null));
 $('#teamall').addEventListener('click', () => selectTeam(null));
 $('#pickclear').addEventListener('click', clearPicks);
+$('#autofill').addEventListener('click', autofillPicks);
+$('#savefixture').addEventListener('click', saveFixture);
 $('#matchdays').addEventListener('input', e => {
   const inp = e.target.closest('input[data-fx]');
   if (inp) onPickInput(inp);
@@ -773,15 +884,20 @@ $('#savereload').addEventListener('click', listSaves);
 $('#saves').addEventListener('click', e => {
   const open = e.target.closest('[data-open]');
   if (open) return openSave(open.dataset.open);
+  const link = e.target.closest('[data-link]');
+  if (link) return copyText(shareUrl(link.dataset.link), link);
   const del = e.target.closest('[data-del]');
   if (del) removeSave(del.dataset.del);
 });
 window.addEventListener('hashchange', () => {
-  const s = seedFromHash();
-  if (s && s !== state.seed) { $('#seed').value = s; newDraw(s); }
+  const h = parseHash();
+  if (h.saveId) return openSave(h.saveId, true);
+  if (h.seed && h.seed !== state.seed) { $('#seed').value = h.seed; newDraw(h.seed); }
 });
 
-state.seed = seedFromHash() || state.seed;
+const initialHash = parseHash();
+state.seed = initialHash.seed || state.seed;
 $('#seed').value = state.seed;
 fillTeamPicker();
 newDraw(state.seed);
+if (initialHash.saveId) openSave(initialHash.saveId, true);

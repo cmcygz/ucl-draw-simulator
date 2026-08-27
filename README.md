@@ -51,6 +51,18 @@ tahmini simülasyonu ezer.** Puan tablosu ve takım fikstür paneli, tahmin giri
 maçlarda tahmini, kalanlarda (sezon oynandıysa) simülasyon skorunu kullanır.
 Yalnızca tahmin girilmişse tablo sadece o maçlar üzerinden hesaplanır.
 
+**Skorları doldur** butonu boş kutuları modelin ürettiği skorlarla doldurur:
+rating farkı ve iç saha avantajı Poisson gol beklentisine çevrilir, skor oradan
+çekilir. Elle girilmiş skorlara dokunmaz. 200 çalıştırmanın ortalamasında en güçlü
+9 takım 16.3, en zayıf 9 takım 6.4 puan topluyor; iç sahada maç başına 1.96,
+deplasmanda 1.27 gol atılıyor.
+
+Deterministik alternatifler denendi ve elendi: beklenen golün tabanı maçların
+%53'ünü berabere yapıyor, yuvarlanmışı %4'ünü; ikisi de 144 maça yalnızca 7 farklı
+skor dağıtıyor. Örnekleme 30+ farklı skor üretiyor ve maç başına gol sayısı
+gerçeğe daha yakın. Bilinen sapma: bağımsız Poisson beraberliği az üretiyor
+(%15, gerçekte ~%25).
+
 Tahminler tarayıcının `localStorage`'ında **tohum başına** saklanır
 (`ucl:picks:<tohum>`), yani başka bir kuraya geçip geri dönünce yerinde durur.
 
@@ -63,6 +75,17 @@ tohumdan yeniden üretilir, skorlar üstüne yerleştirilir, tahmin işaretleri 
 Liste herkese açıktır: kaydı olan herkes listeyi görür ve açar. Silme yetkisi
 kaydı oluşturan tarayıcıya aittir — kayıt anında dönen token `localStorage`'da
 `ucl:tokens` altında tutulur. Hesap ve giriş yok.
+
+Kaydeden iki yol var: Haftalar sekmesindeki **Fikstürü kaydet** (ad sorar, kaydeder,
+paylaşım linkini hemen gösterir) ve Kayıtlar sekmesindeki form. İkisi de kayıttan
+sonra linki üretir; listedeki her satırın **Link** butonu da aynı adresi kopyalar.
+
+```
+https://cmcygz.github.io/ucl-draw-simulator/#k=ysjgzzsv
+```
+
+Bu adres açıldığında kayıt sunucudan çekilir, kura tohumdan yeniden üretilir,
+skorlar yerleştirilir ve puan tablosu sekmesi açılır.
 
 ## Kayıt sunucusu (`api/`)
 

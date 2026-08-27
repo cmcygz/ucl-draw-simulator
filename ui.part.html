@@ -234,6 +234,15 @@ table.std td.pts{font-weight:600}
 .progress{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-2)}
 
 /* ---------- kayitlar ---------- */
+.sharebox{margin:0 0 16px;border:1.5px dashed var(--rule);padding:12px 14px;background:var(--paper-2)}
+.sharebox .lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-2);margin-bottom:8px}
+.sharebox .row{display:flex;gap:8px;flex-wrap:wrap}
+.sharebox input{
+  flex:1;min-width:220px;font-family:'IBM Plex Mono',monospace;font-size:12px;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink);padding:8px 10px;outline:none
+}
+.sharebox input:focus{border-color:var(--ink)}
 .namebox{
   display:flex;align-items:center;gap:8px;cursor:default;
   font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;
