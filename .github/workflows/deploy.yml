@@ -43,6 +43,16 @@ jobs:
             echo "CLOUDFLARE_API_TOKEN secret'i tanimli degil." >&2
             exit 1
           fi
+          # Token'in kendisi loglanmaz; yalnizca bicimi bildirilir. Cloudflare
+          # panelinde token degeri ile token ID'si yan yana duruyor ve yanlis
+          # olani kopyalamak "Authentication failed [code: 9106]" veriyor.
+          case "$CLOUDFLARE_API_TOKEN" in
+            *[!0-9a-f]*)
+              echo "Token bicimi: API token'a benziyor (${#CLOUDFLARE_API_TOKEN} karakter)." ;;
+            *)
+              echo "::warning::Token tamamen kucuk harf hex ve ${#CLOUDFLARE_API_TOKEN} karakter."
+              echo "::warning::Bu bir API token degeri degil; 32 karakterse token ID'si, 37 karakterse Global API Key'dir." ;;
+          esac
           if [ -n "$ACCOUNT_ID_SECRET" ]; then
             export CLOUDFLARE_ACCOUNT_ID="$ACCOUNT_ID_SECRET"
           fi
