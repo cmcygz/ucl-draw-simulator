@@ -1,5 +1,5 @@
 name = "drawlab"
-main = "src/worker.js"
+main = "api/src/worker.js"
 compatibility_date = "2025-06-01"
 
 [[d1_databases]]
