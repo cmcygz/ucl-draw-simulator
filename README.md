@@ -223,10 +223,11 @@ detay yanıtında dönmez. CORS yalnızca `ALLOWED_ORIGINS` içindeki kaynaklara
 IP'ler ham saklanmaz; hız sınırı için `IP_SALT` secret'ıyla tuzlanmış SHA-256
 özetinin ilk 8 baytı tutulur.
 
+Komutlar deponun kökünden çalıştırılır:
+
 ```bash
-cd api
 npx wrangler@3 d1 create ucl-draw-saves          # database_id'yi wrangler.toml'a yaz
-npx wrangler@3 d1 execute ucl-draw-saves --remote --file=schema.sql
+npx wrangler@3 d1 execute ucl-draw-saves --remote --file=api/schema.sql
 node -e "console.log(require('crypto').randomBytes(24).toString('hex'))" \
   | npx wrangler@3 secret put IP_SALT
 npx wrangler@3 deploy
@@ -238,15 +239,16 @@ Yayına alma Cloudflare Workers Builds ile yapılıyor: panelde depo bağlı,
 
 | Alan | Değer |
 |---|---|
-| Root directory | `api` |
+| Root directory | `/` (varsayılan) |
 | Build command | boş |
 | Deploy command | `npx wrangler deploy` |
 | Production branch | `main` |
 
-**Kök dizin `api` olmak zorunda**, çünkü `wrangler.toml` orada. Kökte çalışan
-wrangler yapılandırmayı bulamıyor ve "Missing entry-point to Worker script"
-diyerek düşüyor. GitHub App'i yeniden kurmak bu alanı `/` yapıp build'i
-sessizce bozabiliyor, o yüzden buraya yazıldı.
+`wrangler.toml` bilerek deponun kökünde duruyor ve Worker'ı `api/src/worker.js`
+olarak gösteriyor. Önceden `api/` altındaydı ve panelde kök dizinin `api`
+yapılmasını gerektiriyordu; GitHub App her yeniden kurulduğunda o alan `/`
+olarak sıfırlanıyor ve build "Missing entry-point to Worker script" diyerek
+düşüyordu. Yapılandırma kökte olduğu için artık varsayılan ayarla çalışıyor.
 
 Yalnızca production dalının build'i `deploy` komutunu çalıştırır. Diğer dallar
 "Version command"daki `npx wrangler versions upload` ile derlenir: bu bir sürüm
