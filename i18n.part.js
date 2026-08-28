@@ -25,6 +25,10 @@ const I18N = {
     'head.lede': 'The new league phase has no groups. Every club draws two opponents from '
       + 'each of the four pots, playing one at home and one away. This page reproduces that '
       + 'draw under the real constraints, then simulates the season.',
+    'head.lede6': 'The new league phase has no groups. Every club draws one opponent from '
+      + 'each of the six pots; neighbouring pots are paired, so one of each pair is played at '
+      + 'home and the other away. This page reproduces that draw under the real constraints, '
+      + 'then simulates the season.',
 
     'bar.lang': 'language',
     'bar.redraw': 'New draw',
@@ -222,6 +226,9 @@ const I18N = {
     'head.lede': 'Yeni lig aşamasında grup yok. Her takım dört torbanın her birinden iki rakip '
       + 'çekiyor, birini evinde birini deplasmanda oynuyor. Bu sayfa o kurayı kurallara uyarak '
       + 'yeniden üretiyor, sonra sezonu simüle ediyor.',
+    'head.lede6': 'Yeni lig aşamasında grup yok. Her takım altı torbanın her birinden bir rakip '
+      + 'çekiyor; komşu torbalar eşleştiriliyor, her çiftten biri evinde biri deplasmanda '
+      + 'oynanıyor. Bu sayfa o kurayı kurallara uyarak yeniden üretiyor, sonra sezonu simüle ediyor.',
 
     'bar.lang': 'dil',
     'bar.redraw': 'Yeni kura',
