@@ -232,11 +232,29 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))" \
 npx wrangler@3 deploy
 ```
 
-Yayına alma Cloudflare Workers Builds ile yapılıyor: panelde depo bağlı, kök
-dizin `api`, deploy komutu `npx wrangler deploy`. `main`'e gönderilen değişiklik
-build tetikliyor. Derlenmiş `index.html` ve `api/src/site.js` depoda tutulduğu
-için build ortamında ayrıca `build.py` çalıştırmak gerekmiyor — parçaları
-değiştirdikten sonra `python3 build.py` çalıştırıp çıktıyı commit'lemek yeterli.
+Yayına alma Cloudflare Workers Builds ile yapılıyor: panelde depo bağlı,
+`main`'e gönderilen değişiklik build tetikliyor. Panel ayarları (Workers & Pages
+→ drawlab → Settings → Builds):
+
+| Alan | Değer |
+|---|---|
+| Root directory | `api` |
+| Build command | boş |
+| Deploy command | `npx wrangler deploy` |
+| Production branch | `main` |
+
+**Kök dizin `api` olmak zorunda**, çünkü `wrangler.toml` orada. Kökte çalışan
+wrangler yapılandırmayı bulamıyor ve "Missing entry-point to Worker script"
+diyerek düşüyor. GitHub App'i yeniden kurmak bu alanı `/` yapıp build'i
+sessizce bozabiliyor, o yüzden buraya yazıldı.
+
+Yalnızca production dalının build'i `deploy` komutunu çalıştırır. Diğer dallar
+"Version command"daki `npx wrangler versions upload` ile derlenir: bu bir sürüm
+yükler ama trafiği ona yönlendirmez, yani siteyi güncellemez.
+
+Derlenmiş `index.html` ve `api/src/site.js` depoda tutulduğu için build
+ortamında ayrıca `build.py` çalıştırmak gerekmiyor — parçaları değiştirdikten
+sonra `python3 build.py` çalıştırıp çıktıyı commit'lemek yeterli.
 
 Worker adresi `app.part.js` içindeki `API` sabitine yazılır. Sabit boş bırakılırsa
 Kayıtlar sekmesi "yapılandırılmadı" der, sitenin geri kalanı çalışmaya devam eder.
