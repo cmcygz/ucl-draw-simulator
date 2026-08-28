@@ -46,6 +46,7 @@ port edildi, tarayıcıda çalışıyor (bir kura ~150 ms).
 |---|---|
 | `index.html` | Derlenmiş tek dosya site (dağıtılacak olan bu) |
 | `engine.js` | Kura + simülasyon motoru, JS portu |
+| `competitions.part.js` | Üç turnuvanın torba listeleri, biçimi ve hafta tarihleri (36+36+36 takım) |
 | `ui.part.html` | Stiller |
 | `i18n.part.js` | İngilizce/Türkçe sözlük ve çeviri yardımcıları |
 | `app.part.js` | Görünümler ve etkileşim |

@@ -186,6 +186,7 @@ function renderHeader() {
   $('#h1clubs').textContent = tx('head.clubs', { n: teamCount() });
   $('#h1matches').textContent = tx('head.matches', { n: matchCount() });
   $('#h1weeks').textContent = tx('head.weeks', { n: FORMAT.matchdays });
+  $('.lede').textContent = tx(FORMAT.oppPerPot === 1 ? 'head.lede6' : 'head.lede');
 }
 
 /**

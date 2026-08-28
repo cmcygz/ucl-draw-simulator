@@ -47,6 +47,92 @@ const UCL_TEAMS = [
   { id:'sabah',      name:'Sabah',        code:'SAB', country:'AZE', pot:4, rating:1420 },
 ];
 
+const UEL_TEAMS = [
+  { id:'benfica',    name:'Benfica',      code:'BEN', country:'POR', pot:1, rating:1720 },
+  { id:'leverkusen', name:'Leverkusen',   code:'B04', country:'GER', pot:1, rating:1710 },
+  { id:'juventus',   name:'Juventus',     code:'JUV', country:'ITA', pot:1, rating:1705 },
+  { id:'marseille',  name:'Marseille',    code:'MAR', country:'FRA', pot:1, rating:1695 },
+  { id:'milan',      name:'Milan',        code:'MIL', country:'ITA', pot:1, rating:1690 },
+  { id:'lyon',       name:'Lyon',         code:'LYO', country:'FRA', pot:1, rating:1670 },
+  { id:'sociedad',   name:'Real Sociedad',code:'RSO', country:'ESP', pot:1, rating:1650 },
+  { id:'olympiacos', name:'Olympiacos',   code:'OLY', country:'GRE', pot:1, rating:1630 },
+  { id:'az',         name:'AZ Alkmaar',   code:'AZA', country:'NED', pot:1, rating:1600 },
+
+  { id:'celtic',     name:'Celtic',       code:'CEL', country:'SCO', pot:2, rating:1570 },
+  { id:'salzburg',   name:'Salzburg',     code:'SAL', country:'AUT', pot:2, rating:1560 },
+  { id:'dinamozg',   name:'Dinamo Zagreb',code:'DZG', country:'CRO', pot:2, rating:1545 },
+  { id:'rennes',     name:'Rennes',       code:'REN', country:'FRA', pot:2, rating:1540 },
+  { id:'unionsg',    name:'Union SG',     code:'USG', country:'BEL', pot:2, rating:1535 },
+  { id:'anderlecht', name:'Anderlecht',   code:'AND', country:'BEL', pot:2, rating:1520 },
+  { id:'sparta',     name:'Sparta Praha', code:'SPA', country:'CZE', pot:2, rating:1510 },
+  { id:'ferencvaros',name:'Ferencváros',  code:'FER', country:'HUN', pot:2, rating:1500 },
+  { id:'plzen',      name:'Viktoria Plzeň',code:'PLZ',country:'CZE', pot:2, rating:1495 },
+
+  { id:'palace',     name:'Crystal Palace',code:'CRY',country:'ENG', pot:3, rating:1580 },
+  { id:'bournemouth',name:'Bournemouth',  code:'BOU', country:'ENG', pot:3, rating:1565 },
+  { id:'sunderland', name:'Sunderland',   code:'SUN', country:'ENG', pot:3, rating:1530 },
+  { id:'celta',      name:'Celta',        code:'CTA', country:'ESP', pot:3, rating:1520 },
+  { id:'sturm',      name:'Sturm Graz',   code:'STU', country:'AUT', pot:3, rating:1450 },
+  { id:'lech',       name:'Lech Poznań',  code:'LEC', country:'POL', pot:3, rating:1430 },
+  { id:'jagiellonia',name:'Jagiellonia',  code:'JAG', country:'POL', pot:3, rating:1410 },
+  { id:'celje',      name:'Celje',        code:'CLJ', country:'SVN', pot:3, rating:1395 },
+  { id:'omonia',     name:'Omonia',       code:'OMO', country:'CYP', pot:3, rating:1385 },
+
+  { id:'hoffenheim', name:'Hoffenheim',   code:'TSG', country:'GER', pot:4, rating:1490 },
+  { id:'besiktas',   name:'Beşiktaş',     code:'BJK', country:'TUR', pot:4, rating:1470 },
+  { id:'nec',        name:'NEC',          code:'NEC', country:'NED', pot:4, rating:1420 },
+  { id:'beersheva',  name:'H. Beer-Sheva',code:'HBS', country:'ISR', pot:4, rating:1390 },
+  { id:'ofi',        name:'OFI',          code:'OFI', country:'GRE', pot:4, rating:1360 },
+  { id:'lillestrom', name:'Lillestrøm',   code:'LSK', country:'NOR', pot:4, rating:1350 },
+  { id:'levski',     name:'Levski Sofia', code:'LEV', country:'BUL', pot:4, rating:1330 },
+  { id:'torreense',  name:'Torreense',    code:'TOR', country:'POR', pot:4, rating:1320 },
+  { id:'ararat',     name:'Ararat-Armenia',code:'ARA',country:'ARM', pot:4, rating:1290 },
+];
+
+const UECL_TEAMS = [
+  { id:'atalanta',   name:'Atalanta',     code:'ATA', country:'ITA', pot:1, rating:1560 },
+  { id:'ajax',       name:'Ajax',         code:'AJA', country:'NED', pot:1, rating:1540 },
+  { id:'monaco',     name:'Monaco',       code:'ASM', country:'FRA', pot:1, rating:1530 },
+  { id:'freiburg',   name:'Freiburg',     code:'SCF', country:'GER', pot:1, rating:1520 },
+  { id:'braga',      name:'Braga',        code:'BRA', country:'POR', pot:1, rating:1490 },
+  { id:'copenhagen', name:'Copenhagen',   code:'FCK', country:'DEN', pot:1, rating:1470 },
+
+  { id:'brighton',   name:'Brighton',     code:'BHA', country:'ENG', pot:2, rating:1545 },
+  { id:'midtjylland',name:'Midtjylland',  code:'FCM', country:'DEN', pot:2, rating:1440 },
+  { id:'panathinaikos',name:'Panathinaikos',code:'PAO',country:'GRE',pot:2, rating:1430 },
+  { id:'zvezda',     name:'Crvena Zvezda',code:'CRV', country:'SRB', pot:2, rating:1425 },
+  { id:'gent',       name:'Gent',         code:'GNT', country:'BEL', pot:2, rating:1415 },
+  { id:'pafos',      name:'Pafos',        code:'PAF', country:'CYP', pot:2, rating:1380 },
+
+  { id:'getafe',     name:'Getafe',       code:'GET', country:'ESP', pot:3, rating:1450 },
+  { id:'twente',     name:'Twente',       code:'TWE', country:'NED', pot:3, rating:1400 },
+  { id:'lugano',     name:'Lugano',       code:'LUG', country:'SUI', pot:3, rating:1370 },
+  { id:'kups',       name:'KuPS',         code:'KUP', country:'FIN', pot:3, rating:1300 },
+  { id:'borac',      name:'Borac',        code:'BOR', country:'BIH', pot:3, rating:1270 },
+  { id:'redimps',    name:'L. Red Imps',  code:'LRI', country:'GIB', pot:3, rating:1150 },
+
+  { id:'trabzonspor',name:'Trabzonspor',  code:'TRA', country:'TUR', pot:4, rating:1420 },
+  { id:'hearts',     name:'Hearts',       code:'HEA', country:'SCO', pot:4, rating:1360 },
+  { id:'brann',      name:'Brann',        code:'BRN', country:'NOR', pot:4, rating:1345 },
+  { id:'sinttruiden',name:'Sint-Truiden', code:'STV', country:'BEL', pot:4, rating:1330 },
+  { id:'craiova',    name:'U. Craiova',   code:'UCR', country:'ROU', pot:4, rating:1320 },
+  { id:'kairat',     name:'Kairat',       code:'KAI', country:'KAZ', pot:4, rating:1280 },
+
+  { id:'hajduk',     name:'Hajduk Split', code:'HAJ', country:'CRO', pot:5, rating:1330 },
+  { id:'nordsjaelland',name:'Nordsjælland',code:'FCN',country:'DEN', pot:5, rating:1320 },
+  { id:'agf',        name:'AGF',          code:'AGF', country:'DEN', pot:5, rating:1310 },
+  { id:'jablonec',   name:'Jablonec',     code:'JAB', country:'CZE', pot:5, rating:1295 },
+  { id:'riga',       name:'Riga FC',      code:'RIG', country:'LVA', pot:5, rating:1240 },
+  { id:'escaldes',   name:"Inter d'Escaldes",code:'IDE',country:'AND',pot:5,rating:1160 },
+
+  { id:'mjallby',    name:'Mjällby',      code:'MJA', country:'SWE', pot:6, rating:1280 },
+  { id:'thun',       name:'Thun',         code:'THU', country:'SUI', pot:6, rating:1265 },
+  { id:'cska',       name:'CSKA Sofia',   code:'CSK', country:'BUL', pot:6, rating:1250 },
+  { id:'kaunas',     name:'Kauno Žalgiris',code:'KZA',country:'LTU', pot:6, rating:1200 },
+  { id:'egnatia',    name:'Egnatia',      code:'EGN', country:'ALB', pot:6, rating:1190 },
+  { id:'iberia',     name:'Iberia 1999',  code:'IBE', country:'GEO', pot:6, rating:1180 },
+];
+
 const COMPETITIONS = {
   ucl: {
     id: 'ucl',
@@ -72,7 +158,7 @@ const COMPETITIONS = {
     id: 'uel',
     format: 'uel',
     season: '2026/27',
-    available: false,
+    available: true,
     teamCount: 36,
     drawnOn: '2026-08-28',
     dates: [
@@ -85,14 +171,14 @@ const COMPETITIONS = {
       { day: '21/22', month: 1, year: 2027 },
       { day: '28/29', month: 1, year: 2027 }
     ],
-    teams: []
+    teams: UEL_TEAMS
   },
 
   uecl: {
     id: 'uecl',
     format: 'uecl',
     season: '2026/27',
-    available: false,
+    available: true,
     teamCount: 36,
     drawnOn: '2026-08-28',
     dates: [
@@ -103,7 +189,7 @@ const COMPETITIONS = {
       { day: '26/27', month: 11, year: 2026 },
       { day: '10/11', month: 12, year: 2026 }
     ],
-    teams: []
+    teams: UECL_TEAMS
   }
 };
 
