@@ -232,12 +232,11 @@ node -e "console.log(require('crypto').randomBytes(24).toString('hex'))" \
 npx wrangler@3 deploy
 ```
 
-`main`'e gönderilen her değişiklik `.github/workflows/deploy.yml` ile otomatik
-yayına çıkar: iş akışı önce `build.py` çalıştırıp `index.html` ile
-`api/src/site.js` dosyalarını tazeler, sonra `wrangler deploy` eder. Tek gereken
-`CLOUDFLARE_API_TOKEN` depo secret'ı (Workers Scripts: Edit yetkili); hesapta
-birden fazla Cloudflare hesabı varsa `CLOUDFLARE_ACCOUNT_ID` de eklenir. Elle
-tetiklemek için Actions sekmesindeki **Deploy > Run workflow** kullanılır.
+Yayına alma Cloudflare Workers Builds ile yapılıyor: panelde depo bağlı, kök
+dizin `api`, deploy komutu `npx wrangler deploy`. `main`'e gönderilen değişiklik
+build tetikliyor. Derlenmiş `index.html` ve `api/src/site.js` depoda tutulduğu
+için build ortamında ayrıca `build.py` çalıştırmak gerekmiyor — parçaları
+değiştirdikten sonra `python3 build.py` çalıştırıp çıktıyı commit'lemek yeterli.
 
 Worker adresi `app.part.js` içindeki `API` sabitine yazılır. Sabit boş bırakılırsa
 Kayıtlar sekmesi "yapılandırılmadı" der, sitenin geri kalanı çalışmaya devam eder.
